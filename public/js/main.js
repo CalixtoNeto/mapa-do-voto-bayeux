@@ -1,5 +1,5 @@
 // Carrega os dados estáticos e inicia a aplicação.
-const ANOS_DISPONIVEIS = ['2024', '2022', '2020', '2018', '2016', '2014', '2012'];
+const ANOS_DISPONIVEIS = ['2026', '2024', '2022', '2020', '2018', '2016', '2014', '2012'];
 (async () => {
   const root = document.getElementById('root');
   try {

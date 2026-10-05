@@ -44,7 +44,7 @@ const nf = new Intl.NumberFormat('pt-BR');
 const pct = (v, d = 2) => (v * 100).toLocaleString('pt-BR', { minimumFractionDigits: d === 2 ? 1 : d, maximumFractionDigits: d }) + '%';
 const LOWER = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di', 'du']);
 const titleCase = s => String(s || '').toLowerCase().split(/\s+/).map((w, i) => (i && LOWER.has(w)) ? w : w.replace(/^(\p{L})/u, c => c.toUpperCase())).join(' ');
-const ANOS = ['2024', '2022', '2020', '2018', '2016', '2014', '2012'];
+const ANOS = ['2026', '2024', '2022', '2020', '2018', '2016', '2014', '2012'];
 const sentence = s => { s = String(s || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
 const CARGO_ORDER = { '3': 0, '5': 1, '6': 2, '7': 3, '13': 4 };
 // Partido pelo prefixo do número (os votos de legenda do arquivo trazem o nome do partido)
@@ -340,7 +340,7 @@ function Stats({ view }) {
 }
 
 function Source({ ano, dsAno, busy, progress, error, onFile, onClear, compact }) {
-  const [anoBaixar, setAnoBaixar] = useState(ano || ANOS[0]); const [drag, setDrag] = useState(false); const inp = useRef();
+  const [anoBaixar, setAnoBaixar] = useState(ano || '2024'); const [drag, setDrag] = useState(false); const inp = useRef();
   const url = `https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_${anoBaixar}_${UF}.zip`;
   const pick = () => inp.current && inp.current.click();
   const input = html`<input ref=${inp} type="file" accept=".zip,.csv,text/csv,application/zip" hidden onChange=${e => { const f = e.target.files[0]; e.target.value = ''; f && onFile(f); }} />`;
@@ -361,7 +361,7 @@ function Source({ ano, dsAno, busy, progress, error, onFile, onClear, compact })
           </select>
           <a class="btn ghost" href=${url} target="_blank" rel="noopener">Baixar do TSE</a>
         </span>
-        <small>O arquivo tem de 6 a 50 MB. <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Abrir o portal de dados abertos</a></small>
+        <small>${anoBaixar === '2026' ? 'O TSE publica o arquivo por seção de 2026 algum tempo depois da apuração; se o download der erro 404, ele ainda não saiu. ' : ''}O arquivo tem de 6 a 50 MB. <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Abrir o portal de dados abertos</a></small>
       </li>
       <li>Envie o .zip inteiro ou só o CSV da ${UF}. A leitura acontece no seu aparelho, e o ano é reconhecido sozinho.</li>
     </ol>

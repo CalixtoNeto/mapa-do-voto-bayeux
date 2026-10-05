@@ -6,7 +6,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { Unzip, UnzipInflate } from 'fflate';
 
 const UF = 'PB', COD_TSE = '19372';
-const ANOS = process.argv.slice(2).length ? process.argv.slice(2) : ['2012', '2014', '2016', '2018', '2020', '2022', '2024'];
+const ANOS = process.argv.slice(2).length ? process.argv.slice(2) : ['2012', '2014', '2016', '2018', '2020', '2022', '2024', '2026'];
 const url = ano => `https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_${ano}.zip`;
 
 const NORM = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
@@ -98,9 +98,11 @@ for (const ano of ANOS) {
     const zona = c[ix.NR_ZONA], secao = c[ix.NR_SECAO], nr = c[ix.NR_LOCAL_VOTACAO], lk = zona + '|' + nr;
     if (!porLocal.has(lk)) {
       const bairro = canon.get(NORM(c[ix.NM_BAIRRO])) || '';
-      const lat = parseFloat(c[ix.NR_LATITUDE]), lon = parseFloat(c[ix.NR_LONGITUDE]);
+      const num = s => parseFloat(String(s).replace(',', '.')); // 2026 usa vírgula decimal
+      const lat = num(c[ix.NR_LATITUDE]), lon = num(c[ix.NR_LONGITUDE]);
       const ok = Number.isFinite(lat) && Number.isFinite(lon) && dentro(lon, lat);
-      if (!bairro) semBairro++; if (!ok) semCoord++;
+      if (!bairro) semBairro++;
+      if (!ok) { if (!semCoord) console.log(`${ano}: coordenada rejeitada, ex.: lat="${c[ix.NR_LATITUDE]}" lon="${c[ix.NR_LONGITUDE]}"`); semCoord++; }
       porLocal.set(lk, locais.length);
       locais.push({ zona: +zona, nr: +nr, nome: c[ix.NM_LOCAL_VOTACAO].trim(), endereco: (c[ix.DS_ENDERECO] || '').trim(), bairro,
         lat: ok ? lat : null, lon: ok ? lon : null, eleitores: 0 });
