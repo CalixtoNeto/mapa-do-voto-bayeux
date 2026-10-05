@@ -6,6 +6,8 @@ Votos de candidatos a vereador, deputado federal, deputado estadual, senador e g
 
 ## Como usar
 
+![Baixando os dados de 2024 e buscando a vereadora Naymara Carneiro](docs/uso.gif)
+
 1. Escolha o ano da eleição e baixe `votacao_secao_ANO_PB.zip` no Portal de Dados Abertos do TSE. Eleições gerais (2014, 2018, 2022, 2026) trazem governador, senador e deputados; municipais (2012, 2016, 2020, 2024) trazem vereador.
 2. Abra o site e envie o .zip (ou só o CSV da PB). A leitura acontece no navegador.
 3. Escolha a eleição (ano e turno), o cargo e o candidato. Dá para carregar vários anos e alternar entre eles. O partido vem dos votos de legenda do próprio arquivo e pode faltar quando o partido não teve voto de legenda em Bayeux.
