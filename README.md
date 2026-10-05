@@ -2,13 +2,15 @@ Site: https://calixtoneto.github.io/mapa-do-voto-bayeux/
 
 # Mapa do voto · Bayeux
 
-Votos de candidatos a vereador em cada bairro de Bayeux (PB), a partir do arquivo oficial do TSE (votação por seção eleitoral).
+Votos de candidatos a vereador, deputado federal, deputado estadual, senador e governador em cada bairro de Bayeux (PB), a partir do arquivo oficial do TSE (votação por seção eleitoral).
 
 ## Como usar
 
-1. Escolha o ano da eleição (2012, 2016, 2020 ou 2024) e baixe `votacao_secao_ANO_PB.zip` no Portal de Dados Abertos do TSE.
+1. Escolha o ano da eleição e baixe `votacao_secao_ANO_PB.zip` no Portal de Dados Abertos do TSE. Eleições gerais (2014, 2018, 2022) trazem governador, senador e deputados; municipais (2012, 2016, 2020, 2024) trazem vereador.
 2. Abra o site e envie o .zip (ou só o CSV da PB). A leitura acontece no navegador.
-3. Escolha o candidato a vereador.
+3. Escolha a eleição (ano e turno), o cargo e o candidato. Dá para carregar vários anos e alternar entre eles. O partido vem dos votos de legenda do próprio arquivo e pode faltar quando o partido não teve voto de legenda em Bayeux.
+
+Presidente não aparece: o TSE o publica em outro arquivo.
 
 ## Como os votos chegam aos bairros
 
