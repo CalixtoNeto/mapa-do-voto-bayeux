@@ -1,0 +1,16 @@
+{
+  "name": "mapa-do-voto-bayeux",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Votos de vereador por bairro em Bayeux (PB) a partir dos dados oficiais do TSE",
+  "type": "module",
+  "scripts": {
+    "contorno": "node scripts/gerar-contorno.mjs",
+    "secoes": "node scripts/gerar-secoes.mjs",
+    "dados": "npm run contorno && npm run secoes",
+    "dev": "npx --yes serve public -l 5174"
+  },
+  "devDependencies": {
+    "fflate": "^0.8.2"
+  }
+}
