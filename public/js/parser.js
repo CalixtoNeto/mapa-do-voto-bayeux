@@ -1,7 +1,10 @@
 // ---------- Leitura do arquivo oficial do TSE (votacao_secao_ANO_PB) ----------
-// Soma, por local de votação, os votos nominais de vereador de Bayeux.
+// Soma, por local de votação, os votos nominais de Bayeux para governador, senador,
+// deputado federal, deputado estadual e vereador, em todos os turnos do arquivo.
 const NORM = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
-const COD_VEREADOR = '13';
+
+// Cargos lidos e quantidade de dígitos do número de um candidato (menos que isso é voto de legenda)
+const CARGOS = { '3': 2, '5': 3, '6': 4, '7': 5, '13': 5 };
 
 function splitLine(s){
   const out=[]; const n=s.length; let i=0;
@@ -23,13 +26,14 @@ function splitLine(s){
   return out;
 }
 
-const REQ = ['ANO_ELEICAO','NR_TURNO','SG_UF','CD_MUNICIPIO','NR_ZONA','NR_SECAO','CD_CARGO','NR_VOTAVEL','NM_VOTAVEL','QT_VOTOS'];
+const REQ = ['ANO_ELEICAO','NR_TURNO','SG_UF','CD_MUNICIPIO','NR_ZONA','NR_SECAO','CD_CARGO','DS_CARGO','NR_VOTAVEL','NM_VOTAVEL','QT_VOTOS'];
 
 // tabelas: { [ano]: { municipio, locais, secoes } } (public/data/secoes-ANO.json)
 class Aggregator{
   constructor(uf, tabelas){
-    this.uf=uf; this.tabelas=tabelas; this.header=null; this.cands=new Map(); this.tot={}; this.esp={};
+    this.uf=uf; this.tabelas=tabelas; this.header=null; this.cands=new Map(); this.tot={}; this.esp={}; this.partidos={};
     this.rows=0; this.semLocal=new Set(); this.anos=new Set(); this.err=null; this.idx={};
+    const t=Object.values(tabelas)[0]; this.cod=t ? t.municipio : null;
   }
   // índice do local de votação: pela seção e, se faltar, por zona + número do local
   local(tab, zona, secao, nrLocal){
@@ -43,6 +47,7 @@ class Aggregator{
     if(this.err || !l) return;
     if(l.charCodeAt(l.length-1)===13) l=l.slice(0,-1);
     if(!l) return;
+    if(this.header && this.cod && l.indexOf(this.cod)<0) return;
     const c=splitLine(l);
     if(!this.header){
       const h=c.map(x=>x.trim().toUpperCase());
@@ -51,30 +56,36 @@ class Aggregator{
       const ix={}; h.forEach((k,i)=>ix[k]=i); this.ix=ix; this.header=h; return;
     }
     const ix=this.ix;
-    if(c[ix.SG_UF]!==this.uf || c[ix.CD_CARGO]!==COD_VEREADOR) return;
+    const cargo=c[ix.CD_CARGO], minDig=CARGOS[cargo];
+    if(c[ix.SG_UF]!==this.uf || !minDig) return;
     const ano=c[ix.ANO_ELEICAO];
     const tab=this.tabelas[ano];
     if(!tab) { this.anos.add(ano); return; }
     if(c[ix.CD_MUNICIPIO]!==tab.municipio) return;
-    if(c[ix.NR_TURNO]!=='1') return;
     this.rows++; this.anos.add(ano);
+    const turno=c[ix.NR_TURNO];
+    const tk=ano+'|'+turno+'|'+cargo;
     const v=parseInt(c[ix.QT_VOTOS],10)||0;
     const nr=c[ix.NR_VOTAVEL];
+    if(nr.length<minDig || nr==='95' || nr==='96'){
+      // 95 = branco, 96 = nulo, números curtos = voto de legenda (o nome é o do partido)
+      const e=this.esp[tk]||(this.esp[tk]={branco:0,nulo:0,legenda:0});
+      if(nr==='95') e.branco+=v; else if(nr==='96') e.nulo+=v; else e.legenda+=v;
+      if(nr.length===2 && nr!=='95' && nr!=='96' && cargo!=='3') (this.partidos[ano]||(this.partidos[ano]={}))[nr]=c[ix.NM_VOTAVEL];
+      return;
+    }
     const loc=this.local(tab, c[ix.NR_ZONA], c[ix.NR_SECAO], ix.NR_LOCAL_VOTACAO!=null ? c[ix.NR_LOCAL_VOTACAO] : '');
-    const e=this.esp[ano]||(this.esp[ano]={branco:0,nulo:0,legenda:0});
-    // 95 = branco, 96 = nulo, demais números de até 2 dígitos = voto de legenda
-    if(nr.length<=2){ if(nr==='95') e.branco+=v; else if(nr==='96') e.nulo+=v; else e.legenda+=v; return; }
     if(loc==null){ this.semLocal.add(c[ix.NR_ZONA]+'|'+c[ix.NR_SECAO]); return; }
-    const key=ano+'|'+nr;
+    const key=tk+'|'+nr;
     let k=this.cands.get(key);
-    if(!k){ k={key, ano, nr, nome:c[ix.NM_VOTAVEL], total:0, loc:{}}; this.cands.set(key,k); }
+    if(!k){ k={key, ano, turno, cargo, cargoNome:c[ix.DS_CARGO], nr, nome:c[ix.NM_VOTAVEL], total:0, loc:{}}; this.cands.set(key,k); }
     k.loc[loc]=(k.loc[loc]||0)+v; k.total+=v;
-    const t=this.tot[ano]||(this.tot[ano]={});
+    const t=this.tot[tk]||(this.tot[tk]={});
     t[loc]=(t[loc]||0)+v;
   }
   result(fileName){
     return { fileName, uf:this.uf, rows:this.rows, semLocal:[...this.semLocal], anos:[...this.anos].filter(a=>this.tabelas[a]),
-      anosSemTabela:[...this.anos].filter(a=>!this.tabelas[a]), cands:[...this.cands.values()], tot:this.tot, esp:this.esp, loadedAt:Date.now() };
+      anosSemTabela:[...this.anos].filter(a=>!this.tabelas[a]), cands:[...this.cands.values()], tot:this.tot, esp:this.esp, partidos:this.partidos, loadedAt:Date.now() };
   }
 }
 
@@ -102,8 +113,8 @@ async function readStream(file, onChunk, onProgress){
 function conferir(agg){
   if(agg.err) throw new Error(agg.err);
   if(!agg.rows){
-    if(agg.anosSemTabela && agg.anosSemTabela.length) throw new Error('Este arquivo é da eleição de '+agg.anosSemTabela.join(', ')+', que não tem tabela de locais de votação aqui. Use 2012, 2016, 2020 ou 2024.');
-    throw new Error('O arquivo não tem votos de vereador de Bayeux no 1º turno.');
+    if(agg.anosSemTabela && agg.anosSemTabela.length) throw new Error('Este arquivo é da eleição de '+agg.anosSemTabela.join(', ')+', que não tem tabela de locais de votação aqui.');
+    throw new Error('O arquivo não tem votos de Bayeux para governador, senador, deputado ou vereador.');
   }
 }
 
