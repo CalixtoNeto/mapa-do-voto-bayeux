@@ -1,12 +1,12 @@
 // Gera public/data/secoes-ANO.json: para cada seção eleitoral de Bayeux, o local de votação,
 // o bairro e as coordenadas (TSE, "Eleitorado por local de votação").
-// Uso: npm run secoes [ano ...]   (padrão: 2012 2016 2020 2024)
+// Uso: npm run secoes [ano ...]   (padrão: eleições municipais e gerais de 2012 a 2024)
 import { createReadStream, existsSync } from 'node:fs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { Unzip, UnzipInflate } from 'fflate';
 
 const UF = 'PB', COD_TSE = '19372';
-const ANOS = process.argv.slice(2).length ? process.argv.slice(2) : ['2012', '2016', '2020', '2024'];
+const ANOS = process.argv.slice(2).length ? process.argv.slice(2) : ['2012', '2014', '2016', '2018', '2020', '2022', '2024'];
 const url = ano => `https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_${ano}.zip`;
 
 const NORM = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
