@@ -44,7 +44,11 @@ const nf = new Intl.NumberFormat('pt-BR');
 const pct = (v, d = 2) => (v * 100).toLocaleString('pt-BR', { minimumFractionDigits: d === 2 ? 1 : d, maximumFractionDigits: d }) + '%';
 const LOWER = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di', 'du']);
 const titleCase = s => String(s || '').toLowerCase().split(/\s+/).map((w, i) => (i && LOWER.has(w)) ? w : w.replace(/^(\p{L})/u, c => c.toUpperCase())).join(' ');
-const ANOS = ['2024', '2020', '2016', '2012'];
+const ANOS = ['2024', '2022', '2020', '2018', '2016', '2014', '2012'];
+const sentence = s => { s = String(s || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
+const CARGO_ORDER = { '3': 0, '5': 1, '6': 2, '7': 3, '13': 4 };
+// Partido pelo prefixo do número (os votos de legenda do arquivo trazem o nome do partido)
+const partidoDe = (ds, ano, nr) => (ds.partidos && ds.partidos[ano] && ds.partidos[ano][String(nr).slice(0, 2)]) || '';
 // Nome de escola/local: título em caixa mista, mas siglas (EMEF, E.E.E.F.M., CRAS…) continuam em maiúsculas
 const SIGLAS = new Set(['EMEF', 'EEEF', 'EEEFM', 'EMEB', 'EMEI', 'ECI', 'CRAS', 'SENAI', 'SESI', 'CAIC', 'APAE', 'UFPB', 'IFPB']);
 const localNome = s => String(s || '').split(/\s+/).map((w, i) => (SIGLAS.has(w) || w.includes('.') && w.length <= 10) ? w : titleCase(w).replace(/^(de|da|do|das|dos|e)$/i, m => i ? m.toLowerCase() : titleCase(m))).join(' ');
@@ -59,20 +63,22 @@ const idb = {
 const ls = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
 
 // ---------- Visão de um candidato ----------
-function buildView(ds, ano, cand) {
-  const tot = ds.tot[ano] || {};
-  const rivals = ds.cands.filter(c => c.ano === ano);
+function buildView(ds, cand) {
+  const ano = cand.ano, tk = ano + '|' + cand.turno + '|' + cand.cargo;
+  const tot = ds.tot[tk] || {};
+  const rivals = ds.cands.filter(c => c.ano === ano && c.turno === cand.turno && c.cargo === cand.cargo);
   const soma = (b, o) => b.locais.reduce((s, i) => s + (o[i] || 0), 0);
   const bairros = bairrosDe(ano).map(b => {
     const v = soma(b, cand.loc), t = soma(b, tot);
     let rank = null;
-    if (v > 0) { rank = 1; for (const r of rivals) if (r !== cand && soma(b, r.loc) > v) rank++; }
+    if (v > 0) { rank = 1; for (const r of rivals) if (r.key !== cand.key && soma(b, r.loc) > v) rank++; }
     return { key: b.key, name: b.name, c: b.c, v, t, p: t ? v / t : 0, rank, eleitores: b.eleitores,
       locais: b.locais.map(i => ({ nome: TABELAS[ano].locais[i].nome, v: cand.loc[i] || 0, t: tot[i] || 0 })).sort((x, y) => y.v - x.v) };
   });
   const sorted = rivals.map(c => c.total).sort((a, b) => b - a);
-  return { ano, nr: cand.nr, nome: cand.nome, total: cand.total, posicao: sorted.indexOf(cand.total) + 1, nCands: rivals.length,
-    totCidade: Object.values(tot).reduce((a, b) => a + b, 0), esp: ds.esp[ano], bairros };
+  return { ano, turno: cand.turno, cargo: cand.cargo, cargoNome: cand.cargoNome, nr: cand.nr, nome: cand.nome, partido: partidoDe(ds, ano, cand.nr),
+    total: cand.total, posicao: sorted.indexOf(cand.total) + 1, nCands: rivals.length,
+    totCidade: Object.values(tot).reduce((a, b) => a + b, 0), esp: ds.esp[tk], bairros };
 }
 
 function quantBreaks(vals) {
@@ -269,19 +275,19 @@ function CandidatePicker({ cands, value, onPick }) {
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false);
   const list = useMemo(() => {
     const nq = NORM(q);
-    const r = nq ? cands.filter(c => NORM(c.nome + ' ' + c.nr).includes(nq)) : cands;
+    const r = nq ? cands.filter(c => NORM(c.nome + ' ' + c.nr + ' ' + c.partido).includes(nq)) : cands;
     return r.slice(0, 40);
   }, [q, cands]);
   const cur = cands.find(c => c.key === value);
   return html`<div class="picker">
-    <label for="cand">Vereador</label>
-    <input id="cand" type="search" autocomplete="off" placeholder=${cur ? `${titleCase(cur.nome)} (${cur.nr})` : 'Nome ou número do candidato'}
+    <label for="cand">Candidato</label>
+    <input id="cand" type="search" autocomplete="off" placeholder=${cur ? `${titleCase(cur.nome)} (${cur.nr})` : 'Nome, número ou partido'}
       value=${q} onInput=${e => { setQ(e.target.value); setOpen(true); }} onFocus=${() => setOpen(true)}
       onKeyDown=${e => { if (e.key === 'Escape') setOpen(false); if (e.key === 'Enter' && list[0]) { onPick(list[0].key); setQ(''); setOpen(false); e.target.blur(); } }} />
     ${open && html`<ul class="results" role="listbox">
       ${list.map(c => html`<li role="option" aria-selected=${c.key === value}>
         <button type="button" onMouseDown=${e => e.preventDefault()} onClick=${() => { onPick(c.key); setQ(''); setOpen(false); document.activeElement && document.activeElement.blur(); }}>
-          <span class="n">${titleCase(c.nome)}</span><span class="meta">${c.nr}</span><span class="v">${nf.format(c.total)}</span>
+          <span class="n">${titleCase(c.nome)}</span><span class="meta">${c.nr}${c.partido ? ' · ' + c.partido : ''}</span><span class="v">${nf.format(c.total)}</span>
         </button></li>`)}
       ${!list.length && html`<li class="empty">Nenhum candidato com “${q}”.</li>`}
     </ul>`}
@@ -327,7 +333,7 @@ function Stats({ view }) {
   const top = [...com].sort((a, b) => b.v - a.v)[0];
   return html`<dl class="stats">
     <div><dt>Votos em ${CIDADE}</dt><dd>${nf.format(view.total)}</dd></div>
-    <div><dt>Dos votos nominais para vereador</dt><dd>${view.totCidade ? pct(view.total / view.totCidade) : '—'}</dd></div>
+    <div><dt>Dos votos nominais para ${sentence(view.cargoNome).toLowerCase()}</dt><dd>${view.totCidade ? pct(view.total / view.totCidade) : '—'}</dd></div>
     <div><dt>Bairros com voto</dt><dd>${com.length} de ${view.bairros.length}</dd></div>
     <div><dt>Votos no maior reduto${top ? ` (${titleCase(top.name)})` : ''}</dt><dd>${top && view.total ? pct(top.v / view.total, 1) : '—'}</dd></div>
   </dl>`;
@@ -348,14 +354,14 @@ function Source({ ano, dsAno, busy, progress, error, onFile, onClear, compact })
       onDrop=${e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; f && onFile(f); }}>
     <h2>Carregue os resultados oficiais do TSE</h2>
     <ol class="steps">
-      <li>Escolha a eleição e baixe o arquivo de votação por seção eleitoral da Paraíba:
+      <li>Escolha o ano e baixe o arquivo de votação por seção eleitoral da Paraíba (eleições gerais: governador, senador e deputados; municipais: vereador):
         <span class="row">
           <select aria-label="Ano da eleição" value=${anoBaixar} onChange=${e => setAnoBaixar(e.target.value)}>
             ${ANOS.map(a => html`<option value=${a}>${a}</option>`)}
           </select>
           <a class="btn ghost" href=${url} target="_blank" rel="noopener">Baixar do TSE</a>
         </span>
-        <small>O arquivo tem de 6 a 30 MB. <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Abrir o portal de dados abertos</a></small>
+        <small>O arquivo tem de 6 a 50 MB. <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Abrir o portal de dados abertos</a></small>
       </li>
       <li>Envie o .zip inteiro ou só o CSV da ${UF}. A leitura acontece no seu aparelho, e o ano é reconhecido sozinho.</li>
     </ol>
@@ -370,7 +376,7 @@ function Source({ ano, dsAno, busy, progress, error, onFile, onClear, compact })
 // ---------- App ----------
 function App() {
   const [data, setData] = useState({});
-  const [ano, setAno] = useState(null);
+  const [eleicao, setEleicao] = useState(null), [cargo, setCargo] = useState(null);
   const [busy, setBusy] = useState(false), [progress, setProgress] = useState(0), [error, setError] = useState('');
   const [candKey, setCandKey] = useState(null);
   const [metric, setMetric] = useState(ls.get('mvb.metric') || 'pct');
@@ -380,25 +386,47 @@ function App() {
   useEffect(() => {
     (async () => {
       const got = {};
-      for (const a of ANOS) { const d = await idb.get('ds-' + a); if (d && d.cands) got[a] = d; }
-      const anos = Object.keys(got);
-      if (anos.length) { setData(got); const last = ls.get('mvb.ano'); setAno(anos.includes(last) ? last : anos.sort().reverse()[0]); }
+      for (const a of ANOS) { const d = await idb.get('ds2-' + a); if (d && d.cands) got[a] = d; }
+      if (Object.keys(got).length) setData(got);
     })();
   }, []);
 
+  const ano = eleicao ? eleicao.split('|')[0] : null;
   const ds = ano && data[ano];
   const loaded = ANOS.filter(a => data[a]);
-  const cands = useMemo(() => ds ? ds.cands.filter(c => c.ano === ano).sort((a, b) => b.total - a.total) : [], [ds, ano]);
+  // eleições (ano + turno) de todos os arquivos carregados, da mais recente para a mais antiga
+  const eleicoes = useMemo(() => {
+    const s = new Set(); for (const a of loaded) data[a].cands.forEach(c => s.add(c.ano + '|' + c.turno));
+    return [...s].sort((x, y) => (y.split('|')[0] - x.split('|')[0]) || (x.split('|')[1] - y.split('|')[1]));
+  }, [data]);
   useEffect(() => {
-    if (!cands.length) return;
-    setCandKey(k => cands.some(c => c.key === k) ? k : null);
-  }, [cands]);
+    if (!eleicoes.length) return;
+    setEleicao(e => {
+      if (e && eleicoes.includes(e)) return e;
+      const last = ls.get('mvb.eleicao');
+      return last && eleicoes.includes(last) ? last : eleicoes[0];
+    });
+  }, [eleicoes]);
+  const cargos = useMemo(() => {
+    if (!ds || !eleicao) return [];
+    const m = new Map(); ds.cands.forEach(c => { if (c.ano + '|' + c.turno === eleicao) m.set(c.cargo, c.cargoNome); });
+    return [...m].sort((a, b) => (CARGO_ORDER[a[0]] ?? 99) - (CARGO_ORDER[b[0]] ?? 99));
+  }, [ds, eleicao]);
+  useEffect(() => {
+    if (!cargos.length) return;
+    const last = ls.get('mvb.cargo');
+    setCargo(c => cargos.some(x => x[0] === c) ? c : (cargos.some(x => x[0] === last) ? last : cargos[0][0]));
+  }, [cargos]);
+  const cands = useMemo(() => ds && eleicao && cargo
+    ? ds.cands.filter(c => c.ano + '|' + c.turno === eleicao && c.cargo === cargo).map(c => ({ ...c, partido: partidoDe(ds, c.ano, c.nr) })).sort((a, b) => b.total - a.total) : [], [ds, eleicao, cargo]);
+  useEffect(() => { setCandKey(k => cands.some(c => c.key === k) ? k : null); }, [cands]);
   const view = useMemo(() => {
     const c = ds && cands.find(x => x.key === candKey);
-    return c ? buildView(ds, ano, c) : null;
-  }, [ds, ano, cands, candKey]);
+    return c ? buildView(ds, c) : null;
+  }, [ds, cands, candKey]);
   useEffect(() => { ls.set('mvb.metric', metric); }, [metric]);
-  useEffect(() => { if (ano) ls.set('mvb.ano', ano); }, [ano]);
+  useEffect(() => { if (eleicao) ls.set('mvb.eleicao', eleicao); }, [eleicao]);
+  useEffect(() => { if (cargo) ls.set('mvb.cargo', cargo); }, [cargo]);
 
   const classes = useMemo(() => view ? quantBreaks(view.bairros.map(b => metricOf(b, metric))) : null, [view, metric]);
 
@@ -407,8 +435,8 @@ function App() {
     try {
       const d = await parseTSE(f, UF, TABELAS, setProgress);
       const next = {};
-      for (const a of d.anos) { next[a] = d; idb.set('ds-' + a, d); }
-      setData(prev => ({ ...prev, ...next })); setAno(d.anos[0]); setCandKey(null); setSelected(null);
+      for (const a of d.anos) { next[a] = d; idb.set('ds2-' + a, d); }
+      setData(prev => ({ ...prev, ...next })); setEleicao(d.anos[0] + '|1'); setCandKey(null); setSelected(null);
     } catch (e) { setError(e.message || 'Não foi possível ler o arquivo.'); }
     setBusy(false);
   }
@@ -424,20 +452,24 @@ function App() {
     </header>
 
     ${hasData && html`<section class="filters" aria-label="Filtros">
-      ${loaded.length > 1 && html`<div class="chips" role="radiogroup" aria-label="Eleição">
-        ${loaded.map(a => html`<button type="button" role="radio" aria-checked=${a === ano} onClick=${() => { setAno(a); setCandKey(null); setSelected(null); }}>Vereador ${a}</button>`)}
-      </div>`}
+      ${eleicoes.length > 1 && html`<label class="field">Eleição
+        <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); }}>
+          ${eleicoes.map(e => { const [a, t] = e.split('|'); return html`<option value=${e}>${a} · ${t}º turno</option>`; })}
+        </select></label>`}
+      <div class="chips" role="radiogroup" aria-label="Cargo">
+        ${cargos.map(([cd, nm]) => html`<button type="button" role="radio" aria-checked=${cd === cargo} onClick=${() => { setCargo(cd); setSelected(null); }}>${sentence(nm)}</button>`)}
+      </div>
       <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setSelected(null); }} />
     </section>`}
 
     <section class="stage" ref=${mapRef}>
       ${view ? html`<div class="who">
           <h1>${titleCase(view.nome)}</h1>
-          <p>${view.nr} · Vereador · ${view.ano}</p>
-          <p class="sub">${view.posicao}º mais votado entre ${view.nCands} candidatos</p>
+          <p>${view.nr}${view.partido ? ' · ' + view.partido : ''} · ${sentence(view.cargoNome)} · ${view.ano}${view.turno !== '1' ? ` (${view.turno}º turno)` : ''}</p>
+          <p class="sub">${view.posicao}º mais votado em ${CIDADE} entre ${view.nCands} candidatos</p>
         </div>`
-      : html`<div class="who empty"><h1>${hasData ? 'Escolha um vereador' : 'Votos por bairro'}</h1>
-          <p>${hasData ? 'Busque pelo nome ou número do candidato.' : `Veja em quais bairros de ${CIDADE} cada candidato a vereador foi votado.`}</p></div>`}
+      : html`<div class="who empty"><h1>${hasData ? 'Escolha um candidato' : 'Votos por bairro'}</h1>
+          <p>${hasData ? 'Busque pelo nome, número ou partido.' : `Veja em quais bairros de ${CIDADE} cada candidato a vereador, deputado, senador ou governador foi votado.`}</p></div>`}
       <${MapCanvas} ano=${mapAno} view=${view} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} />
       ${view && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} />`}
       <${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} />
@@ -447,7 +479,7 @@ function App() {
       <${Stats} view=${view} />
       <${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />
       <${Source} ano=${ano} dsAno=${ds} busy=${busy} progress=${progress} error=${error} onFile=${onFile} compact=${hasData}
-        onClear=${() => { idb.del('ds-' + ano); setData(prev => { const n = { ...prev }; delete n[ano]; setAno(Object.keys(n).sort().reverse()[0] || null); return n; }); setCandKey(null); setSelected(null); }} />
+        onClear=${() => { idb.del('ds2-' + ano); setData(prev => { const n = { ...prev }; delete n[ano]; return n; }); setEleicao(null); setCandKey(null); setSelected(null); }} />
       <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, Portal de Dados Abertos (votação por seção e eleitorado por local de votação); contorno municipal do IBGE.</p>
     </aside>
   </div>`;
