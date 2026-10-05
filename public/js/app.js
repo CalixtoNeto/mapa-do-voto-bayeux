@@ -1,8 +1,10 @@
 // Interface: Preact + htm, mapa em Canvas 2D.
-// startApp é chamado por main.js depois que o contorno e as tabelas de locais de votação são carregados.
+// startApp é chamado por main.js depois que o contorno é carregado; TABELAS é preenchida
+// com a tabela de locais de votação de cada ano, conforme a eleição escolhida.
 function startApp(GEO, TABELAS) {
 const { html, render, useState, useEffect, useMemo, useRef } = htmPreact;
 const UF = 'PB', CIDADE = 'Bayeux';
+const NORM = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 
 // ---------- Geometria ----------
 const K = Math.cos(-7.13 * Math.PI / 180);
@@ -24,6 +26,7 @@ for (const poly of (GEOM.type === 'Polygon' ? [GEOM.coordinates] : GEOM.coordina
 const bairrosCache = {};
 function bairrosDe(ano) {
   if (bairrosCache[ano]) return bairrosCache[ano];
+  if (!TABELAS[ano]) return [];
   const m = new Map();
   TABELAS[ano].locais.forEach((l, i) => {
     const k = NORM(l.bairro) || 'SEM BAIRRO';
@@ -44,9 +47,8 @@ const nf = new Intl.NumberFormat('pt-BR');
 const pct = (v, d = 2) => (v * 100).toLocaleString('pt-BR', { minimumFractionDigits: d === 2 ? 1 : d, maximumFractionDigits: d }) + '%';
 const LOWER = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di', 'du']);
 const titleCase = s => String(s || '').toLowerCase().split(/\s+/).map((w, i) => (i && LOWER.has(w)) ? w : w.replace(/^(\p{L})/u, c => c.toUpperCase())).join(' ');
-const ANOS = ['2026', '2024', '2022', '2020', '2018', '2016', '2014', '2012'];
 const sentence = s => { s = String(s || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
-const CARGO_ORDER = { '3': 0, '5': 1, '6': 2, '7': 3, '13': 4 };
+const CARGO_ORDER = { '1': 0, '3': 1, '5': 2, '6': 3, '7': 4, '13': 5 };
 // Partido pelo prefixo do número (os votos de legenda do arquivo trazem o nome do partido)
 const partidoDe = (ds, ano, nr) => (ds.partidos && ds.partidos[ano] && ds.partidos[ano][String(nr).slice(0, 2)]) || '';
 // Nome de escola/local: título em caixa mista, mas siglas (EMEF, E.E.E.F.M., CRAS…) continuam em maiúsculas
@@ -54,12 +56,6 @@ const SIGLAS = new Set(['EMEF', 'EEEF', 'EEEFM', 'EMEB', 'EMEI', 'ECI', 'CRAS', 
 const localNome = s => String(s || '').split(/\s+/).map((w, i) => (SIGLAS.has(w) || w.includes('.') && w.length <= 10) ? w : titleCase(w).replace(/^(de|da|do|das|dos|e)$/i, m => i ? m.toLowerCase() : titleCase(m))).join(' ');
 
 // ---------- Armazenamento local ----------
-const idb = {
-  open() { return new Promise((res, rej) => { const r = indexedDB.open('mapa-do-voto-bayeux', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
-  async get(k) { try { const db = await this.open(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); }); } catch (e) { return undefined; } },
-  async set(k, v) { try { const db = await this.open(); await new Promise(res => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = res; }); } catch (e) { } },
-  async del(k) { try { const db = await this.open(); await new Promise(res => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').delete(k); t.oncomplete = res; t.onerror = res; }); } catch (e) { } },
-};
 const ls = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
 
 // ---------- Visão de um candidato ----------
@@ -76,7 +72,7 @@ function buildView(ds, cand) {
       locais: b.locais.map(i => ({ nome: TABELAS[ano].locais[i].nome, v: cand.loc[i] || 0, t: tot[i] || 0 })).sort((x, y) => y.v - x.v) };
   });
   const sorted = rivals.map(c => c.total).sort((a, b) => b - a);
-  return { ano, turno: cand.turno, cargo: cand.cargo, cargoNome: cand.cargoNome, nr: cand.nr, nome: cand.nome, partido: partidoDe(ds, ano, cand.nr),
+  return { ano, turno: cand.turno, cargo: cand.cargo, cargoNome: cand.cargoNome, nr: cand.nr, nome: cand.nome || cand.urna, partido: cand.partido || partidoDe(ds, ano, cand.nr), sit: cand.sit || '',
     total: cand.total, posicao: sorted.indexOf(cand.total) + 1, nCands: rivals.length,
     totCidade: Object.values(tot).reduce((a, b) => a + b, 0), esp: ds.esp[tk], bairros };
 }
@@ -327,8 +323,9 @@ function Ranking({ view, metric, selected, onSelect }) {
   </section>`;
 }
 
-function Stats({ view }) {
+function Stats({ view, semBairros }) {
   if (!view) return null;
+  if (semBairros) return html`<dl class="stats"><div><dt>Votos em ${CIDADE}</dt><dd>${nf.format(view.total)}</dd></div></dl>`;
   const com = view.bairros.filter(b => b.v > 0);
   const top = [...com].sort((a, b) => b.v - a.v)[0];
   return html`<dl class="stats">
@@ -339,86 +336,75 @@ function Stats({ view }) {
   </dl>`;
 }
 
-function Source({ ano, dsAno, busy, progress, error, onFile, onClear, compact }) {
-  const [anoBaixar, setAnoBaixar] = useState(ano || '2024'); const [drag, setDrag] = useState(false); const inp = useRef();
-  const url = `https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_${anoBaixar}_${UF}.zip`;
-  const pick = () => inp.current && inp.current.click();
-  const input = html`<input ref=${inp} type="file" accept=".zip,.csv,text/csv,application/zip" hidden onChange=${e => { const f = e.target.files[0]; e.target.value = ''; f && onFile(f); }} />`;
-  if (compact && dsAno && !busy) return html`<section class="source compact">
-    <p>Dados de ${ano}: <strong>${dsAno.fileName}</strong> · ${nf.format(dsAno.rows)} linhas de ${CIDADE}</p>
-    <div class="row"><button type="button" class="btn ghost" onClick=${pick}>Carregar outro arquivo</button><button type="button" class="link" onClick=${onClear}>Remover dados de ${ano} deste aparelho</button></div>
-    ${input}
-  </section>`;
-  return html`<section class=${'source' + (drag ? ' drag' : '')}
-      onDragOver=${e => { e.preventDefault(); setDrag(true); }} onDragLeave=${() => setDrag(false)}
-      onDrop=${e => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; f && onFile(f); }}>
-    <h2>Carregue os resultados oficiais do TSE</h2>
-    <ol class="steps">
-      <li>Escolha o ano e baixe o arquivo de votação por seção eleitoral da Paraíba (eleições gerais: governador, senador e deputados; municipais: vereador):
-        <span class="row">
-          <select aria-label="Ano da eleição" value=${anoBaixar} onChange=${e => setAnoBaixar(e.target.value)}>
-            ${ANOS.map(a => html`<option value=${a}>${a}</option>`)}
-          </select>
-          <a class="btn ghost" href=${url} target="_blank" rel="noopener">Baixar do TSE</a>
-        </span>
-        <small>${anoBaixar === '2026' ? 'O TSE publica o arquivo por seção de 2026 algum tempo depois da apuração; se o download der erro 404, ele ainda não saiu. ' : ''}O arquivo tem de 6 a 50 MB. <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">Abrir o portal de dados abertos</a></small>
-      </li>
-      <li>Envie o .zip inteiro ou só o CSV da ${UF}. A leitura acontece no seu aparelho, e o ano é reconhecido sozinho.</li>
-    </ol>
-    ${busy ? html`<div class="progress" role="progressbar" aria-valuenow=${Math.round(progress * 100)} aria-valuemin="0" aria-valuemax="100">
-        <i style=${`width:${(progress * 100).toFixed(1)}%`}></i><span>Lendo arquivo… ${Math.round(progress * 100)}%</span></div>`
-      : html`<button type="button" class="btn" onClick=${pick}>Escolher arquivo</button>`}
-    ${error && html`<p class="error" role="alert">${error}</p>`}
-    ${input}
+function Fonte({ item }) {
+  if (!item) return null;
+  const quando = item.atualizadoEm && item.fonte === 'api' ? new Date(item.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  return html`<section class="source compact">
+    <p>${item.fonte === 'api'
+      ? html`<strong>API de resultados do TSE</strong> · ${item.final ? 'apuração concluída' : 'apuração em andamento'}${quando ? ` · atualizado em ${quando}` : ''}`
+      : html`<strong>Dados Abertos do TSE</strong> · votação por seção eleitoral · resultado final`}</p>
   </section>`;
 }
 
+const rotuloEleicao = e => `${e.ano} · ${e.turno}º turno${e.final ? '' : ' (parcial)'}`;
+
 // ---------- App ----------
 function App() {
-  const [data, setData] = useState({});
-  const [eleicao, setEleicao] = useState(null), [cargo, setCargo] = useState(null);
-  const [busy, setBusy] = useState(false), [progress, setProgress] = useState(0), [error, setError] = useState('');
-  const [candKey, setCandKey] = useState(null);
+  const [indice, setIndice] = useState(null), [erro, setErro] = useState('');
+  const [eleicao, setEleicao] = useState(null), [cargo, setCargo] = useState(null), [candKey, setCandKey] = useState(null);
+  const [ds, setDs] = useState(null), [carregando, setCarregando] = useState(false);
   const [metric, setMetric] = useState(ls.get('mvb.metric') || 'pct');
   const [selected, setSelected] = useState(null), [hover, setHover] = useState(null);
   const mapRef = useRef();
 
+  // lista as eleições sozinho: histórico (commitado) + ciclo atual (gerado pelo workflow, se existir)
   useEffect(() => {
     (async () => {
-      const got = {};
-      for (const a of ANOS) { const d = await idb.get('ds2-' + a); if (d && d.cands) got[a] = d; }
-      if (Object.keys(got).length) setData(got);
+      const ler = async base => {
+        try {
+          const r = await fetch(base + '/index.json', { cache: 'no-cache' });
+          if (!r.ok) return [];
+          return ((await r.json()).eleicoes || []).map(e => ({ ...e, base, id: e.ano + '|' + e.turno }));
+        } catch (e) { return []; }
+      };
+      const [hist, atual] = await Promise.all([ler('data/historico'), ler('data/atual')]);
+      const m = new Map(); for (const e of [...hist, ...atual]) m.set(e.id, e);   // o ciclo atual prevalece
+      const lista = [...m.values()].sort((x, y) => (y.ano - x.ano) || (x.turno - y.turno));
+      if (!lista.length) { setErro('Nenhuma eleição disponível ainda.'); return; }
+      setIndice(lista);
+      const last = ls.get('mvb.eleicao');
+      setEleicao(last && lista.some(e => e.id === last) ? last : lista[0].id);
     })();
   }, []);
 
-  const ano = eleicao ? eleicao.split('|')[0] : null;
-  const ds = ano && data[ano];
-  const loaded = ANOS.filter(a => data[a]);
-  // eleições (ano + turno) de todos os arquivos carregados, da mais recente para a mais antiga
-  const eleicoes = useMemo(() => {
-    const s = new Set(); for (const a of loaded) data[a].cands.forEach(c => s.add(c.ano + '|' + c.turno));
-    return [...s].sort((x, y) => (y.split('|')[0] - x.split('|')[0]) || (x.split('|')[1] - y.split('|')[1]));
-  }, [data]);
+  const item = indice && indice.find(e => e.id === eleicao);
+  // carrega os votos da eleição escolhida e a tabela de locais de votação do ano
   useEffect(() => {
-    if (!eleicoes.length) return;
-    setEleicao(e => {
-      if (e && eleicoes.includes(e)) return e;
-      const last = ls.get('mvb.eleicao');
-      return last && eleicoes.includes(last) ? last : eleicoes[0];
-    });
-  }, [eleicoes]);
+    if (!item) return;
+    let vivo = true; setCarregando(true); setDs(null); setErro('');
+    (async () => {
+      try {
+        const ler = async u => { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error(u); return r.json(); };
+        const [d, t] = await Promise.all([ler(`${item.base}/${item.arquivo}`), TABELAS[item.ano] ? null : ler(`data/secoes-${item.ano}.json`).catch(() => null)]);
+        if (t) TABELAS[item.ano] = t;
+        if (vivo) { setDs(d); setCarregando(false); }
+      } catch (e) { if (vivo) { setErro('Não foi possível carregar os dados desta eleição.'); setCarregando(false); } }
+    })();
+    return () => { vivo = false; };
+  }, [item && item.base + item.arquivo]);
+
   const cargos = useMemo(() => {
-    if (!ds || !eleicao) return [];
-    const m = new Map(); ds.cands.forEach(c => { if (c.ano + '|' + c.turno === eleicao) m.set(c.cargo, c.cargoNome); });
+    if (!ds) return [];
+    const m = new Map(); ds.cands.forEach(c => m.set(c.cargo, c.cargoNome));
     return [...m].sort((a, b) => (CARGO_ORDER[a[0]] ?? 99) - (CARGO_ORDER[b[0]] ?? 99));
-  }, [ds, eleicao]);
+  }, [ds]);
   useEffect(() => {
     if (!cargos.length) return;
     const last = ls.get('mvb.cargo');
     setCargo(c => cargos.some(x => x[0] === c) ? c : (cargos.some(x => x[0] === last) ? last : cargos[0][0]));
   }, [cargos]);
-  const cands = useMemo(() => ds && eleicao && cargo
-    ? ds.cands.filter(c => c.ano + '|' + c.turno === eleicao && c.cargo === cargo).map(c => ({ ...c, partido: partidoDe(ds, c.ano, c.nr) })).sort((a, b) => b.total - a.total) : [], [ds, eleicao, cargo]);
+  const cands = useMemo(() => ds && cargo
+    ? ds.cands.filter(c => c.cargo === cargo).map(c => ({ ...c, partido: c.partido || partidoDe(ds, c.ano, c.nr) })).sort((a, b) => b.total - a.total) : [], [ds, cargo]);
   useEffect(() => { setCandKey(k => cands.some(c => c.key === k) ? k : null); }, [cands]);
   const view = useMemo(() => {
     const c = ds && cands.find(x => x.key === candKey);
@@ -429,58 +415,47 @@ function App() {
   useEffect(() => { if (cargo) ls.set('mvb.cargo', cargo); }, [cargo]);
 
   const classes = useMemo(() => view ? quantBreaks(view.bairros.map(b => metricOf(b, metric))) : null, [view, metric]);
-
-  async function onFile(f) {
-    setBusy(true); setError(''); setProgress(0);
-    try {
-      const d = await parseTSE(f, UF, TABELAS, setProgress);
-      const next = {};
-      for (const a of d.anos) { next[a] = d; idb.set('ds2-' + a, d); }
-      setData(prev => ({ ...prev, ...next })); setEleicao(d.anos[0] + '|1'); setCandKey(null); setSelected(null);
-    } catch (e) { setError(e.message || 'Não foi possível ler o arquivo.'); }
-    setBusy(false);
-  }
   const selectFromList = key => { setSelected(key); if (window.innerWidth < 960 && mapRef.current) mapRef.current.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); };
   const shownKey = hover || selected;
   const shown = view && view.bairros.find(b => b.key === shownKey);
   const hasData = !!ds;
-  const mapAno = ano || ANOS[0];
+  const semBairros = !!(ds && ds.semBairros);
 
   return html`<div class=${'app' + (hasData ? '' : ' nodata')}>
     <header class="top">
       <p class="brand">Mapa do voto <span>${CIDADE}</span></p>
     </header>
 
-    ${hasData && html`<section class="filters" aria-label="Filtros">
-      ${eleicoes.length > 1 && html`<label class="field">Eleição
-        <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); }}>
-          ${eleicoes.map(e => { const [a, t] = e.split('|'); return html`<option value=${e}>${a} · ${t}º turno</option>`; })}
-        </select></label>`}
-      <div class="chips" role="radiogroup" aria-label="Cargo">
+    ${indice && html`<section class="filters" aria-label="Filtros">
+      <label class="field">Eleição
+        <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); setCandKey(null); }}>
+          ${indice.map(e => html`<option value=${e.id}>${rotuloEleicao(e)}</option>`)}
+        </select></label>
+      ${hasData && html`<div class="chips" role="radiogroup" aria-label="Cargo">
         ${cargos.map(([cd, nm]) => html`<button type="button" role="radio" aria-checked=${cd === cargo} onClick=${() => { setCargo(cd); setSelected(null); }}>${sentence(nm)}</button>`)}
       </div>
-      <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setSelected(null); }} />
+      <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setSelected(null); }} />`}
     </section>`}
 
     <section class="stage" ref=${mapRef}>
       ${view ? html`<div class="who">
           <h1>${titleCase(view.nome)}</h1>
           <p>${view.nr}${view.partido ? ' · ' + view.partido : ''} · ${sentence(view.cargoNome)} · ${view.ano}${view.turno !== '1' ? ` (${view.turno}º turno)` : ''}</p>
-          <p class="sub">${view.posicao}º mais votado em ${CIDADE} entre ${view.nCands} candidatos</p>
+          <p class="sub">${view.posicao}º mais votado em ${CIDADE} entre ${view.nCands} candidatos${view.sit ? ' · ' + sentence(view.sit) : ''}</p>
         </div>`
       : html`<div class="who empty"><h1>${hasData ? 'Escolha um candidato' : 'Votos por bairro'}</h1>
-          <p>${hasData ? 'Busque pelo nome, número ou partido.' : `Veja em quais bairros de ${CIDADE} cada candidato a vereador, deputado, senador ou governador foi votado.`}</p></div>`}
-      <${MapCanvas} ano=${mapAno} view=${view} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} />
-      ${view && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} />`}
-      <${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} />
+          <p>${erro ? erro : carregando || !indice ? 'Carregando os resultados…' : hasData ? 'Busque pelo nome, número ou partido.' : `Veja em quais bairros de ${CIDADE} cada candidato foi votado.`}</p></div>`}
+      ${semBairros && html`<p class="aviso" role="note">O TSE ainda não publicou o arquivo por seção desta eleição, então os votos por bairro não estão disponíveis. Por enquanto só aparece o total de ${CIDADE}.</p>`}
+      <${MapCanvas} ano=${item ? item.ano : '2024'} view=${view} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} />
+      ${view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} />`}
+      ${!semBairros && html`<${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} />`}
     </section>
 
     <aside class="side">
-      <${Stats} view=${view} />
-      <${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />
-      <${Source} ano=${ano} dsAno=${ds} busy=${busy} progress=${progress} error=${error} onFile=${onFile} compact=${hasData}
-        onClear=${() => { idb.del('ds2-' + ano); setData(prev => { const n = { ...prev }; delete n[ano]; return n; }); setEleicao(null); setCandKey(null); setSelected(null); }} />
-      <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, Portal de Dados Abertos (votação por seção e eleitorado por local de votação); contorno municipal do IBGE.</p>
+      <${Stats} view=${view} semBairros=${semBairros} />
+      ${!semBairros && html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />`}
+      <${Fonte} item=${item} />
+      <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, API de resultados (ciclo atual) e Portal de Dados Abertos (votação por seção e eleitorado por local de votação); contorno municipal do IBGE.</p>
     </aside>
   </div>`;
 }
