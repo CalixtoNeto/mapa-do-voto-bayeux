@@ -3,3 +3,5 @@ tmp/
 .DS_Store
 *.zip
 *.csv
+# ciclo atual: gerado pelo workflow a cada publicacao, nunca commitado
+public/data/atual/
