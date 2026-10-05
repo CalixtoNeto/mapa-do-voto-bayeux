@@ -2,17 +2,26 @@ Site: https://calixtoneto.github.io/mapa-do-voto-bayeux/
 
 # Mapa do voto · Bayeux
 
-Votos de candidatos a vereador, deputado federal, deputado estadual, senador e governador em cada bairro de Bayeux (PB), a partir do arquivo oficial do TSE (votação por seção eleitoral).
+Votos de candidatos a vereador, deputado federal, deputado estadual, senador e governador em cada bairro de Bayeux (PB), a partir dos resultados oficiais do TSE.
 
 ## Como usar
 
-![Baixando os dados de 2024 e buscando a vereadora Naymara Carneiro](docs/uso.gif)
+![Escolhendo a eleição de 2024 e buscando a vereadora Naymara Carneiro](docs/uso.gif)
 
-1. Escolha o ano da eleição e baixe `votacao_secao_ANO_PB.zip` no Portal de Dados Abertos do TSE. Eleições gerais (2014, 2018, 2022, 2026) trazem governador, senador e deputados; municipais (2012, 2016, 2020, 2024) trazem vereador.
-2. Abra o site e envie o .zip (ou só o CSV da PB). A leitura acontece no navegador.
-3. Escolha a eleição (ano e turno), o cargo e o candidato. Dá para carregar vários anos e alternar entre eles. O partido vem dos votos de legenda do próprio arquivo e pode faltar quando o partido não teve voto de legenda em Bayeux.
+Abra o site: ele lista todas as eleições disponíveis sozinho, sem precisar baixar nem enviar arquivos. Escolha a eleição (ano e turno), o cargo e o candidato. Clique num bairro para ver os votos em cada escola.
 
-Presidente não aparece: o TSE o publica em outro arquivo.
+O partido vem dos votos de legenda do arquivo por seção e pode faltar quando o partido não teve voto de legenda em Bayeux. Presidente não aparece: o TSE o publica em outro arquivo.
+
+## De onde vêm os dados
+
+| | Onde fica | Como é gerado |
+|---|---|---|
+| **Histórico** (2012 a 2024) | `public/data/historico/ANO-tTURNO.json`, commitado | Uma vez, com `npm run historico`. Nunca mais muda. |
+| **Ciclo atual** (2026) | `public/data/atual/`, **não** commitado | Pelo workflow, a cada publicação (push, de hora em hora e manualmente). Vai direto para o Pages. |
+
+Os bairros precisam de votos por seção eleitoral, e a [API de resultados do TSE](https://resultados.tse.jus.br/) só entrega votos por município. Por isso o gerador usa primeiro o CSV por seção do Portal de Dados Abertos. Se o TSE ainda não o publicou (comum logo depois de uma eleição), usa a API e o site mostra só o total de Bayeux, com um aviso, até o CSV sair. Quem busca é o workflow, uma vez por execução, com cache. O navegador do visitante nunca chama o TSE.
+
+Quando o ciclo atual terminar, mova-o para o histórico com `npm run historico -- ANO`.
 
 ## Como os votos chegam aos bairros
 
@@ -24,15 +33,17 @@ Isso mostra **onde o voto foi depositado, não onde o eleitor mora**. O bairro v
 
 ```bash
 npm install
-npm run dados   # regenera o contorno (IBGE) e as tabelas de locais de votação (TSE)
-npm run dev     # http://localhost:5174
+npm run dados       # contorno (IBGE) e tabelas de locais de votação (TSE)
+npm run historico   # gera o histórico que ainda não existe (use -- ANO para escolher; --forcar para refazer)
+npm run atual       # gera o ciclo atual em public/data/atual
+npm run dev         # http://localhost:5174
 ```
 
 ## Stack
 
-Preact + htm, Canvas 2D e fflate para ler o .zip. Sem etapa de build: a pasta `public/` é o site.
+Preact + htm e Canvas 2D. fflate só nos scripts. Sem etapa de build: a pasta `public/` é o site.
 
 ## Fontes
 
-- TSE, Portal de Dados Abertos: votação por seção eleitoral e eleitorado por local de votação.
+- TSE: API de resultados e Portal de Dados Abertos (votação por seção e eleitorado por local de votação).
 - Contorno municipal: IBGE, API de malhas.
