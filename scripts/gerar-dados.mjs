@@ -1,24 +1,25 @@
-// Gera os dados do site a partir do TSE.
-//   node scripts/gerar-dados.mjs historico [ano ...] [--forcar]   → public/data/historico/ANO-tTURNO.json (commitado, nunca mais muda)
-//   node scripts/gerar-dados.mjs atual                            → public/data/atual/ANO-tTURNO.json (gerado pelo workflow, não commitado)
+// Gera os dados do site (public/data/eleicoes/ANO-tTURNO.json), que são commitados e servidos como arquivos estáticos.
+//   node scripts/gerar-dados.mjs [ano ...] [--forcar]
+// Sem anos, gera os que ainda não existem. Com --forcar, refaz os anos informados.
 // Os bairros precisam de votos por seção eleitoral, e a API do TSE só entrega votos por município.
-// Por isso a ordem aqui é: CSV por seção dos Dados Abertos (com bairros); se o TSE ainda não o publicou,
-// usa a API e mostra só o total da cidade (semBairros) até o CSV sair.
+// Por isso a ordem é: CSV por seção dos Dados Abertos (com bairros); se o TSE ainda não o publicou,
+// usa a API e o site mostra só o total da cidade (semBairros) até o CSV sair.
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { API, CDN, getJson, baixar, splitLine, lerCsvDoZip, pad } from './lib/tse.mjs';
 
 const UF = 'PB', COD_TSE = '19372';
-const ANOS_HISTORICO = ['2012', '2014', '2016', '2018', '2020', '2022', '2024'];
+const ANOS_PADRAO = ['2012', '2014', '2016', '2018', '2020', '2022', '2024', '2026'];
+const DIR = 'public/data/eleicoes';
 // cargos lidos e dígitos do número de um candidato (menos que isso é voto de legenda)
 const MIN_DIG = { '3': 2, '5': 3, '6': 4, '7': 5, '13': 5 };
 const CARGOS_API = ['1', '3', '5', '6', '7', '13'];
 const COM_2_TURNO = ['1', '3'];
 
-const [modo, ...resto] = process.argv.slice(2);
-const forcar = resto.includes('--forcar');
-const anosArg = resto.filter(a => /^\d{4}$/.test(a));
+const args = process.argv.slice(2);
+const forcar = args.includes('--forcar');
+const anosArg = args.filter(a => /^\d{4}$/.test(a));
 const tabelaDe = ano => `public/data/secoes-${ano}.json`;
 
 // Tabela seção → local de votação → bairro (TSE, "Eleitorado por local de votação"); gera se faltar.
@@ -132,28 +133,7 @@ async function gerarCiclo(ano, dir) {
   return true;
 }
 
-async function atual() {
-  const dir = 'public/data/atual';
-  const cfg = await getJson(`${API}/comum/config/ele-c.json`);
-  const ciclo = [...new Set((cfg?.pl || []).map(p => p.c))].sort().pop()?.replace('ele', '');
-  if (!ciclo) return console.warn('Não foi possível descobrir o ciclo atual; mantendo os dados em cache.');
-  if (existsSync(`public/data/historico/${ciclo}-t1.json`)) return console.log(`Ciclo ${ciclo} já está no histórico; nada a fazer.`);
-  // dados finais e já com bairros (cache do workflow) não precisam ser buscados de novo
-  const idx = existsSync(`${dir}/index.json`) ? JSON.parse(await readFile(`${dir}/index.json`, 'utf8')) : null;
-  const doCiclo = idx?.eleicoes?.filter(e => e.ano === ciclo) || [];
-  if (doCiclo.length && doCiclo.every(e => e.final && !e.semBairros)) return console.log(`Ciclo ${ciclo}: dados finais já em cache.`);
-  await gerarCiclo(ciclo, dir);
-}
-
-if (modo === 'historico') {
-  const dir = 'public/data/historico';
-  for (const ano of anosArg.length ? anosArg : ANOS_HISTORICO) {
-    if (!forcar && existsSync(`${dir}/${ano}-t1.json`)) { console.log(`Ciclo ${ano}: já existe no histórico (use --forcar para refazer)`); continue; }
-    await gerarCiclo(ano, dir);
-  }
-} else if (modo === 'atual') {
-  await atual();
-} else {
-  console.error('Uso: node scripts/gerar-dados.mjs historico [ano ...] [--forcar]  |  node scripts/gerar-dados.mjs atual');
-  process.exitCode = 1;
+for (const ano of anosArg.length ? anosArg : ANOS_PADRAO) {
+  if (!forcar && existsSync(`${DIR}/${ano}-t1.json`)) { console.log(`Eleição ${ano}: já existe (use --forcar para refazer)`); continue; }
+  if (!await gerarCiclo(ano, DIR)) process.exitCode = 1;
 }

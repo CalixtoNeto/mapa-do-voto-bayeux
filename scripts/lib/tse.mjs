@@ -71,29 +71,35 @@ export function splitLine(s) {
   return out;
 }
 
-// Lê, em streaming, as linhas do CSV (cujo nome casa com `padrao`) de dentro de um .zip.
-// A primeira linha chega a aoLinha como cabeçalho (cabecalho === true).
-export async function lerCsvDoZip(zip, padrao, aoLinha) {
-  const dec = new TextDecoder('windows-1252'); let buf = '', achou = false, primeira = true;
-  const tratar = l => {
-    if (l.endsWith('\r')) l = l.slice(0, -1);
-    if (!l) return;
-    aoLinha(l, primeira); primeira = false;
-  };
-  const alimentar = (chunk, fim) => {
-    buf += chunk && chunk.length ? dec.decode(chunk, { stream: !fim }) : (fim ? dec.decode() : '');
-    let ini = 0, nl;
-    while ((nl = buf.indexOf('\n', ini)) >= 0) { tratar(buf.slice(ini, nl)); ini = nl + 1; }
-    buf = buf.slice(ini);
-    if (fim && buf) { tratar(buf); buf = ''; }
-  };
+// Lê, em streaming e numa só passada, os CSVs de dentro de um .zip.
+// alvos: [{ padrao: /_PB\.csv$/, aoLinha(linha, cabecalho) }]. Cada arquivo tem o seu próprio cabeçalho.
+export async function lerCsvsDoZip(zip, alvos) {
+  const dec = new TextDecoder('windows-1252');
+  const achou = new Set();
   const uz = new Unzip(); uz.register(UnzipInflate);
   uz.onfile = f => {
-    if (!padrao.test(f.name.split('/').pop())) return;
-    achou = true; f.ondata = (err, chunk, fim) => { if (err) throw err; alimentar(chunk, fim); }; f.start();
+    const alvo = alvos.find(a => a.padrao.test(f.name.split('/').pop()));
+    if (!alvo) return;
+    achou.add(alvo); let buf = '', primeira = true;
+    const tratar = l => { if (l.endsWith('\r')) l = l.slice(0, -1); if (!l) return; alvo.aoLinha(l, primeira); primeira = false; };
+    f.ondata = (err, chunk, fim) => {
+      if (err) throw err;
+      buf += chunk && chunk.length ? dec.decode(chunk, { stream: !fim }) : (fim ? dec.decode() : '');
+      let ini = 0, nl;
+      while ((nl = buf.indexOf('\n', ini)) >= 0) { tratar(buf.slice(ini, nl)); ini = nl + 1; }
+      buf = buf.slice(ini);
+      if (fim && buf) { tratar(buf); buf = ''; }
+    };
+    f.start();
   };
   for await (const chunk of createReadStream(zip)) uz.push(new Uint8Array(chunk), false);
   uz.push(new Uint8Array(0), true);
+  return alvos.map(a => achou.has(a));        // quais arquivos foram encontrados
+}
+
+// Caso comum: um único CSV.
+export async function lerCsvDoZip(zip, padrao, aoLinha) {
+  const [achou] = await lerCsvsDoZip(zip, [{ padrao, aoLinha }]);
   if (!achou) throw new Error(`Nenhum arquivo ${padrao} dentro de ${zip}`);
 }
 

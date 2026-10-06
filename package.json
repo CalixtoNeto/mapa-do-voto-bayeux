@@ -8,8 +8,7 @@
     "contorno": "node scripts/gerar-contorno.mjs",
     "secoes": "node scripts/gerar-secoes.mjs",
     "dados": "npm run contorno && npm run secoes",
-    "historico": "node scripts/gerar-dados.mjs historico",
-    "atual": "node scripts/gerar-dados.mjs atual",
+    "eleicoes": "node scripts/gerar-dados.mjs",
     "dev": "npx --yes serve public -l 5174"
   },
   "devDependencies": {
