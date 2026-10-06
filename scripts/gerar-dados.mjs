@@ -112,13 +112,35 @@ async function escrever(dir, ano, res) {
   await indexar(dir);
 }
 
+// ---------- Mesmo candidato em várias eleições ----------
+// O site compara a votação de uma pessoa entre eleições; a ligação é feita pelo nome completo.
+const NORM_NOME = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+function registrarPessoas(pessoas, d) {
+  const porCargo = {};
+  for (const c of d.cands) (porCargo[c.cargo] ||= []).push(c);
+  for (const [cargo, lista] of Object.entries(porCargo)) {
+    const soma = lista.reduce((s, c) => s + c.total, 0);
+    lista.sort((a, b) => b.total - a.total).forEach((c, i) => {
+      const k = NORM_NOME(c.nome || c.urna); if (!k) return;
+      (pessoas[k] ||= []).push([d.ano, d.turno, cargo, c.nr, c.total, soma ? Math.round(c.total / soma * 1e5) / 1e5 : 0, i + 1]);
+    });
+  }
+}
+// ano, turno, cargo, número, votos, parcela dos votos nominais do cargo, posição. Só quem aparece em 2 eleições ou mais.
+async function escreverPessoas(dir, pessoas) {
+  for (const k of Object.keys(pessoas)) if (pessoas[k].length < 2) delete pessoas[k];
+  await writeFile(`${dir}/pessoas.json`, JSON.stringify(pessoas));
+}
+
 // Índice que o site lê para listar as eleições disponíveis.
 async function indexar(dir) {
-  const eleicoes = [];
+  const eleicoes = [], pessoas = {};
   for (const f of (await readdir(dir)).filter(f => /^\d{4}-t\d\.json$/.test(f)).sort()) {
     const d = JSON.parse(await readFile(`${dir}/${f}`, 'utf8'));
+    registrarPessoas(pessoas, d);
     eleicoes.push({ ano: d.ano, turno: d.turno, arquivo: f, cargos: d.cargos, fonte: d.fonte, semBairros: d.semBairros, final: d.final, atualizadoEm: d.atualizadoEm });
   }
+  await escreverPessoas(dir, pessoas);
   await writeFile(`${dir}/index.json`, JSON.stringify({ geradoEm: new Date().toISOString(), eleicoes }));
 }
 
@@ -133,7 +155,9 @@ async function gerarCiclo(ano, dir) {
   return true;
 }
 
-for (const ano of anosArg.length ? anosArg : ANOS_PADRAO) {
+const soIndice = args.includes('--indice');
+if (soIndice) await indexar(DIR);
+for (const ano of soIndice ? [] : (anosArg.length ? anosArg : ANOS_PADRAO)) {
   if (!forcar && existsSync(`${DIR}/${ano}-t1.json`)) { console.log(`Eleição ${ano}: já existe (use --forcar para refazer)`); continue; }
   if (!await gerarCiclo(ano, DIR)) process.exitCode = 1;
 }

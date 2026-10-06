@@ -88,14 +88,22 @@ const classOf = (v, b) => { if (!(v > 0)) return -1; let i = 0; while (i < b.len
 const rampIndex = (cls, n) => n <= 1 ? 5 : Math.round(cls * 5 / (n - 1));
 const metricOf = (b, metric) => metric === 'votos' ? b.v : b.p;
 
+// ---------- Comparação entre eleições ----------
+const CARGO_NOMES = { '1': 'Presidente', '3': 'Governador', '5': 'Senador', '6': 'Deputado federal', '7': 'Deputado estadual', '13': 'Vereador' };
+const LIM_VAR = [0.01, 0.0025];   // 1 e 0,25 ponto percentual da parcela de votos do bairro
+const binVar = d => d < -LIM_VAR[0] ? 0 : d < -LIM_VAR[1] ? 1 : d <= LIM_VAR[1] ? 2 : d <= LIM_VAR[0] ? 3 : 4;
+const pp = d => (d >= 0 ? '+' : '−') + Math.abs(d * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' p.p.';
+const dv = d => (d > 0 ? '+' : d < 0 ? '−' : '') + nf.format(Math.abs(d));
+const lerJson = async u => { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error(u); return r.json(); };
+
 // ---------- Mapa (Canvas 2D) ----------
-function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, classes }) {
+function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, classes, modoVar }) {
   const wrap = useRef(), cv = useRef();
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [, force] = useState(0);
   const tf = useRef({ s: 1, ox: 0, oy: 0, s0: 1, z: 1 });
   const ptrs = useRef(new Map()), gesture = useRef(null), bubbles = useRef([]);
-  const props = useRef({}); props.current = { ano, view, metric, selected, hover, classes };
+  const props = useRef({}); props.current = { ano, view, metric, selected, hover, classes, modoVar };
 
   useEffect(() => {
     const ro = new ResizeObserver(([e]) => {
@@ -126,7 +134,8 @@ function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, clas
     const css = getComputedStyle(document.documentElement);
     const v = n => css.getPropertyValue(n).trim();
     const ramp = [0, 1, 2, 3, 4, 5].map(i => v('--r' + i)), zero = v('--zero'), edge = v('--edge'), ink = v('--ink'), accent = v('--accent'), paper = v('--map-bg'), halo = v('--halo');
-    const { ano, view, metric, selected, hover, classes } = props.current;
+    const div = [0, 1, 2, 3, 4].map(i => v('--d' + i));
+    const { ano, view, metric, selected, hover, classes, modoVar } = props.current;
     const { s, ox, oy } = tf.current;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, size.w, size.h);
     ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (ox - BB[0] * s), dpr * (oy - BB[1] * s));
@@ -142,11 +151,11 @@ function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, clas
     bubbles.current = list.filter(b => b.c).map(b => {
       const r = view ? (b.v > 0 ? rmin + (rmax - rmin) * Math.sqrt(b.v / maxV) : rmin * 0.7) : rmin;
       return { key: b.key, name: b.name, v: b.v, x: ox + (b.c[0] - BB[0]) * s, y: oy + (b.c[1] - BB[1]) * s, r,
-        cl: view ? classOf(metricOf(b, metric), classes.b) : -1 };
+        cl: view ? (modoVar ? binVar(b.dp) : classOf(metricOf(b, metric), classes.b)) : -1 };
     }).sort((a, b) => b.r - a.r);
     for (const b of bubbles.current) {
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7);
-      if (view && b.cl >= 0) { ctx.globalAlpha = 0.92; ctx.fillStyle = ramp[rampIndex(b.cl, n)]; ctx.fill(); ctx.globalAlpha = 1; }
+      if (view && b.cl >= 0) { ctx.globalAlpha = 0.92; ctx.fillStyle = modoVar ? div[b.cl] : ramp[rampIndex(b.cl, n)]; ctx.fill(); ctx.globalAlpha = 1; }
       else if (!view) { ctx.fillStyle = ink; ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1; }
       ctx.lineWidth = 1.2; ctx.strokeStyle = view ? halo : paper; ctx.stroke();
       if (view && b.cl < 0) { ctx.setLineDash([2, 2]); ctx.strokeStyle = edge; ctx.stroke(); ctx.setLineDash([]); }
@@ -230,7 +239,14 @@ function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, clas
 }
 
 // ---------- Componentes ----------
-function Legend({ classes, metric, setMetric, view }) {
+function Legend({ classes, metric, setMetric, view, modoVar }) {
+  if (modoVar) {
+    const itens = ['Perdeu mais de 1 p.p.', 'Perdeu de 0,25 a 1 p.p.', 'Estável (até 0,25 p.p.)', 'Ganhou de 0,25 a 1 p.p.', 'Ganhou mais de 1 p.p.'];
+    return html`<div class="legend">
+      <ul>${itens.map((t, i) => html`<li><i style=${`background:var(--d${i})`}></i>${t}</li>`)}</ul>
+      <p class="hint">A cor mostra a mudança da parcela dos votos do bairro entre as duas eleições (em pontos percentuais). O tamanho do círculo é o maior número de votos do candidato no bairro entre as duas.</p>
+    </div>`;
+  }
   const n = classes ? classes.b.length + 1 : 0;
   const fmt = v => metric === 'votos' ? nf.format(v) : pct(v, 1);
   const items = [];
@@ -249,7 +265,7 @@ function Legend({ classes, metric, setMetric, view }) {
   </div>`;
 }
 
-function BairroCard({ view, b, pinned, onClear }) {
+function BairroCard({ view, b, pinned, onClear, linha }) {
   if (!view || !b) return html`<p class="hint">${view ? 'Toque ou clique num bairro para ver os números e as escolas.' : ''}</p>`;
   const max = Math.max(1, ...b.locais.map(l => l.v));
   return html`<div class=${'muni' + (pinned ? ' pinned' : '')} aria-live="polite">
@@ -259,12 +275,73 @@ function BairroCard({ view, b, pinned, onClear }) {
       <div><dt>Dos votos nominais do bairro</dt><dd>${b.t ? pct(b.p) : '—'}</dd></div>
       <div><dt>Posição no bairro</dt><dd>${b.rank ? `${b.rank}º` : '—'}</dd></div>
     </dl>
+    ${linha && html`<dl class="cmp-dl">
+      <div><dt>Votos ${linha.ant.ano} → ${linha.rec.ano}</dt><dd>${nf.format(linha.vAnt)} → ${nf.format(linha.vRec)}</dd></div>
+      <div><dt>Variação de votos</dt><dd class=${linha.d > 0 ? 'up' : linha.d < 0 ? 'down' : ''}>${dv(linha.d)}</dd></div>
+      <div><dt>Parcela no bairro</dt><dd class=${linha.dp > 0 ? 'up' : linha.dp < 0 ? 'down' : ''}>${pp(linha.dp)}</dd></div>
+    </dl>`}
     <ul class="locais" aria-label="Votos por local de votação">
       ${b.locais.map(l => html`<li><span class="ln">${localNome(l.nome)}</span><span class="lv">${nf.format(l.v)}</span>
         <span class="bar" aria-hidden="true"><i style=${`width:${(l.v / max * 100).toFixed(1)}%`}></i></span></li>`)}
     </ul>
     <p class="hint">${nf.format(b.eleitores)} eleitores aptos nos locais deste bairro.</p>
   </div>`;
+}
+
+// Votos do mesmo candidato em todas as eleições em que ele aparece
+function Trajetoria({ entradas, view, comp, onComparar, onSair, pode }) {
+  const lista = [...entradas].sort((a, b) => a.ano - b.ano || a.turno - b.turno);
+  const max = Math.max(1, ...lista.map(e => e.total));
+  const igual = (e, o) => o && e.ano === o.ano && e.turno === o.turno && e.cargo === o.cargo && e.nr === o.nr;
+  return html`<section class="traj" aria-labelledby="tj">
+    <div class="rk-head"><h2 id="tj">Evolução do candidato</h2>${comp && html`<button type="button" class="link" onClick=${onSair}>Sair da comparação</button>`}</div>
+    <ul>${lista.map(e => { const atual = igual(e, view), em = igual(e, comp);
+      return html`<li key=${e.ano + e.turno + e.cargo} class=${em ? 'em' : ''}>
+        <div class="tl"><span class="ty">${e.ano}${e.turno !== '1' ? ' · 2º turno' : ''}</span><span class="tc">${CARGO_NOMES[e.cargo] || e.cargo}</span>
+          <span class="tv">${nf.format(e.total)}</span><span class="tp">${pct(e.pct, 1)} · ${e.pos}º</span>
+          ${atual ? html`<span class="tag">no mapa</span>` : pode(e) ? html`<button type="button" class="btn ghost" aria-pressed=${em} onClick=${() => onComparar(e)}>${em ? 'Comparando' : 'Comparar'}</button>` : null}</div>
+        <span class="bar" aria-hidden="true"><i style=${`width:${(e.total / max * 100).toFixed(1)}%`}></i></span></li>`; })}
+    </ul>
+    <p class="hint">Votos em ${CIDADE}, parcela dos votos nominais do cargo e posição entre os candidatos da cidade.</p>
+  </section>`;
+}
+
+function ComparaStats({ cmp }) {
+  const { ant, rec, rows } = cmp; const d = rec.total - ant.total, rel = ant.total ? d / ant.total : null;
+  const rot = v => `${v.ano} · ${sentence(v.cargoNome)}`;
+  return html`<dl class="stats">
+    <div><dt>Votos em ${rot(ant)}</dt><dd>${nf.format(ant.total)}</dd></div>
+    <div><dt>Votos em ${rot(rec)}</dt><dd>${nf.format(rec.total)}</dd></div>
+    <div><dt>Variação de votos</dt><dd class=${d > 0 ? 'up' : d < 0 ? 'down' : ''}>${dv(d)}${rel != null ? ` (${rel >= 0 ? '+' : '−'}${pct(Math.abs(rel), 1)})` : ''}</dd></div>
+    <div><dt>Bairros que cresceram / caíram</dt><dd>${rows.filter(r => r.d > 0).length} / ${rows.filter(r => r.d < 0).length}</dd></div>
+  </dl>`;
+}
+
+function ComparaRanking({ cmp, selected, onSelect }) {
+  const [sort, setSort] = useState('ganho');
+  const rows = useMemo(() => {
+    const r = cmp.rows.map(x => ({ ...x }));
+    if (sort === 'ganho') r.sort((a, b) => b.d - a.d || a.name.localeCompare(b.name)); else if (sort === 'perda') r.sort((a, b) => a.d - b.d || a.name.localeCompare(b.name));
+    else if (sort === 'pp') r.sort((a, b) => b.dp - a.dp); else r.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    return r;
+  }, [cmp, sort]);
+  return html`<section class="ranking cmp" aria-labelledby="rk">
+    <div class="rk-head">
+      <h2 id="rk">Bairros: ${cmp.ant.ano} → ${cmp.rec.ano}</h2>
+      <select aria-label="Ordenar bairros" value=${sort} onChange=${e => setSort(e.target.value)}>
+        <option value="ganho">Maior ganho de votos</option><option value="perda">Maior perda de votos</option><option value="pp">Maior ganho em p.p.</option><option value="nome">Nome</option>
+      </select>
+    </div>
+    <ol>
+      ${rows.map(x => html`<li key=${x.key} class=${x.key === selected ? 'on' : ''}>
+        <button type="button" onClick=${() => onSelect(x.key)}>
+          <span class="nm">${titleCase(x.name)}</span>
+          <span class="vv">${nf.format(x.vAnt)} → ${nf.format(x.vRec)}</span>
+          <span class=${'dd ' + (x.d > 0 ? 'up' : x.d < 0 ? 'down' : '')}>${x.d ? dv(x.d) : '0'}</span>
+          <span class=${'pv ' + (x.dp > 0.00005 ? 'up' : x.dp < -0.00005 ? 'down' : '')}>${pp(x.dp)}</span>
+        </button></li>`)}
+    </ol>
+  </section>`;
 }
 
 function CandidatePicker({ cands, value, onPick }) {
@@ -356,6 +433,8 @@ function App() {
   const [metric, setMetric] = useState(ls.get('mvb.metric') || 'pct');
   const [selected, setSelected] = useState(null), [hover, setHover] = useState(null);
   const mapRef = useRef();
+  const [pessoas, setPessoas] = useState({}), [comp, setComp] = useState(null), [dsB, setDsB] = useState(null);
+  useEffect(() => { lerJson('data/eleicoes/pessoas.json').then(setPessoas).catch(() => { }); }, []);
 
   // lista as eleições sozinho, a partir do índice gerado junto com os dados (commitado)
   useEffect(() => {
@@ -413,6 +492,39 @@ function App() {
   useEffect(() => { if (cargo) ls.set('mvb.cargo', cargo); }, [cargo]);
 
   const classes = useMemo(() => view ? quantBreaks(view.bairros.map(b => metricOf(b, metric))) : null, [view, metric]);
+
+  // ---- comparação com outra eleição do mesmo candidato ----
+  const entradas = useMemo(() => view ? (pessoas[NORM(view.nome)] || []).map(([ano, turno, cargo, nr, total, pc, pos]) => ({ ano, turno, cargo, nr, total, pct: pc, pos })) : [], [view, pessoas]);
+  useEffect(() => {
+    setDsB(null); if (!comp) return;
+    let vivo = true;
+    (async () => {
+      try {
+        const [d, t] = await Promise.all([lerJson(`data/eleicoes/${comp.ano}-t${comp.turno}.json`), TABELAS[comp.ano] ? null : lerJson(`data/secoes-${comp.ano}.json`).catch(() => null)]);
+        if (t) TABELAS[comp.ano] = t;
+        if (vivo) setDsB(d);
+      } catch (e) { if (vivo) setComp(null); }
+    })();
+    return () => { vivo = false; };
+  }, [comp && comp.ano + comp.turno + comp.cargo + comp.nr]);
+  const viewB = useMemo(() => {
+    const c = dsB && comp && dsB.cands.find(x => x.cargo === comp.cargo && x.nr === comp.nr);
+    return c ? buildView(dsB, c) : null;
+  }, [dsB, comp]);
+  const cmp = useMemo(() => {
+    if (!view || !viewB) return null;
+    const [ant, rec] = (viewB.ano + viewB.turno) < (view.ano + view.turno) ? [viewB, view] : [view, viewB];
+    const mAnt = new Map(ant.bairros.map(b => [b.key, b])), mRec = new Map(rec.bairros.map(b => [b.key, b]));
+    const rows = [...new Set([...mAnt.keys(), ...mRec.keys()])].map(key => {
+      const a = mAnt.get(key), r = mRec.get(key);
+      return { key, name: (r || a).name, c: (r && r.c) || (a && a.c) || null, vAnt: a ? a.v : 0, vRec: r ? r.v : 0, pAnt: a ? a.p : 0, pRec: r ? r.p : 0,
+        d: (r ? r.v : 0) - (a ? a.v : 0), dp: (r ? r.p : 0) - (a ? a.p : 0), v: Math.max(a ? a.v : 0, r ? r.v : 0), p: 0, eleitores: (r || a).eleitores };
+    });
+    return { ant, rec, rows };
+  }, [view, viewB]);
+  const viewMapa = useMemo(() => cmp ? { nome: view.nome, bairros: cmp.rows } : view, [cmp, view]);
+  const semBairrosDe = id => { const e = indice && indice.find(x => x.id === id); return !!(e && e.semBairros); };
+  const podeComparar = e => !(ds && ds.semBairros) && !semBairrosDe(e.ano + '|' + e.turno);
   const selectFromList = key => { setSelected(key); if (window.innerWidth < 960 && mapRef.current) mapRef.current.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); };
   const shownKey = hover || selected;
   const shown = view && view.bairros.find(b => b.key === shownKey);
@@ -426,13 +538,13 @@ function App() {
 
     ${indice && html`<section class="filters" aria-label="Filtros">
       <label class="field">Eleição
-        <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); setCandKey(null); }}>
+        <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); setCandKey(null); setComp(null); }}>
           ${indice.map(e => html`<option value=${e.id}>${rotuloEleicao(e)}</option>`)}
         </select></label>
       ${hasData && html`<div class="chips" role="radiogroup" aria-label="Cargo">
-        ${cargos.map(([cd, nm]) => html`<button type="button" role="radio" aria-checked=${cd === cargo} onClick=${() => { setCargo(cd); setSelected(null); }}>${sentence(nm)}</button>`)}
+        ${cargos.map(([cd, nm]) => html`<button type="button" role="radio" aria-checked=${cd === cargo} onClick=${() => { setCargo(cd); setSelected(null); setComp(null); }}>${sentence(nm)}</button>`)}
       </div>
-      <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setSelected(null); }} />`}
+      <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setSelected(null); setComp(null); }} />`}
     </section>`}
 
     <section class="stage" ref=${mapRef}>
@@ -444,14 +556,17 @@ function App() {
       : html`<div class="who empty"><h1>${hasData ? 'Escolha um candidato' : 'Votos por bairro'}</h1>
           <p>${erro ? erro : carregando || !indice ? 'Carregando os resultados…' : hasData ? 'Busque pelo nome, número ou partido.' : `Veja em quais bairros de ${CIDADE} cada candidato foi votado.`}</p></div>`}
       ${semBairros && html`<p class="aviso" role="note">O TSE ainda não publicou o arquivo por seção desta eleição, então os votos por bairro não estão disponíveis. Por enquanto só aparece o total de ${CIDADE}.</p>`}
-      <${MapCanvas} ano=${item ? item.ano : '2024'} view=${view} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} />
-      ${view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} />`}
-      ${!semBairros && html`<${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} />`}
+      ${comp && !cmp && html`<p class="hint">Carregando a outra eleição…</p>`}
+      ${cmp && html`<p class="cmp-bar" role="note"><span>Comparando <strong>${cmp.ant.ano}</strong> (${sentence(cmp.ant.cargoNome)}) com <strong>${cmp.rec.ano}</strong> (${sentence(cmp.rec.cargoNome)})</span><button type="button" class="link" onClick=${() => setComp(null)}>Sair da comparação</button></p>`}
+      <${MapCanvas} ano=${item ? item.ano : '2024'} view=${viewMapa} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} modoVar=${!!cmp} />
+      ${view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} modoVar=${!!cmp} />`}
+      ${!semBairros && html`<${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} linha=${cmp && shown ? { ...(cmp.rows.find(r => r.key === shown.key) || {}), ant: cmp.ant, rec: cmp.rec } : null} />`}
     </section>
 
     <aside class="side">
-      <${Stats} view=${view} semBairros=${semBairros} />
-      ${!semBairros && html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />`}
+      ${cmp ? html`<${ComparaStats} cmp=${cmp} />` : html`<${Stats} view=${view} semBairros=${semBairros} />`}
+      ${entradas.length > 1 && html`<${Trajetoria} entradas=${entradas} view=${view} comp=${comp} pode=${podeComparar} onComparar=${e => { setComp(c => c && c.ano === e.ano && c.turno === e.turno && c.cargo === e.cargo && c.nr === e.nr ? null : e); setSelected(null); }} onSair=${() => setComp(null)} />`}
+      ${!semBairros && (cmp ? html`<${ComparaRanking} cmp=${cmp} selected=${selected} onSelect=${selectFromList} />` : html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />`)}
       <${Fonte} item=${item} />
       <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, API de resultados (ciclo atual) e Portal de Dados Abertos (votação por seção e eleitorado por local de votação); contorno municipal do IBGE.</p>
     </aside>

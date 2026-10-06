@@ -157,3 +157,32 @@ h2{margin:0; font:600 21px/1.25 var(--serif)}
 .ranking li button{grid-template-columns:30px 1fr auto 64px}
 /* Aviso: eleição sem votos por bairro */
 .aviso{margin:0; padding:10px 12px; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px; background:var(--surface); font-size:14px; color:var(--ink)}
+/* Comparação entre eleições */
+:root{ --d0:#B3132B; --d1:#E8949E; --d2:#CBD2D7; --d3:#86B3DC; --d4:#1F5E9E; --up:#1F7A4D }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --d0:#FF5D73; --d1:#B3566B; --d2:#3A4856; --d3:#4B8DCA; --d4:#9CCBF2; --up:#5BD18B } }
+:root[data-theme="dark"]{ --d0:#FF5D73; --d1:#B3566B; --d2:#3A4856; --d3:#4B8DCA; --d4:#9CCBF2; --up:#5BD18B }
+.up{color:var(--up)} .down{color:var(--accent)}
+.cmp-bar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0; padding:10px 12px; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px; background:var(--surface); font-size:14px}
+.cmp-dl{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--line)}
+.cmp-dl div{display:flex; flex-direction:column; justify-content:space-between}
+.cmp-dl dt{font-size:12.5px; color:var(--muted); line-height:1.3}
+.cmp-dl dd{margin:2px 0 0; font:600 17px/1.15 var(--serif)}
+.traj{display:flex; flex-direction:column; gap:10px}
+.traj ul{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.traj li{display:grid; gap:5px; padding:9px 4px 8px; border-bottom:1px solid var(--line)}
+.traj li.em{background:color-mix(in srgb, var(--accent) 9%, transparent)}
+.traj .tl{display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px}
+.traj .ty{font:600 16px var(--serif)}
+.traj .tc{flex:1; min-width:110px; color:var(--muted); font-size:13px}
+.traj .tv{font:600 16px var(--serif)}
+.traj .tp{color:var(--muted); font-size:13px}
+.traj .btn{min-height:32px; padding:0 12px; font-size:13px}
+.traj .btn[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+.traj .tag{font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:2px 9px}
+.traj .bar{height:3px}
+.traj .bar i{display:block; height:100%; background:var(--r3); border-radius:2px}
+.ranking.cmp li button{grid-template-columns:minmax(0,1fr) auto 62px 84px; grid-template-rows:auto; align-items:center}
+.ranking.cmp .vv{font:500 14px var(--sans); color:var(--muted); text-align:right; white-space:nowrap}
+.ranking.cmp .dd{font:600 15px var(--serif); text-align:right}
+.ranking.cmp .pv{font-size:13px; text-align:right; color:var(--muted)}
+.ranking.cmp .pv.up,.ranking.cmp .dd.up{color:var(--up)} .ranking.cmp .pv.down,.ranking.cmp .dd.down{color:var(--accent)}
