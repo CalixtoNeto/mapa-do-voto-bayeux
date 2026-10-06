@@ -91,9 +91,17 @@ const metricOf = (b, metric) => metric === 'votos' ? b.v : b.p;
 // ---------- Comparação entre eleições ----------
 const CARGO_NOMES = { '1': 'Presidente', '3': 'Governador', '5': 'Senador', '6': 'Deputado federal', '7': 'Deputado estadual', '13': 'Vereador' };
 const LIM_VAR = [0.01, 0.0025];   // 1 e 0,25 ponto percentual da parcela de votos do bairro
+const LIM_REL = [0.25, 0.05];   // 25% e 5% de variação nos votos
+const binRel = r => r === Infinity ? 4 : r < -LIM_REL[0] ? 0 : r < -LIM_REL[1] ? 1 : r <= LIM_REL[1] ? 2 : r <= LIM_REL[0] ? 3 : 4;
 const binVar = d => d < -LIM_VAR[0] ? 0 : d < -LIM_VAR[1] ? 1 : d <= LIM_VAR[1] ? 2 : d <= LIM_VAR[0] ? 3 : 4;
 const pp = d => (d >= 0 ? '+' : '−') + Math.abs(d * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' p.p.';
 const dv = d => (d > 0 ? '+' : d < 0 ? '−' : '') + nf.format(Math.abs(d));
+// Comparar cargos (ou turnos) diferentes distorce os números; o site avisa.
+const avisoComparacao = ({ ant, rec }) => ant.cargo !== rec.cargo
+  ? `Atenção: esta é uma comparação entre cargos diferentes (${sentence(ant.cargoNome)} em ${ant.ano} e ${sentence(rec.cargoNome)} em ${rec.ano}). Isso gera distorções: mudam o tipo de disputa, o número de candidatos e de votos por eleitor, então a variação não mede, por si só, crescimento ou queda de apoio. O ideal é comparar o mesmo cargo.`
+  : ant.turno !== rec.turno
+    ? `Atenção: você está comparando turnos diferentes (${ant.turno}º e ${rec.turno}º). No 2º turno restam poucos candidatos e os votos se redistribuem, o que gera distorções. O ideal é comparar o mesmo turno.`
+    : '';
 const lerJson = async u => { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error(u); return r.json(); };
 
 // ---------- Mapa (Canvas 2D) ----------
@@ -151,7 +159,7 @@ function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, clas
     bubbles.current = list.filter(b => b.c).map(b => {
       const r = view ? (b.v > 0 ? rmin + (rmax - rmin) * Math.sqrt(b.v / maxV) : rmin * 0.7) : rmin;
       return { key: b.key, name: b.name, v: b.v, x: ox + (b.c[0] - BB[0]) * s, y: oy + (b.c[1] - BB[1]) * s, r,
-        cl: view ? (modoVar ? binVar(b.dp) : classOf(metricOf(b, metric), classes.b)) : -1 };
+        cl: view ? (modoVar === 'pp' ? binVar(b.dp) : modoVar ? binRel(b.rel) : classOf(metricOf(b, metric), classes.b)) : -1 };
     }).sort((a, b) => b.r - a.r);
     for (const b of bubbles.current) {
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7);
@@ -239,12 +247,18 @@ function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, clas
 }
 
 // ---------- Componentes ----------
-function Legend({ classes, metric, setMetric, view, modoVar }) {
+function Legend({ classes, metric, setMetric, view, modoVar, varModo, setVarModo }) {
   if (modoVar) {
-    const itens = ['Perdeu mais de 1 p.p.', 'Perdeu de 0,25 a 1 p.p.', 'Estável (até 0,25 p.p.)', 'Ganhou de 0,25 a 1 p.p.', 'Ganhou mais de 1 p.p.'];
+    const rel = modoVar === 'rel';
+    const itens = rel ? ['Perdeu mais de 25% dos votos', 'Perdeu de 5% a 25%', 'Estável (até 5%)', 'Ganhou de 5% a 25%', 'Ganhou mais de 25% (ou veio de zero)']
+      : ['Perdeu mais de 1 p.p.', 'Perdeu de 0,25 a 1 p.p.', 'Estável (até 0,25 p.p.)', 'Ganhou de 0,25 a 1 p.p.', 'Ganhou mais de 1 p.p.'];
     return html`<div class="legend">
+      <div class="seg" role="radiogroup" aria-label="Cor da comparação">
+        <button type="button" role="radio" aria-checked=${rel} onClick=${() => setVarModo('rel')}>Cor: votos (%)</button>
+        <button type="button" role="radio" aria-checked=${!rel} onClick=${() => setVarModo('pp')}>Cor: parcela (p.p.)</button>
+      </div>
       <ul>${itens.map((t, i) => html`<li><i style=${`background:var(--d${i})`}></i>${t}</li>`)}</ul>
-      <p class="hint">A cor mostra a mudança da parcela dos votos do bairro entre as duas eleições (em pontos percentuais). O tamanho do círculo é o maior número de votos do candidato no bairro entre as duas.</p>
+      <p class="hint">${rel ? 'A cor mostra quanto os votos do candidato cresceram ou caíram entre as duas eleições.' : 'A cor mostra a mudança da parcela dos votos do bairro entre as duas eleições. Entre cargos diferentes ela pode enganar: por exemplo, em anos de dois senadores cada eleitor tem dois votos.'} O tamanho do círculo é o maior número de votos do candidato no bairro entre as duas.</p>
     </div>`;
   }
   const n = classes ? classes.b.length + 1 : 0;
@@ -299,7 +313,7 @@ function Trajetoria({ entradas, view, comp, onComparar, onSair, pode }) {
       return html`<li key=${e.ano + e.turno + e.cargo} class=${em ? 'em' : ''}>
         <div class="tl"><span class="ty">${e.ano}${e.turno !== '1' ? ' · 2º turno' : ''}</span><span class="tc">${CARGO_NOMES[e.cargo] || e.cargo}</span>
           <span class="tv">${nf.format(e.total)}</span><span class="tp">${pct(e.pct, 1)} · ${e.pos}º</span>
-          ${atual ? html`<span class="tag">no mapa</span>` : pode(e) ? html`<button type="button" class="btn ghost" aria-pressed=${em} onClick=${() => onComparar(e)}>${em ? 'Comparando' : 'Comparar'}</button>` : null}</div>
+          ${atual ? html`<span class="tag">no mapa</span>` : pode(e) ? html`<button type="button" class="btn ghost" aria-pressed=${em} onClick=${() => onComparar(e)}>${em ? 'Comparando' : e.cargo !== view.cargo ? 'Comparar (outro cargo)' : e.turno !== view.turno ? 'Comparar (outro turno)' : 'Comparar'}</button>` : null}</div>
         <span class="bar" aria-hidden="true"><i style=${`width:${(e.total / max * 100).toFixed(1)}%`}></i></span></li>`; })}
     </ul>
     <p class="hint">Votos em ${CIDADE}, parcela dos votos nominais do cargo e posição entre os candidatos da cidade.</p>
@@ -434,6 +448,8 @@ function App() {
   const [selected, setSelected] = useState(null), [hover, setHover] = useState(null);
   const mapRef = useRef();
   const [pessoas, setPessoas] = useState({}), [comp, setComp] = useState(null), [dsB, setDsB] = useState(null);
+  const [varModo, setVarModo] = useState(ls.get('mvb.varmodo') || 'rel');
+  useEffect(() => { ls.set('mvb.varmodo', varModo); }, [varModo]);
   useEffect(() => { lerJson('data/eleicoes/pessoas.json').then(setPessoas).catch(() => { }); }, []);
 
   // lista as eleições sozinho, a partir do índice gerado junto com os dados (commitado)
@@ -518,7 +534,7 @@ function App() {
     const rows = [...new Set([...mAnt.keys(), ...mRec.keys()])].map(key => {
       const a = mAnt.get(key), r = mRec.get(key);
       return { key, name: (r || a).name, c: (r && r.c) || (a && a.c) || null, vAnt: a ? a.v : 0, vRec: r ? r.v : 0, pAnt: a ? a.p : 0, pRec: r ? r.p : 0,
-        d: (r ? r.v : 0) - (a ? a.v : 0), dp: (r ? r.p : 0) - (a ? a.p : 0), v: Math.max(a ? a.v : 0, r ? r.v : 0), p: 0, eleitores: (r || a).eleitores };
+        d: (r ? r.v : 0) - (a ? a.v : 0), dp: (r ? r.p : 0) - (a ? a.p : 0), v: Math.max(a ? a.v : 0, r ? r.v : 0), p: 0, rel: a && a.v ? ((r ? r.v : 0) - a.v) / a.v : (r && r.v ? Infinity : 0), eleitores: (r || a).eleitores };
     });
     return { ant, rec, rows };
   }, [view, viewB]);
@@ -557,9 +573,10 @@ function App() {
           <p>${erro ? erro : carregando || !indice ? 'Carregando os resultados…' : hasData ? 'Busque pelo nome, número ou partido.' : `Veja em quais bairros de ${CIDADE} cada candidato foi votado.`}</p></div>`}
       ${semBairros && html`<p class="aviso" role="note">O TSE ainda não publicou o arquivo por seção desta eleição, então os votos por bairro não estão disponíveis. Por enquanto só aparece o total de ${CIDADE}.</p>`}
       ${comp && !cmp && html`<p class="hint">Carregando a outra eleição…</p>`}
-      ${cmp && html`<p class="cmp-bar" role="note"><span>Comparando <strong>${cmp.ant.ano}</strong> (${sentence(cmp.ant.cargoNome)}) com <strong>${cmp.rec.ano}</strong> (${sentence(cmp.rec.cargoNome)})</span><button type="button" class="link" onClick=${() => setComp(null)}>Sair da comparação</button></p>`}
-      <${MapCanvas} ano=${item ? item.ano : '2024'} view=${viewMapa} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} modoVar=${!!cmp} />
-      ${view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} modoVar=${!!cmp} />`}
+      ${cmp && html`<p class="cmp-bar" role="note"><span>Comparando <strong>${cmp.ant.ano}${cmp.ant.turno !== '1' ? ' · 2º turno' : ''}</strong> (${sentence(cmp.ant.cargoNome)}) com <strong>${cmp.rec.ano}${cmp.rec.turno !== '1' ? ' · 2º turno' : ''}</strong> (${sentence(cmp.rec.cargoNome)})</span><button type="button" class="link" onClick=${() => setComp(null)}>Sair da comparação</button></p>`}
+      ${cmp && avisoComparacao(cmp) && html`<p class="aviso" role="alert">${avisoComparacao(cmp)}</p>`}
+      <${MapCanvas} ano=${item ? item.ano : '2024'} view=${viewMapa} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} modoVar=${cmp ? varModo : false} />
+      ${view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} modoVar=${cmp ? varModo : false} varModo=${varModo} setVarModo=${setVarModo} />`}
       ${!semBairros && html`<${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} linha=${cmp && shown ? { ...(cmp.rows.find(r => r.key === shown.key) || {}), ant: cmp.ant, rec: cmp.rec } : null} />`}
     </section>
 

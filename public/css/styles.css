@@ -181,8 +181,9 @@ h2{margin:0; font:600 21px/1.25 var(--serif)}
 .traj .tag{font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:2px 9px}
 .traj .bar{height:3px}
 .traj .bar i{display:block; height:100%; background:var(--r3); border-radius:2px}
-.ranking.cmp li button{grid-template-columns:minmax(0,1fr) auto 62px 84px; grid-template-rows:auto; align-items:center}
-.ranking.cmp .vv{font:500 14px var(--sans); color:var(--muted); text-align:right; white-space:nowrap}
-.ranking.cmp .dd{font:600 15px var(--serif); text-align:right}
-.ranking.cmp .pv{font-size:13px; text-align:right; color:var(--muted)}
+.ranking.cmp li button{display:grid; grid-template-columns:minmax(0,1fr) auto 84px; grid-template-areas:"nm dd pv" "vv vv vv"; grid-template-rows:auto auto; gap:1px 10px; align-items:baseline; padding:8px 4px}
+.ranking.cmp .nm{grid-area:nm}
+.ranking.cmp .vv{grid-area:vv; font:400 12.5px var(--sans); color:var(--muted); text-align:left; white-space:nowrap}
+.ranking.cmp .dd{grid-area:dd; font:600 15px var(--serif); text-align:right}
+.ranking.cmp .pv{grid-area:pv; font-size:13px; text-align:right; color:var(--muted)}
 .ranking.cmp .pv.up,.ranking.cmp .dd.up{color:var(--up)} .ranking.cmp .pv.down,.ranking.cmp .dd.down{color:var(--accent)}
