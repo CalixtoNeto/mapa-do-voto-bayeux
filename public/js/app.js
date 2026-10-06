@@ -342,7 +342,7 @@ function Fonte({ item }) {
   return html`<section class="source compact">
     <p>${item.fonte === 'api'
       ? html`<strong>API de resultados do TSE</strong> · ${item.final ? 'apuração concluída' : 'apuração em andamento'}${quando ? ` · atualizado em ${quando}` : ''}`
-      : html`<strong>Dados Abertos do TSE</strong> · votação por seção eleitoral · resultado final`}</p>
+      : html`<strong>Dados Abertos do TSE</strong> · votação por seção eleitoral${item.fonte === 'csv+api' ? ' · completado com a API de resultados' : ''} · ${item.final ? 'resultado final' : 'resultado parcial'}`}</p>
   </section>`;
 }
 
@@ -357,7 +357,7 @@ function App() {
   const [selected, setSelected] = useState(null), [hover, setHover] = useState(null);
   const mapRef = useRef();
 
-  // lista as eleições sozinho: histórico (commitado) + ciclo atual (gerado pelo workflow, se existir)
+  // lista as eleições sozinho, a partir do índice gerado junto com os dados (commitado)
   useEffect(() => {
     (async () => {
       const ler = async base => {
@@ -367,9 +367,7 @@ function App() {
           return ((await r.json()).eleicoes || []).map(e => ({ ...e, base, id: e.ano + '|' + e.turno }));
         } catch (e) { return []; }
       };
-      const [hist, atual] = await Promise.all([ler('data/historico'), ler('data/atual')]);
-      const m = new Map(); for (const e of [...hist, ...atual]) m.set(e.id, e);   // o ciclo atual prevalece
-      const lista = [...m.values()].sort((x, y) => (y.ano - x.ano) || (x.turno - y.turno));
+      const lista = (await ler('data/eleicoes')).sort((x, y) => (y.ano - x.ano) || (x.turno - y.turno));
       if (!lista.length) { setErro('Nenhuma eleição disponível ainda.'); return; }
       setIndice(lista);
       const last = ls.get('mvb.eleicao');
