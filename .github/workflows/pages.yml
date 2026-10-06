@@ -1,11 +1,10 @@
 name: Publicar no GitHub Pages
 
+# Publica a pasta public/ como está no repositório. Os dados das eleições já vêm commitados;
+# para atualizá-los numa eleição nova, use o workflow "Atualizar dados de uma eleição".
 on:
   push:
     branches: [main]
-  schedule:
-    # Atualiza o ciclo atual de hora em hora. Com a apuração final em cache, a execução termina em segundos.
-    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -25,28 +24,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      # O histórico (public/data/historico) vem commitado. Só o ciclo atual é gerado aqui, e o cache
-      # evita buscar de novo na API dados que já estão finais.
-      - name: Restaurar o ciclo atual do cache
-        uses: actions/cache@v4
-        with:
-          path: public/data/atual
-          key: atual-${{ github.run_id }}
-          restore-keys: atual-
-
-      - name: Atualizar o ciclo atual (API do TSE, com CSV dos Dados Abertos como reserva)
-        run: node scripts/gerar-dados.mjs atual
-        # Se o TSE estiver fora do ar, publica com o que já existe em vez de falhar a publicação.
-        continue-on-error: true
-
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

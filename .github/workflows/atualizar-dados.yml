@@ -1,0 +1,59 @@
+name: Atualizar dados de uma eleição
+
+# Acionado à mão (Actions > Atualizar dados de uma eleição > Run workflow) nas próximas eleições.
+# Gera public/data/eleicoes/ANO-tTURNO.json com os Dados Abertos do TSE (e a API para o que faltar),
+# commita no repositório e dispara a publicação do site.
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano da eleição (por exemplo, 2030)'
+        required: true
+        type: string
+      forcar:
+        description: 'Refazer mesmo que o ano já exista (use durante a apuração e para pegar o 2º turno)'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # commitar os dados gerados
+  actions: write    # disparar a publicação do site
+
+concurrency:
+  group: atualizar-dados
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    env:
+      ANO: ${{ inputs.ano }}
+      FORCAR: ${{ inputs.forcar && '--forcar' || '' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Gerar os dados
+        run: |
+          [[ "$ANO" =~ ^[0-9]{4}$ ]] || { echo "Ano inválido: $ANO"; exit 1; }
+          node scripts/gerar-dados.mjs "$ANO" $FORCAR
+
+      - name: Commitar e publicar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data
+          if git diff --cached --quiet; then echo "Nenhuma mudança nos dados."; exit 0; fi
+          git commit -m "dados: eleição $ANO atualizada pelo workflow"
+          git pull --rebase
+          git push
+          # o push feito com o token do workflow não dispara o deploy, então chamamos o workflow de publicação
+          gh workflow run pages.yml
