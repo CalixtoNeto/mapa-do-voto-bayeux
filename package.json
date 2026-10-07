@@ -9,7 +9,8 @@
     "secoes": "node scripts/gerar-secoes.mjs",
     "dados": "npm run contorno && npm run secoes",
     "eleicoes": "node scripts/gerar-dados.mjs",
-    "dev": "npx --yes serve public -l 5174"
+    "dev": "npx --yes serve public -l 5174",
+    "test": "node --test 'test/**/*.test.mjs'"
   },
   "devDependencies": {
     "fflate": "^0.8.2"

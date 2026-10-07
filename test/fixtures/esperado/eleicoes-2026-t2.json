@@ -1,0 +1,34 @@
+{
+ "ano": "2026",
+ "turno": "2",
+ "municipio": "19372",
+ "fonte": "api",
+ "semBairros": true,
+ "final": false,
+ "atualizadoEm": "2026-10-25T21:00:00",
+ "cargos": [
+  {
+   "cd": "3",
+   "nome": "Governador"
+  }
+ ],
+ "cands": [
+  {
+   "key": "2026|2|3|1",
+   "ano": "2026",
+   "turno": "2",
+   "cargo": "3",
+   "cargoNome": "Governador",
+   "nr": "11",
+   "nome": "FULANO GOVERNADOR",
+   "urna": "FULANO",
+   "partido": "PART",
+   "sit": "",
+   "total": 600,
+   "loc": {}
+  }
+ ],
+ "tot": {},
+ "esp": {},
+ "partidos": {}
+}

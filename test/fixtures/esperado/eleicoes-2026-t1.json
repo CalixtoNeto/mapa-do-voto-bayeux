@@ -1,0 +1,52 @@
+{
+ "ano": "2026",
+ "turno": "1",
+ "municipio": "19372",
+ "fonte": "api",
+ "semBairros": true,
+ "final": true,
+ "atualizadoEm": "2026-10-04T21:00:00",
+ "cargos": [
+  {
+   "cd": "3",
+   "nome": "Governador"
+  },
+  {
+   "cd": "7",
+   "nome": "Deputado Estadual"
+  }
+ ],
+ "cands": [
+  {
+   "key": "2026|1|3|1",
+   "ano": "2026",
+   "turno": "1",
+   "cargo": "3",
+   "cargoNome": "Governador",
+   "nr": "11",
+   "nome": "FULANO GOVERNADOR",
+   "urna": "FULANO",
+   "partido": "PART",
+   "sit": "2º turno",
+   "total": 500,
+   "loc": {}
+  },
+  {
+   "key": "2026|1|7|3",
+   "ano": "2026",
+   "turno": "1",
+   "cargo": "7",
+   "cargoNome": "Deputado Estadual",
+   "nr": "12345",
+   "nome": "MARIA DE BAYEUX",
+   "urna": "MARIA",
+   "partido": "PART",
+   "sit": "Eleito",
+   "total": 77,
+   "loc": {}
+  }
+ ],
+ "tot": {},
+ "esp": {},
+ "partidos": {}
+}

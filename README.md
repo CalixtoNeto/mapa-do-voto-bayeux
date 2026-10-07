@@ -60,6 +60,31 @@ npm run eleicoes    # gera os anos que ainda não existem (use -- ANO para escol
 npm run dev         # http://localhost:5174
 ```
 
+## Testes
+
+```bash
+npm test
+```
+
+Rodam offline, em menos de um segundo, sem baixar nada do TSE:
+
+- `test/caracterizacao.test.mjs` é um *golden master*: monta 2024 (CSV por seção, com a tabela de locais) e 2026 (só a API) com os mesmos formatos do TSE (zips em `tmp/` e um `fetch` falso), roda os geradores inteiros e compara a saída com `test/fixtures/esperado/`. Se uma mudança na saída for intencional, regrave com `ATUALIZAR_ESPERADO=1 npm test` e revise o diff dos arquivos esperados.
+- `test/unidade/` testa cada regra isolada: divisão do CSV, branco, nulo e legenda, nome do partido, seção fora da tabela, grafias do mesmo bairro, coordenadas com vírgula ou fora do município e o que é pedido à API.
+
+## Organização dos geradores
+
+| Pasta | O que tem |
+|---|---|
+| `scripts/gerar-dados.mjs` | Linha de comando dos votos: escolhe os anos e encadeia as etapas |
+| `scripts/gerar-secoes.mjs` | Linha de comando da tabela seção → local de votação → bairro |
+| `scripts/eleicao/` | Configuração (município, cargos) e a apuração (soma de votos por local) |
+| `scripts/fontes/` | CSV por seção, API de resultados e leitura da tabela de seções |
+| `scripts/secoes/` | Bairros, coordenadas e montagem da tabela de seções |
+| `scripts/saida/` | `pessoas.json`, `index.json` e escrita dos arquivos |
+| `scripts/lib/` | CSV do TSE, texto e acesso à rede (retentativa, cache em disco, leitura de .zip) |
+
+Cada fonte separa o tratamento de uma linha (função pura, testada sem .zip) da leitura do arquivo.
+
 ## Stack
 
 Preact + htm e Canvas 2D. fflate só nos scripts. Sem etapa de build: a pasta `public/` é o site.

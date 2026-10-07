@@ -1,0 +1,54 @@
+{
+ "geradoEm": "<data>",
+ "eleicoes": [
+  {
+   "ano": "2024",
+   "turno": "1",
+   "arquivo": "2024-t1.json",
+   "cargos": [
+    {
+     "cd": "13",
+     "nome": "Vereador"
+    }
+   ],
+   "fonte": "csv",
+   "semBairros": false,
+   "final": true,
+   "atualizadoEm": "<data>"
+  },
+  {
+   "ano": "2026",
+   "turno": "1",
+   "arquivo": "2026-t1.json",
+   "cargos": [
+    {
+     "cd": "3",
+     "nome": "Governador"
+    },
+    {
+     "cd": "7",
+     "nome": "Deputado Estadual"
+    }
+   ],
+   "fonte": "api",
+   "semBairros": true,
+   "final": true,
+   "atualizadoEm": "2026-10-04T21:00:00"
+  },
+  {
+   "ano": "2026",
+   "turno": "2",
+   "arquivo": "2026-t2.json",
+   "cargos": [
+    {
+     "cd": "3",
+     "nome": "Governador"
+    }
+   ],
+   "fonte": "api",
+   "semBairros": true,
+   "final": false,
+   "atualizadoEm": "2026-10-25T21:00:00"
+  }
+ ]
+}

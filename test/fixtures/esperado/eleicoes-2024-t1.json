@@ -1,0 +1,67 @@
+{
+ "ano": "2024",
+ "turno": "1",
+ "municipio": "19372",
+ "fonte": "csv",
+ "semBairros": false,
+ "final": true,
+ "atualizadoEm": "<data>",
+ "cargos": [
+  {
+   "cd": "13",
+   "nome": "Vereador"
+  }
+ ],
+ "cands": [
+  {
+   "key": "2024|1|13|12345",
+   "ano": "2024",
+   "turno": "1",
+   "cargo": "13",
+   "cargoNome": "Vereador",
+   "nr": "12345",
+   "nome": "MARIA DE BAYEUX",
+   "total": 85,
+   "loc": {
+    "0": 50,
+    "1": 30,
+    "3": 5
+   }
+  },
+  {
+   "key": "2024|1|13|45678",
+   "ano": "2024",
+   "turno": "1",
+   "cargo": "13",
+   "cargoNome": "Vereador",
+   "nr": "45678",
+   "nome": "JOSÉ DA SILVA",
+   "total": 41,
+   "loc": {
+    "0": 20,
+    "1": 6,
+    "2": 15
+   }
+  }
+ ],
+ "tot": {
+  "2024|1|13": {
+   "0": 70,
+   "1": 36,
+   "2": 15,
+   "3": 5
+  }
+ },
+ "esp": {
+  "2024|1|13": {
+   "branco": 8,
+   "nulo": 9,
+   "legenda": 7
+  }
+ },
+ "partidos": {
+  "2024": {
+   "12": "PARTIDO DOZE"
+  }
+ }
+}
