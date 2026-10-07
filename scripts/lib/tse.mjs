@@ -1,5 +1,5 @@
 // Utilitários para falar com o TSE sem sobrecarregar os servidores:
-// poucas requisições em paralelo, retentativa com espera e cache em disco dos arquivos grandes.
+// retentativa com espera e cache em disco dos arquivos grandes.
 import { createReadStream, createWriteStream, existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { Readable } from 'node:stream';
@@ -28,15 +28,6 @@ export async function getJson(url, { tentativas = 4, esperaMs = 1500 } = {}) {
   }
 }
 
-// Executa fn sobre os itens com no máximo `limite` chamadas simultâneas.
-export async function paralelo(itens, limite, fn) {
-  const saida = new Array(itens.length); let prox = 0;
-  await Promise.all(Array.from({ length: Math.min(limite, itens.length) }, async () => {
-    while (prox < itens.length) { const i = prox++; saida[i] = await fn(itens[i], i); }
-  }));
-  return saida;
-}
-
 // Baixa um arquivo grande para o disco (reaproveita o que já foi baixado). Devolve false se o TSE responder 404.
 export async function baixar(url, destino) {
   if (existsSync(destino)) return true;
@@ -50,57 +41,53 @@ export async function baixar(url, destino) {
   return true;
 }
 
-// Linha de CSV do TSE (campos entre aspas, separados por ponto e vírgula).
-export function splitLine(s) {
-  const out = []; const n = s.length; let i = 0;
-  while (i <= n) {
-    if (s.charCodeAt(i) === 34) {
-      let j = i + 1, val = '';
-      for (;;) {
-        const q = s.indexOf('"', j);
-        if (q < 0) { val += s.slice(j); j = n; break; }
-        val += s.slice(j, q);
-        if (s.charCodeAt(q + 1) === 34) { val += '"'; j = q + 2; } else { j = q + 1; break; }
-      }
-      out.push(val); i = j + 1;
-    } else {
-      let q = s.indexOf(';', i); if (q < 0) q = n;
-      out.push(s.slice(i, q)); i = q + 1;
-    }
-  }
-  return out;
-}
-
-// Lê, em streaming e numa só passada, os CSVs de dentro de um .zip.
-// alvos: [{ padrao: /_PB\.csv$/, aoLinha(linha, cabecalho) }]. Cada arquivo tem o seu próprio cabeçalho.
+// Lê, em streaming e numa só passada, os CSVs (Windows-1252) de dentro de um .zip.
+// alvos: [{ padrao: /_PB\.csv$/, aoLinha(linha, ehCabecalho) }]. Cada arquivo tem o seu próprio cabeçalho.
+// Devolve, para cada alvo, se algum arquivo do .zip correspondeu a ele.
 export async function lerCsvsDoZip(zip, alvos) {
-  const dec = new TextDecoder('windows-1252');
-  const achou = new Set();
-  const uz = new Unzip(); uz.register(UnzipInflate);
-  uz.onfile = f => {
-    const alvo = alvos.find(a => a.padrao.test(f.name.split('/').pop()));
+  const encontrados = new Set();
+  const descompactador = new Unzip();
+  descompactador.register(UnzipInflate);
+  descompactador.onfile = arquivo => {
+    const alvo = alvos.find(a => a.padrao.test(arquivo.name.split('/').pop()));
     if (!alvo) return;
-    achou.add(alvo); let buf = '', primeira = true;
-    const tratar = l => { if (l.endsWith('\r')) l = l.slice(0, -1); if (!l) return; alvo.aoLinha(l, primeira); primeira = false; };
-    f.ondata = (err, chunk, fim) => {
-      if (err) throw err;
-      buf += chunk && chunk.length ? dec.decode(chunk, { stream: !fim }) : (fim ? dec.decode() : '');
-      let ini = 0, nl;
-      while ((nl = buf.indexOf('\n', ini)) >= 0) { tratar(buf.slice(ini, nl)); ini = nl + 1; }
-      buf = buf.slice(ini);
-      if (fim && buf) { tratar(buf); buf = ''; }
-    };
-    f.start();
+    encontrados.add(alvo);
+    arquivo.ondata = juntarEmLinhas(alvo.aoLinha);
+    arquivo.start();
   };
-  for await (const chunk of createReadStream(zip)) uz.push(new Uint8Array(chunk), false);
-  uz.push(new Uint8Array(0), true);
-  return alvos.map(a => achou.has(a));        // quais arquivos foram encontrados
+  for await (const pedaco of createReadStream(zip)) descompactador.push(new Uint8Array(pedaco), false);
+  descompactador.push(new Uint8Array(0), true);
+  return alvos.map(a => encontrados.has(a));
 }
 
-// Caso comum: um único CSV.
+// Os pedaços descompactados cortam linhas ao meio; o que sobra depois do último \n espera o próximo pedaço.
+function juntarEmLinhas(aoLinha) {
+  const decodificador = new TextDecoder('windows-1252');
+  const entregar = entregadorDeLinhas(aoLinha);
+  let resto = '';
+  return (erro, pedaco, fim) => {
+    if (erro) throw erro;
+    resto += pedaco?.length ? decodificador.decode(pedaco, { stream: !fim }) : (fim ? decodificador.decode() : '');
+    const linhas = resto.split('\n');
+    resto = fim ? '' : linhas.pop();
+    linhas.forEach(entregar);
+  };
+}
+
+function entregadorDeLinhas(aoLinha) {
+  let ehCabecalho = true;
+  return linha => {
+    if (linha.endsWith('\r')) linha = linha.slice(0, -1);
+    if (!linha) return;
+    aoLinha(linha, ehCabecalho);
+    ehCabecalho = false;
+  };
+}
+
+export const pad = (n, d) => String(n).padStart(d, '0');
+
+// Caso comum: um único CSV, que tem de existir.
 export async function lerCsvDoZip(zip, padrao, aoLinha) {
   const [achou] = await lerCsvsDoZip(zip, [{ padrao, aoLinha }]);
   if (!achou) throw new Error(`Nenhum arquivo ${padrao} dentro de ${zip}`);
 }
-
-export const pad = (n, d) => String(n).padStart(d, '0');
