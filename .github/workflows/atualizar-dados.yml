@@ -41,6 +41,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Testar os geradores antes de usá-los
+        run: npm test
+
       - name: Gerar os dados
         run: |
           [[ "$ANO" =~ ^[0-9]{4}$ ]] || { echo "Ano inválido: $ANO"; exit 1; }
