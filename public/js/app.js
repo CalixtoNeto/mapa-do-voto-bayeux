@@ -110,6 +110,8 @@ const CFG = {
   votosDe: c => { if (!votosPorBairro.has(c)) votosPorBairro.set(c, porBairro(c.ano, c.loc || {})); return votosPorBairro.get(c); },
   totDe: (ds, c) => porBairro(c.ano, ds.tot[c.ano + '|' + c.turno + '|' + c.cargo] || {}),
   lugares: ds => bairrosDe(ds.ano).map(b => b.key), lugarNome: 'bairro', lugaresNome: 'bairros', regiao: 'em Bayeux',
+  agrupar: (ano, porLocal) => somaPorBairro(ano, porLocal),
+  nomeDoLugar: (key, ds) => (bairrosDe(ds.ano).find(b => b.key === key) || { name: key }).name,
   foraDasFinancas: c => c.cargo !== '13' ? 'O site mostra o dinheiro de campanha só dos candidatos a vereador: a campanha dos outros cargos é estadual e não dá para dividi-la pelos votos de Bayeux.' : '',
   ehMajoritario: () => false,
   cargoPar: { '6': '7', '7': '6', '3': '5', '5': '3' }, nomeDoCargo: CARGO_NOMES,
@@ -494,9 +496,13 @@ function StatsPanorama({ comp }) {
   </dl>`;
 }
 
-// Soma os números de comparecimento dos locais de votação de cada bairro.
-const comparecimentoPorBairro = (ano, porLocal) => Object.fromEntries(bairrosDe(ano).map(b => [b.key,
-  b.locais.reduce((soma, i) => (porLocal[i] || [0, 0, 0, 0]).map((v, j) => soma[j] + v), [0, 0, 0, 0])]));
+// Soma os números (comparecimento, perfil do eleitorado) dos locais de votação de cada bairro.
+function somaPorBairro(ano, porLocal) {
+  const tamanho = Math.max(0, ...Object.values(porLocal).map(n => n.length));
+  return Object.fromEntries(bairrosDe(ano).map(b => [b.key,
+    b.locais.reduce((soma, i) => soma.map((v, j) => v + ((porLocal[i] || [])[j] || 0)), new Array(tamanho).fill(0))]));
+}
+const comparecimentoPorBairro = somaPorBairro;
 
 const rotuloEleicao = e => `${e.ano} · ${e.turno}º turno${e.final ? '' : ' (parcial)'}`;
 
@@ -535,7 +541,9 @@ function App() {
   }, []);
 
   const item = indice && indice.find(e => e.id === eleicao);
-  const an = AN.usarAnalisesDaEleicao('data/eleicoes', indiceAnalises, item && item.ano, item && item.turno);
+  // a abstenção de 4 anos antes é comparada por bairro, então os locais daquele ano também precisam ser lidos
+  const prepararAno = ano => TABELAS[ano] ? Promise.resolve() : lerJson(`data/secoes-${ano}.json`).then(t => { TABELAS[ano] = t; }).catch(() => {});
+  const an = AN.usarAnalisesDaEleicao('data/eleicoes', indiceAnalises, item && item.ano, item && item.turno, prepararAno);
   // carrega os votos da eleição escolhida e a tabela de locais de votação do ano
   useEffect(() => {
     if (!item) return;
@@ -574,6 +582,7 @@ function App() {
 
   const classes = useMemo(() => view ? quantBreaks(view.bairros.map(b => metricOf(b, metric))) : null, [view, metric]);
   const linhasDoCargo = useMemo(() => an.financas ? AN.linhasFinanceiras(cands, an.financas, CFG.chaveDe) : [], [cands, an.financas]);
+  const ctx = useMemo(() => AN.contextoDasAnalises(CFG, { ds, cands, cargo, an, indice: indiceAnalises }), [ds, cands, cargo, an, indiceAnalises]);
 
   // ---- panorama do cargo ----
   const panorama = modo === 'panorama' && !!ds && !!cargo && !ds.semBairros;
@@ -680,13 +689,15 @@ function App() {
 
     <aside class="side">
       ${panorama ? html`<${StatsPanorama} comp=${compCargo} />
-        <${Panorama} cands=${cands} ano=${ds.ano} financas=${an.financas} perfis=${an.perfis} selecionado=${candKey} onPick=${escolher} />`
+        <${Panorama} cands=${cands} ano=${ds.ano} financas=${an.financas} perfis=${an.perfis} selecionado=${candKey} onPick=${escolher} ctx=${ctx} />`
       : html`${cmp ? html`<${ComparaStats} cmp=${cmp} />` : html`<${Stats} view=${view} semBairros=${semBairros} />`}
         ${view && !cmp && !semBairros && html`<${PAINEL.Concentracao} cand=${candAtual} />`}
-        ${view && !cmp && html`<${PAINEL.Dinheiro} cand=${candAtual} financas=${an.financas} ano=${view.ano} linhasDoCargo=${linhasDoCargo} />`}
+        ${view && !cmp && !semBairros && html`<${PAINEL.ForcaDoVoto} cand=${candAtual} ctx=${ctx} />`}
+        ${view && !cmp && html`<${PAINEL.Dinheiro} cand=${candAtual} financas=${an.financas} ano=${view.ano} linhasDoCargo=${linhasDoCargo} ctx=${ctx} onPick=${escolher} />`}
         ${entradas.length > 1 && html`<${Trajetoria} entradas=${entradas} view=${view} comp=${comp} pode=${podeComparar} onComparar=${e => { setComp(c => c && c.ano === e.ano && c.turno === e.turno && c.cargo === e.cargo && c.nr === e.nr ? null : e); setSelected(null); }} onSair=${() => setComp(null)} />`}
         ${!semBairros && (cmp ? html`<${ComparaRanking} cmp=${cmp} selected=${selected} onSelect=${selectFromList} />` : html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />`)}
-        ${view && !cmp && html`<${PAINEL.QuemE} cand=${candAtual} perfis=${an.perfis} patrimonio=${indiceAnalises.patrimonio} />`}
+        ${view && !cmp && html`<${PAINEL.QuemE} cand=${candAtual} perfis=${an.perfis} />`}
+        ${view && !cmp && html`<${PAINEL.Patrimonio} cand=${candAtual} ctx=${ctx} />`}
         ${view && !cmp && !semBairros && html`<${PAINEL.Dobradinhas} cand=${candAtual} ds=${ds} onPick=${escolher} />`}`}
       <${Fonte} item=${item} />
       <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, API de resultados (ciclo atual) e Portal de Dados Abertos (votação e comparecimento por seção, eleitorado por local de votação, cadastro e bens dos candidatos, prestação de contas); contorno municipal do IBGE.</p>

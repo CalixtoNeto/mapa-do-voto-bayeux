@@ -9,30 +9,40 @@ const lerJson = url => {
 };
 
 export function usarIndiceDasAnalises(base) {
-  const [indice, setIndice] = useState({ anos: {}, patrimonio: {} });
+  const [indice, setIndice] = useState({ anos: {}, patrimonio: {}, dinheiro: {} });
   useEffect(() => {
-    Promise.all([lerJson(`${base}/analises.json`), lerJson(`${base}/patrimonio.json`)])
-      .then(([analises, patrimonio]) => setIndice({ anos: analises?.anos || {}, patrimonio: patrimonio || {} }));
+    Promise.all([lerJson(`${base}/analises.json`), lerJson(`${base}/patrimonio.json`), lerJson(`${base}/dinheiro.json`)])
+      .then(([analises, patrimonio, dinheiro]) => setIndice({ anos: analises?.anos || {}, patrimonio: patrimonio || {}, dinheiro: dinheiro || {} }));
   }, [base]);
   return indice;
 }
 
-const VAZIO = { financas: null, perfis: null, comparecimento: null };
+const VAZIO = { financas: null, perfis: null, comparecimento: null, comparecimentoAnterior: null, eleitorado: null, anoAnterior: null };
 
-export function usarAnalisesDaEleicao(base, indice, ano, turno) {
+// O comparecimento de 4 anos antes é o da mesma disputa (o calendário alterna municipais e gerais).
+// prepararAno deixa o site carregar o que precisa para ler os lugares daquele ano (em Bayeux, os bairros).
+function arquivosDoAno(base, indice, ano, turno) {
+  const doAno = indice.anos[ano] || {}, anoAnterior = String(ano - 4), anterior = indice.anos[anoAnterior] || {};
+  const ler = (tem, arquivo) => tem ? lerJson(`${base}/${arquivo}`) : null;
+  return { anoAnterior, pedidos: [
+    ler(doAno.financas, `${ano}-financas.json`), ler(doAno.candidatos, `${ano}-candidatos.json`),
+    ler((doAno.comparecimento || []).includes(turno), `${ano}-t${turno}-comparecimento.json`),
+    ler((anterior.comparecimento || []).includes(turno), `${anoAnterior}-t${turno}-comparecimento.json`),
+    ler(doAno.eleitorado, `${ano}-eleitorado.json`),
+  ] };
+}
+
+export function usarAnalisesDaEleicao(base, indice, ano, turno, prepararAno = async () => {}) {
   const [dados, setDados] = useState(VAZIO);
-  const doAno = (ano && indice.anos[ano]) || {};
-  const temComparecimento = (doAno.comparecimento || []).includes(turno);
   useEffect(() => {
     setDados(VAZIO);
     if (!ano) return;
     let vivo = true;
-    Promise.all([
-      doAno.financas ? lerJson(`${base}/${ano}-financas.json`) : null,
-      doAno.candidatos ? lerJson(`${base}/${ano}-candidatos.json`) : null,
-      temComparecimento ? lerJson(`${base}/${ano}-t${turno}-comparecimento.json`) : null,
-    ]).then(([financas, perfis, comparecimento]) => { if (vivo) setDados({ financas, perfis, comparecimento }); });
+    const { anoAnterior, pedidos } = arquivosDoAno(base, indice, ano, turno);
+    Promise.all([...pedidos, prepararAno(anoAnterior)]).then(([financas, perfis, comparecimento, comparecimentoAnterior, eleitorado]) => {
+      if (vivo) setDados({ financas, perfis, comparecimento, comparecimentoAnterior, eleitorado, anoAnterior });
+    });
     return () => { vivo = false; };
-  }, [base, ano, turno, !!doAno.financas, !!doAno.candidatos, temComparecimento]);
+  }, [base, ano, turno, indice]);
   return dados;
 }

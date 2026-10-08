@@ -4,6 +4,7 @@ import { pct, sentence, dinheiro, centavos } from './formato.mjs';
 import { BarraDeOrigens } from './componentes.mjs';
 import { resumoFinanceiro, custoPorVoto, posicoesNoCargo } from './calculos.mjs';
 import { PosicaoNoCargo, DespesasDoCandidato, DoadoresDoCandidato, FornecedoresDoCandidato } from './listas-dinheiro.mjs';
+import { PagoEDependencia, RitmoDaArrecadacao, RedeDaCampanha, DinheiroEntreEleicoes } from './extras-dinheiro.mjs';
 const { html, useMemo } = window.htmPreact;
 
 function semPrestacao(financas, ano) {
@@ -33,8 +34,8 @@ function notasDoDinheiro(r, financas, cfg, cand) {
 }
 
 export function criarDinheiro(cfg) {
-  return function Dinheiro({ cand, financas, ano, linhasDoCargo }) {
-    const f = financas?.c?.[cfg.chaveDe(cand)];
+  return function Dinheiro({ cand, financas, ano, linhasDoCargo, ctx, onPick }) {
+    const chave = cfg.chaveDe(cand), f = financas?.c?.[chave];
     const posicoes = useMemo(() => posicoesNoCargo(linhasDoCargo, cand), [linhasDoCargo, cand]);
     const cab = html`<h2 id="din">Dinheiro da campanha</h2>`;
     const fora = cfg.foraDasFinancas(cand);
@@ -42,11 +43,15 @@ export function criarDinheiro(cfg) {
     const r = resumoFinanceiro(f), custo = custoPorVoto(r.gasto, cand.total);
     return html`<section class="analise" aria-labelledby="din">${cab}
       <${NumerosDoDinheiro} r=${r} custo=${custo} posicao=${posicoes.custo} cand=${cand} />
+      <${PagoEDependencia} f=${f} perfil=${ctx?.perfis?.c?.[chave]} recebido=${r.recebido} />
       <${BarraDeOrigens} grupos=${r.grupos} total=${r.recebido} />
       <${PosicaoNoCargo} posicoes=${posicoes} nomeDoCargo=${sentence(cfg.nomeDoCargo[cand.cargo] || '').toLowerCase()} />
       <${DespesasDoCandidato} categorias=${r.categorias} />
       <${DoadoresDoCandidato} doacoes=${f.doa} quantos=${f.nd} recebido=${r.recebido} />
       <${FornecedoresDoCandidato} fornecedores=${f.fo} quantos=${f.nf} gasto=${r.gasto} />
+      ${ctx && html`<${RedeDaCampanha} f=${f} chave=${chave} ctx=${ctx} onPick=${onPick} />`}
+      <${RitmoDaArrecadacao} semanas=${f.rs} />
+      ${ctx && html`<${DinheiroEntreEleicoes} cand=${cand} ctx=${ctx} nomeDoCargo=${cfg.nomeDoCargo} />`}
       ${notasDoDinheiro(r, financas, cfg, cand).map(n => html`<p class="hint">${n}</p>`)}
     </section>`;
   };

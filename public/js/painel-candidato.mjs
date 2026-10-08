@@ -1,23 +1,21 @@
-// Análises de um candidato: dinheiro da campanha (em painel-dinheiro.mjs), quem é (perfil e bens),
-// concentração do voto e dobradinhas.
+// Análises de um candidato: quem é, concentração do voto e dobradinhas; o dinheiro (painel-dinheiro.mjs),
+// a força do voto (painel-voto.mjs) e a evolução patrimonial (painel-patrimonio.mjs) vêm dos outros painéis.
 // cfg diz como cada site identifica o candidato e os lugares (municípios ou bairros); ver analises.mjs.
-import { nf, sentence, titleCase, NORM, dinheiro } from './formato.mjs';
-import { ListaDeBarras } from './componentes.mjs';
-import { fichaDoPerfil, variacaoDoPatrimonio } from './ficha.mjs';
+import { nf, sentence, titleCase } from './formato.mjs';
+import { fichaDoPerfil } from './ficha.mjs';
 import { concentracao, parceirosDeVoto } from './calculos.mjs';
 import { criarDinheiro } from './painel-dinheiro.mjs';
+import { criarForcaDoVoto } from './painel-voto.mjs';
+import { criarPatrimonio } from './painel-patrimonio.mjs';
 const { html, useMemo } = window.htmPreact;
 
 export function criarPainelDoCandidato(cfg) {
-  function QuemE({ cand, perfis, patrimonio }) {
+  // A evolução dos bens fica em Evolução patrimonial (painel-patrimonio.mjs).
+  function QuemE({ cand, perfis }) {
     const p = perfis?.c?.[cfg.chaveDe(cand)];
     if (!p) return null;
-    const evolucao = patrimonio[NORM(cand.nome || cand.urna)] || [];
     return html`<section class="analise" aria-labelledby="qe"><h2 id="qe">Quem é</h2>
       <dl class="ficha">${fichaDoPerfil(p).map(([dt, dd]) => html`<div><dt>${dt}</dt><dd>${dd}</dd></div>`)}</dl>
-      ${evolucao.length > 1 && html`<h3>Bens declarados em cada eleição</h3>
-        <${ListaDeBarras} itens=${[...evolucao].sort((a, b) => a[0] - b[0]).map(([ano, v]) => ({ n: ano, v, rotulo: dinheiro(v) }))} />
-        <p class="hint">${variacaoDoPatrimonio(evolucao)} Valores nominais, sem correção pela inflação; a ligação entre eleições é pelo nome completo.</p>`}
     </section>`;
   }
 
@@ -41,7 +39,7 @@ export function criarPainelDoCandidato(cfg) {
     </section>`;
   }
 
-  return { Dinheiro: criarDinheiro(cfg), QuemE, Concentracao, Dobradinhas };
+  return { Dinheiro: criarDinheiro(cfg), QuemE, Concentracao, Dobradinhas, ForcaDoVoto: criarForcaDoVoto(cfg), Patrimonio: criarPatrimonio(cfg) };
 }
 
 function calcularDobradinhas(cfg, ds, cand, par) {

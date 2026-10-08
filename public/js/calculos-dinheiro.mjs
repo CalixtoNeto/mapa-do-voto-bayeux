@@ -38,7 +38,7 @@ export function posicoesNoCargo(linhas, cand) {
   return { ...posicoes, mediana: { recebido: mediana(linhas.map(l => l.recebido)), gasto: mediana(linhas.map(l => l.gasto)) } };
 }
 
-function mediana(valores) {
+export function mediana(valores) {
   const v = valores.filter(x => x > 0).sort((a, b) => a - b), meio = v.length >> 1;
   if (!v.length) return 0;
   return v.length % 2 ? v[meio] : (v[meio - 1] + v[meio]) / 2;

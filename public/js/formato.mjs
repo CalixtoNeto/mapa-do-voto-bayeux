@@ -15,3 +15,13 @@ export function dinheiro(v) {
   return `R$ ${nf.format(Math.round(v))}`;
 }
 export const centavos = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+// 2022-08-15 → 15/08
+export const diaEMes = iso => String(iso || '').slice(5).split('-').reverse().join('/');
+// +3,2 p.p. · −1,0 p.p. (diferença entre duas parcelas)
+export const pontos = v => {
+  const p = Math.round(v * 1000) / 10;
+  return p ? `${p > 0 ? '+' : '−'}${casas(Math.abs(p), 1)} p.p.` : '0 p.p.';
+};
+export const vezes = v => `${casas(v, 1)}×`;
+// Parcelas pequenas (de candidatos com poucos votos) precisam de mais casas para não virar 0,0%.
+export const parcela = v => pct(v, v > 0 && v < 0.01 ? 2 : 1);

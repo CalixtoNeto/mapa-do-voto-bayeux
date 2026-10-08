@@ -1,10 +1,13 @@
 // Panorama de um cargo numa eleição: dinheiro (custo por voto, fundo eleitoral, gasto × votos) e voto
-// concentrado ou espalhado. Fundo por partido, perfil e doadores estão em panorama-partidos.mjs.
+// concentrado ou espalhado. Fundo por partido, perfil e doadores estão em panorama-partidos.mjs; dinheiro e
+// eleição, partidos, concentração e fornecedores em panorama-eleitos.mjs; os lugares em panorama-lugares.mjs.
 import { nf, dinheiro, centavos } from './formato.mjs';
 import { linhasFinanceiras, concentracao, ehEleito } from './calculos.mjs';
 import { GraficoGastoVotos } from './grafico-gasto.mjs';
 import { nomeDe } from './componentes.mjs';
 import { FundoPorPartido, PerfilDoCargo, Doadores } from './panorama-partidos.mjs';
+import { DinheiroElege, Partidos, ConcentracaoDoFundo, FornecedoresDoCargo } from './panorama-eleitos.mjs';
+import { criarLugaresDoCargo } from './panorama-lugares.mjs';
 const { html, useState, useMemo } = window.htmPreact;
 
 const ORDENS = {
@@ -63,14 +66,21 @@ function Redutos({ cfg, cands, selecionado, onPick }) {
 }
 
 export function criarPanorama(cfg) {
-  // cands: os candidatos do cargo no turno mostrado, como o site os monta (com partido).
-  return function Panorama({ cands, ano, financas, perfis, selecionado, onPick }) {
+  const LugaresDoCargo = criarLugaresDoCargo(cfg);
+  // cands: os candidatos do cargo no turno mostrado, como o site os monta (com partido); ctx: contexto.mjs.
+  return function Panorama({ cands, ano, financas, perfis, selecionado, onPick, ctx }) {
     const eleito = c => ehEleito(c.sit || perfis?.c?.[cfg.chaveDe(c)]?.s);
+    const linhas = useMemo(() => linhasFinanceiras(cands, financas, cfg.chaveDe), [cands, financas]);
     return html`<section class="analise" aria-labelledby="dc"><h2 id="dc">Dinheiro da campanha</h2>
         <${DinheiroDoCargo} cfg=${cfg} cands=${cands} financas=${financas} ano=${ano} selecionado=${selecionado} onPick=${onPick} eleito=${eleito} /></section>
       ${financas && perfis && html`<${FundoPorPartido} cfg=${cfg} cands=${cands} financas=${financas} perfis=${perfis} />`}
       ${perfis && html`<${PerfilDoCargo} cfg=${cfg} cands=${cands} perfis=${perfis} />`}
+      ${ctx && html`<${DinheiroElege} linhas=${financas ? linhas : []} ctx=${ctx} />`}
+      ${ctx && html`<${Partidos} linhas=${linhas} ctx=${ctx} />`}
+      ${ctx && html`<${ConcentracaoDoFundo} linhas=${financas ? linhas : []} ctx=${ctx} />`}
       <${Redutos} cfg=${cfg} cands=${cands} selecionado=${selecionado} onPick=${onPick} />
-      ${financas && html`<${Doadores} cfg=${cfg} cands=${cands} financas=${financas} onPick=${onPick} />`}`;
+      ${ctx && html`<${LugaresDoCargo} ctx=${ctx} />`}
+      ${financas && html`<${Doadores} cfg=${cfg} cands=${cands} financas=${financas} onPick=${onPick} />`}
+      ${financas && html`<${FornecedoresDoCargo} cfg=${cfg} cands=${cands} financas=${financas} onPick=${onPick} />`}`;
   };
 }
