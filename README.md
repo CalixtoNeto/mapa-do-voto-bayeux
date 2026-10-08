@@ -28,7 +28,7 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 
 **Na ficha do candidato** (botão *Candidato*):
 
-- **Dinheiro da campanha**: quanto recebeu, quanto declarou ter gasto, **custo por voto** (e a posição entre os candidatos do cargo), quanto veio do **fundo eleitoral**, a origem do dinheiro (fundo eleitoral, fundo partidário e partido, doações, recursos próprios e de outros candidatos) e as maiores despesas.
+- **Dinheiro da campanha**: quanto recebeu, quanto declarou ter gasto, **custo por voto**, quanto veio do **fundo eleitoral** e a origem do dinheiro (fundo eleitoral, fundo partidário e partido, doações, recursos próprios e de outros candidatos); a **posição entre os candidatos do cargo** no recebido, no gasto e no fundo eleitoral, com a mediana do cargo; **para onde foi o dinheiro** (todas as categorias de despesa); **quem doou** (os dez maiores doadores, com a parcela de cada um no recebido) e **quem recebeu os pagamentos** (os dez maiores fornecedores).
 - **Quem é**: gênero, cor ou raça, idade, escolaridade, ocupação, se tentou a reeleição, a situação final e os **bens declarados**, com a evolução entre eleições.
 - **Concentração do voto**: de quantos bairros veio metade dos votos e o número efetivo de bairros (voto de reduto ou espalhado).
 - **Dobradinhas prováveis**: candidatos do cargo parceiro (deputado federal ↔ estadual, governador ↔ senador) com votação parecida nos mesmos bairros.

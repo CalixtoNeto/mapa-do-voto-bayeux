@@ -48,8 +48,15 @@ function doadorDaReceita(valor, tipo) {
 
 export function leitorDeDespesas({ ano, financas }) {
   return leitorDoCandidato(ano, (chave, campos, colunas) => {
-    const categoria = informado(campo(campos, colunas, 'DS_ORIGEM_DESPESA')) || 'Outras';
-    const valor = reais(campo(campos, colunas, 'VR_DESPESA_CONTRATADA'));
-    somarDespesa(financas, chave, { categoria, valor, repasse: ehRepasse(categoria) });
+    const valor = nome => campo(campos, colunas, nome);
+    const categoria = informado(valor('DS_ORIGEM_DESPESA')) || 'Outras';
+    somarDespesa(financas, chave, {
+      categoria, valor: reais(valor('VR_DESPESA_CONTRATADA')), repasse: ehRepasse(categoria), fornecedor: fornecedorDaDespesa(valor),
+    });
   });
+}
+
+function fornecedorDaDespesa(valor) {
+  const nome = informado(valor('NM_FORNECEDOR_RFB')) || informado(valor('NM_FORNECEDOR'));
+  return nome ? { id: informado(valor('NR_CPF_CNPJ_FORNECEDOR')) || nome, nome } : null;
 }

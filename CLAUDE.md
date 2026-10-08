@@ -20,7 +20,7 @@ e `scripts/gerar-dados.mjs` (votos), a partir do TSE.
   O resto de `scripts/analises/`, `scripts/fontes/{candidatos,bens,prestacao-contas}.mjs`, `scripts/saida/analises.mjs`
   e os módulos `public/js/*.mjs` são iguais nos dois; uma correção num vale para o outro.
 - Os cálculos do site ficam em `public/js/calculos*.mjs`, sem DOM, testados em `test/unidade/calculos.test.mjs`.
-- Nomes curtos das análises que o site lê: `c`, `r`, `d`, `rep`, `dc`, `doadores` (`n`, `t`, `v`) em finanças;
+- Nomes curtos das análises que o site lê: `c`, `r`, `d`, `rep`, `dc`, `doa`, `nd`, `fo`, `nf`, `doadores` (`n`, `t`, `v`) em finanças;
   `g`, `r`, `i`, `e`, `o`, `re`, `s`, `p`, `b` no perfil; `[aptos, comparecimento, brancos, nulos]` no comparecimento.
 
 ## Como o código está organizado

@@ -1,57 +1,14 @@
-// Análises de um candidato: dinheiro da campanha, quem é (perfil e bens), concentração do voto e dobradinhas.
+// Análises de um candidato: dinheiro da campanha (em painel-dinheiro.mjs), quem é (perfil e bens),
+// concentração do voto e dobradinhas.
 // cfg diz como cada site identifica o candidato e os lugares (municípios ou bairros); ver analises.mjs.
-import { nf, pct, sentence, titleCase, NORM, dinheiro, centavos } from './formato.mjs';
-import { BarraDeOrigens, ListaDeBarras } from './componentes.mjs';
+import { nf, sentence, titleCase, NORM, dinheiro } from './formato.mjs';
+import { ListaDeBarras } from './componentes.mjs';
 import { fichaDoPerfil, variacaoDoPatrimonio } from './ficha.mjs';
-import { resumoFinanceiro, custoPorVoto, concentracao, parceirosDeVoto } from './calculos.mjs';
+import { concentracao, parceirosDeVoto } from './calculos.mjs';
+import { criarDinheiro } from './painel-dinheiro.mjs';
 const { html, useMemo } = window.htmPreact;
 
-function semPrestacao(financas, ano) {
-  if (financas) return 'O TSE não tem prestação de contas deste candidato.';
-  return +ano < 2018 ? 'O TSE publica a prestação de contas dos candidatos neste formato a partir de 2018.'
-    : 'A prestação de contas desta eleição ainda não foi gerada para o site.';
-}
-
-const posicaoNoCusto = (linhas, cand) => {
-  const comCusto = linhas.filter(l => l.custo != null).sort((a, b) => a.custo - b.custo);
-  return { posicao: comCusto.findIndex(l => l.cand.key === cand.key) + 1, de: comCusto.length };
-};
-
-function NumerosDoDinheiro({ r, custo, posicao, cfg, cand }) {
-  return html`<dl class="stats">
-    <div><dt>Recebido</dt><dd>${dinheiro(r.recebido)}</dd></div>
-    <div><dt>Gasto declarado</dt><dd>${dinheiro(r.gasto)}</dd></div>
-    <div><dt>Custo por voto${cand.turno !== '1' ? ' (2º turno)' : ''}</dt><dd>${custo != null ? centavos(custo) : '—'}</dd>
-      ${posicao.posicao > 0 ? html`<small>${posicao.posicao}º menor entre ${posicao.de}</small>` : null}</div>
-    <div><dt>Fundo eleitoral</dt><dd>${dinheiro(r.fefc)}</dd>${r.recebido ? html`<small>${pct(r.fefc / r.recebido, 0)} do recebido</small>` : null}</div>
-  </dl>`;
-}
-
-function notasDoDinheiro(r, financas, cfg, cand) {
-  return [
-    !financas.final && 'Prestação de contas parcial: a final é entregue até 30 dias depois da eleição.',
-    'Gasto: despesas contratadas declaradas ao TSE' + (r.repasses ? `, sem ${dinheiro(r.repasses)} doados a outras campanhas.` : '.'),
-    `Custo por voto: gasto dividido pelos votos ${cfg.regiao}.`,
-    cfg.ehMajoritario(cand) && 'Em cargos majoritários, o dinheiro é da chapa e cobre os dois turnos.',
-    r.deCandidatos ? `${dinheiro(r.deCandidatos)} vieram de outros candidatos (podem incluir fundo eleitoral repassado).` : '',
-  ].filter(Boolean);
-}
-
 export function criarPainelDoCandidato(cfg) {
-  function Dinheiro({ cand, financas, ano, linhasDoCargo }) {
-    const f = financas?.c?.[cfg.chaveDe(cand)];
-    const cab = html`<h2 id="din">Dinheiro da campanha</h2>`;
-    const fora = cfg.foraDasFinancas(cand);
-    if (fora || !f) return html`<section class="analise" aria-labelledby="din">${cab}<p class="hint">${fora || semPrestacao(financas, ano)}</p></section>`;
-    const r = resumoFinanceiro(f), custo = custoPorVoto(r.gasto, cand.total);
-    return html`<section class="analise" aria-labelledby="din">${cab}
-      <${NumerosDoDinheiro} r=${r} custo=${custo} posicao=${posicaoNoCusto(linhasDoCargo, cand)} cfg=${cfg} cand=${cand} />
-      <${BarraDeOrigens} grupos=${r.grupos} total=${r.recebido} />
-      ${r.categorias.length > 0 && html`<h3>Maiores despesas</h3><${ListaDeBarras} itens=${r.categorias.map(([n, v]) => ({ n: sentence(n), v, rotulo: dinheiro(v) }))} />`}
-      ${notasDoDinheiro(r, financas, cfg, cand).map(n => html`<p class="hint">${n}</p>`)}
-    </section>`;
-  }
-
   function QuemE({ cand, perfis, patrimonio }) {
     const p = perfis?.c?.[cfg.chaveDe(cand)];
     if (!p) return null;
@@ -84,7 +41,7 @@ export function criarPainelDoCandidato(cfg) {
     </section>`;
   }
 
-  return { Dinheiro, QuemE, Concentracao, Dobradinhas };
+  return { Dinheiro: criarDinheiro(cfg), QuemE, Concentracao, Dobradinhas };
 }
 
 function calcularDobradinhas(cfg, ds, cand, par) {

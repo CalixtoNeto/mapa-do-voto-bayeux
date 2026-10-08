@@ -13,7 +13,7 @@ const CADASTRO = [...ID, 'SG_PARTIDO', 'DS_GENERO', 'DS_COR_RACA', 'DT_NASCIMENT
   'ST_REELEICAO', 'DS_SIT_TOT_TURNO', 'DS_SITUACAO_CANDIDATURA'];
 const vereador = (sq, nr, ue = '19372') => ['2024', '1', 'PB', ue, '13', sq, nr];
 const RECEITA = [...ID, 'DS_FONTE_RECEITA', 'DS_ORIGEM_RECEITA', 'NR_CPF_CNPJ_DOADOR', 'NM_DOADOR', 'NM_DOADOR_RFB', 'VR_RECEITA'];
-const DESPESA = [...ID, 'DS_ORIGEM_DESPESA', 'VR_DESPESA_CONTRATADA'];
+const DESPESA = [...ID, 'DS_ORIGEM_DESPESA', 'NR_CPF_CNPJ_FORNECEDOR', 'NM_FORNECEDOR', 'NM_FORNECEDOR_RFB', 'VR_DESPESA_CONTRATADA'];
 const DETALHE = ['ANO_ELEICAO', 'NR_TURNO', 'SG_UF', 'CD_MUNICIPIO', 'NR_ZONA', 'NR_SECAO', 'CD_CARGO', 'QT_APTOS',
   'QT_COMPARECIMENTO', 'QT_ABSTENCOES', 'QT_VOTOS_BRANCOS', 'QT_VOTOS_NULOS'];
 const secao = (sec, mun, ...n) => ['2024', '1', 'PB', mun, '61', sec, '13', ...n];
@@ -33,8 +33,8 @@ const ZIPS = {
       [...vereador('502', '12345', '20516'), 'Fundo Especial', 'Recursos de partido político', '1', 'P', 'P', '99999,00'],
     ],
     'despesas_contratadas_candidatos_2024_PB.csv': [DESPESA,
-      [...vereador('500', '12345'), 'Publicidade por materiais impressos', '17000,00'],
-      [...vereador('501', '45678'), 'Combustíveis e lubrificantes', '2500,00'],
+      [...vereador('500', '12345'), 'Publicidade por materiais impressos', '55', 'GRAFICA', 'GRAFICA DE BAYEUX LTDA', '17000,00'],
+      [...vereador('501', '45678'), 'Combustíveis e lubrificantes', '66', 'POSTO', '#NULO#', '2500,00'],
     ],
   },
   'detalhe-secao-2024-PB.zip': { 'detalhe_votacao_secao_2024_PB.csv': [DETALHE,

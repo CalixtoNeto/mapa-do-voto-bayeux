@@ -25,6 +25,25 @@ export function linhasFinanceiras(candidatos, financas, chaveDe) {
   });
 }
 
+// Posição do candidato entre os do cargo que têm o valor (1 = maior; no custo por voto, 1 = menor)
+// e a mediana do recebido e do gasto, para dizer se a campanha foi cara ou barata para o cargo.
+const CRITERIOS = { recebido: [l => l.recebido > 0, 'recebido', -1], gasto: [l => l.gasto > 0, 'gasto', -1],
+  fefc: [l => l.fefc > 0, 'fefc', -1], custo: [l => l.custo != null, 'custo', 1] };
+
+export function posicoesNoCargo(linhas, cand) {
+  const posicoes = Object.fromEntries(Object.entries(CRITERIOS).map(([nome, [tem, campo, sentido]]) => {
+    const ordem = linhas.filter(tem).sort((a, b) => sentido * (a[campo] - b[campo]));
+    return [nome, { posicao: ordem.findIndex(l => l.cand.key === cand.key) + 1, de: ordem.length }];
+  }));
+  return { ...posicoes, mediana: { recebido: mediana(linhas.map(l => l.recebido)), gasto: mediana(linhas.map(l => l.gasto)) } };
+}
+
+function mediana(valores) {
+  const v = valores.filter(x => x > 0).sort((a, b) => a - b), meio = v.length >> 1;
+  if (!v.length) return 0;
+  return v.length % 2 ? v[meio] : (v[meio - 1] + v[meio]) / 2;
+}
+
 // A regra dos 30% do fundo eleitoral para mulheres vale para o total nacional de cada partido;
 // a parcela na UF ou no município só indica como o partido distribuiu o dinheiro ali.
 export function cotaPorPartido(candidatos, financas, perfis, chaveDe) {
