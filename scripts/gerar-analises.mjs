@@ -14,7 +14,7 @@ import { escreverAnalises, indexarAnalises } from './saida/analises.mjs';
 async function tentar(descricao, buscar) {
   try {
     const dados = await buscar();
-    if (!dados) console.log(`  ${descricao}: o TSE ainda não publicou`);
+    if (!dados) console.log(`  ${descricao}: não está no TSE (ainda não publicado, ou não existe para este ano)`);
     return dados;
   } catch (e) { console.warn(`  ${descricao} falhou (${e.message})`); return null; }
 }

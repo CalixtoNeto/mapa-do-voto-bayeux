@@ -16,7 +16,7 @@ export async function candidatosViaCsv(ano) {
   const candidatos = novosCandidatos();
   const alvos = arquivosDaEleicao('consulta_cand', ano).map(({ padrao, cargoAceito }) =>
     ({ padrao, aoLinha: leitorDeCandidatos({ ano, candidatos, cargoAceito }) }));
-  if (!(await lerCsvsDoZip(zip, alvos))[0]) return null;
+  if (!(await lerCsvsDoZip(zip, alvos))[0]) throw new Error(`o .zip não tem o arquivo da UF (${alvos[0].padrao})`);
   return perfisComBens(candidatos, await bensViaCsv(ano, cargoDoSequencial(candidatos)));
 }
 

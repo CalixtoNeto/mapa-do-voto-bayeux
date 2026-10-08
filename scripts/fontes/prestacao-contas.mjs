@@ -18,7 +18,8 @@ export async function financasViaCsv(ano) {
     { padrao: new RegExp(`^receitas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeReceitas({ ano, financas }) },
     { padrao: new RegExp(`^despesas_contratadas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeDespesas({ ano, financas }) },
   ]);
-  return temReceitas ? financas : null;
+  if (!temReceitas) throw new Error(`o .zip não tem receitas_candidatos_${ano}_${UF}.csv`);
+  return financas;
 }
 
 function leitorDoCandidato(ano, aoCandidato) {
