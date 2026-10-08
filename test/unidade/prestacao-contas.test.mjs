@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { leitorDeReceitas, leitorDeDespesas, leitorDeDespesasPagas } from '../../scripts/fontes/prestacao-contas.mjs';
-import { novasFinancas, resumoDasFinancas } from '../../scripts/analises/financas.mjs';
+import { novasFinancas, resumoDasFinancas, atribuirPagamentos } from '../../scripts/analises/financas.mjs';
 
 const ID = ['ANO_ELEICAO', 'SG_UF', 'SG_UE', 'CD_CARGO', 'SQ_CANDIDATO', 'NR_CANDIDATO'];
 const RECEITA = [...ID, 'DS_FONTE_RECEITA', 'DS_ORIGEM_RECEITA', 'NR_CPF_CNPJ_DOADOR', 'NM_DOADOR', 'NM_DOADOR_RFB', 'VR_RECEITA'];
@@ -42,13 +42,17 @@ test('despesas contratadas, separando os repasses', () => {
   assert.deepEqual(r.c['13|12345'], { r: {}, d: 700, rep: 300, dc: [['Publicidade por materiais impressos', 700]], fo: [['GRAFICA LTDA', 700, 0]], nf: 1 });
 });
 
-test('despesas pagas, sem os repasses a outras campanhas', () => {
-  const PAGA = [...ID, 'DS_ORIGEM_DESPESA', 'VR_PAGTO_DESPESA'];
-  const r = ler(leitorDeDespesasPagas, PAGA, [
-    [...ID_DO_TESTE, 'Publicidade por materiais impressos', '650,00'],
-    [...ID_DO_TESTE, 'Doações financeiras a outros candidatos/partidos', '300,00'],
-  ]);
-  assert.equal(r.c[CHAVE_DO_TESTE].pg, 650);
+test('despesas pagas chegam ao candidato pela prestação de contas (SQ_PRESTADOR_CONTAS), sem os repasses', () => {
+  const financas = novasFinancas(), ano = ID_DO_TESTE[0];
+  const paga = leitorDeDespesasPagas({ ano, financas }), contratada = leitorDeDespesas({ ano, financas });
+  paga(linha(['SQ_PRESTADOR_CONTAS', 'DS_ORIGEM_DESPESA', 'VR_PAGTO_DESPESA']), true);
+  paga(linha(['77', 'Publicidade por materiais impressos', '650,00']), false);
+  paga(linha(['77', 'Doações financeiras a outros candidatos/partidos', '300,00']), false);
+  paga(linha(['99', 'Publicidade por materiais impressos', '10,00']), false);
+  contratada(linha([...DESPESA, 'SQ_PRESTADOR_CONTAS']), true);
+  contratada(linha([...ID_DO_TESTE, 'Publicidade por materiais impressos', '1', 'G', 'G', '700,00', '77']), false);
+  atribuirPagamentos(financas);
+  assert.equal(resumoDasFinancas(financas, ano, new Date('2026-01-01')).c[CHAVE_DO_TESTE].pg, 650);
 });
 
 test('a data da receita entra no ritmo da arrecadação', () => {

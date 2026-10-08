@@ -4,13 +4,17 @@
 import { campo, inteiro } from '../lib/csv.mjs';
 import { normalizarNome } from '../lib/texto.mjs';
 
-export const COLUNAS_DO_ELEITORADO = ['QT_ELEITORES_PERFIL', 'DS_GENERO', 'DS_FAIXA_ETARIA', 'DS_GRAU_ESCOLARIDADE'];
+export const COLUNAS_DO_ELEITORADO = ['DS_GENERO', 'DS_FAIXA_ETARIA', 'DS_GRAU_ESCOLARIDADE'];
+
+// O nome da quantidade mudou entre os anos; QT_ELEITORES_BIOMETRIA e afins contam outra coisa.
+const COLUNAS_DA_QUANTIDADE = ['QT_ELEITORES_PERFIL', 'QT_ELEITORES', 'QT_ELEITOR_PERFIL', 'QT_ELEITOR'];
+const colunaDaQuantidade = colunas => COLUNAS_DA_QUANTIDADE.find(nome => colunas[nome] != null);
 
 const POUCO_ESTUDO = /ANALFABETO|LE E ESCREVE|FUNDAMENTAL INCOMPLETO/;
 
 // A faixa etária vem como texto ("16 anos", "21 a 24 anos", "100 anos ou mais"); o primeiro número basta.
 export function numerosDoEleitor(campos, colunas) {
-  const qtd = inteiro(campo(campos, colunas, 'QT_ELEITORES_PERFIL'));
+  const qtd = inteiro(campo(campos, colunas, colunaDaQuantidade(colunas)));
   const idade = parseInt(campo(campos, colunas, 'DS_FAIXA_ETARIA').match(/\d+/)?.[0], 10);
   const escolaridade = normalizarNome(campo(campos, colunas, 'DS_GRAU_ESCOLARIDADE'));
   const se = condicao => condicao ? qtd : 0;
@@ -25,5 +29,8 @@ export function somarEleitorado(lugares, lugar, numeros) {
 
 export function exigirColunasDoEleitorado(colunas, ano) {
   const ausentes = COLUNAS_DO_ELEITORADO.filter(nome => colunas[nome] == null);
-  if (ausentes.length) throw new Error(`Colunas ausentes no perfil do eleitorado de ${ano}: ${ausentes.join(', ')}`);
+  if (!colunaDaQuantidade(colunas)) ausentes.push(COLUNAS_DA_QUANTIDADE[0]);
+  if (ausentes.length) {
+    throw new Error(`Colunas ausentes no perfil do eleitorado de ${ano}: ${ausentes.join(', ')} (colunas do arquivo: ${Object.keys(colunas).join(', ')})`);
+  }
 }

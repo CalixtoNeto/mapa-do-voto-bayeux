@@ -5,7 +5,7 @@ import { porRegistro, campo } from '../lib/csv.mjs';
 import { reais } from '../lib/valores.mjs';
 import { informado } from '../lib/texto.mjs';
 import { origemDaReceita, ehRepasse } from '../analises/receitas.mjs';
-import { novasFinancas, somarReceita, somarDespesa, somarDespesaPaga } from '../analises/financas.mjs';
+import { novasFinancas, somarReceita, somarDespesa, registrarPrestador, somarPagoDoPrestador, atribuirPagamentos } from '../analises/financas.mjs';
 import { identificacao, ehDoAno } from '../analises/identificacao.mjs';
 import { candidatoDasFinancas, chaveDoCandidato } from '../analises/escopo.mjs';
 import { UF, PASTA_DOWNLOADS } from '../eleicao/config.mjs';
@@ -14,26 +14,31 @@ export async function financasViaCsv(ano) {
   const zip = `${PASTA_DOWNLOADS}/prestacao-contas-${ano}.zip`;
   if (!await baixar(`${CDN}/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_${ano}.zip`, zip)) return null;
   const financas = novasFinancas();
-  const [temReceitas] = await lerCsvsDoZip(zip, [
+  const [temReceitas, , temPagas] = await lerCsvsDoZip(zip, [
     { padrao: new RegExp(`^receitas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeReceitas({ ano, financas }) },
     { padrao: new RegExp(`^despesas_contratadas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeDespesas({ ano, financas }) },
     { padrao: new RegExp(`^despesas_pagas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeDespesasPagas({ ano, financas }) },
   ]);
   if (!temReceitas) throw new Error(`o .zip não tem receitas_candidatos_${ano}_${UF}.csv`);
+  if (!temPagas) console.warn(`  despesas pagas: o .zip não tem despesas_pagas_candidatos_${ano}_${UF}.csv`);
+  atribuirPagamentos(financas);
   return financas;
 }
 
-function leitorDoCandidato(ano, aoCandidato) {
+function leitorDoCandidato(ano, financas, aoCandidato) {
   return porRegistro({
     aoRegistro: (campos, colunas) => {
       const candidato = identificacao(campos, colunas);
-      if (ehDoAno(candidato, ano) && candidatoDasFinancas(candidato)) aoCandidato(chaveDoCandidato(candidato), campos, colunas);
+      if (!ehDoAno(candidato, ano) || !candidatoDasFinancas(candidato)) return;
+      const chave = chaveDoCandidato(candidato);
+      registrarPrestador(financas, campo(campos, colunas, 'SQ_PRESTADOR_CONTAS'), chave);
+      aoCandidato(chave, campos, colunas);
     },
   });
 }
 
 export function leitorDeReceitas({ ano, financas }) {
-  return leitorDoCandidato(ano, (chave, campos, colunas) => {
+  return leitorDoCandidato(ano, financas, (chave, campos, colunas) => {
     const valor = nome => campo(campos, colunas, nome);
     const origem = origemDaReceita(valor('DS_FONTE_RECEITA'), valor('DS_ORIGEM_RECEITA'));
     const doador = origem === 'pf' || origem === 'pj' ? doadorDaReceita(valor, origem) : null;
@@ -48,7 +53,7 @@ function doadorDaReceita(valor, tipo) {
 }
 
 export function leitorDeDespesas({ ano, financas }) {
-  return leitorDoCandidato(ano, (chave, campos, colunas) => {
+  return leitorDoCandidato(ano, financas, (chave, campos, colunas) => {
     const valor = nome => campo(campos, colunas, nome);
     const categoria = informado(valor('DS_ORIGEM_DESPESA')) || 'Outras';
     somarDespesa(financas, chave, {
@@ -63,9 +68,18 @@ function fornecedorDaDespesa(valor) {
 }
 
 // Despesa contratada e não paga até a prestação de contas vira dívida de campanha.
-export function leitorDeDespesasPagas({ ano, financas }) {
-  return leitorDoCandidato(ano, (chave, campos, colunas) => {
-    if (ehRepasse(campo(campos, colunas, 'DS_ORIGEM_DESPESA'))) return;
-    somarDespesaPaga(financas, chave, reais(campo(campos, colunas, 'VR_PAGTO_DESPESA')));
+export function leitorDeDespesasPagas({ financas }) {
+  return porRegistro({
+    aoCabecalho: colunas => avisarColunasAusentes(colunas, ['SQ_PRESTADOR_CONTAS', 'VR_PAGTO_DESPESA']),
+    aoRegistro: (campos, colunas) => {
+      const prestador = campo(campos, colunas, 'SQ_PRESTADOR_CONTAS');
+      if (!prestador || ehRepasse(campo(campos, colunas, 'DS_ORIGEM_DESPESA'))) return;
+      somarPagoDoPrestador(financas, prestador, reais(campo(campos, colunas, 'VR_PAGTO_DESPESA')));
+    },
   });
+}
+
+function avisarColunasAusentes(colunas, esperadas) {
+  const ausentes = esperadas.filter(nome => colunas[nome] == null);
+  if (ausentes.length) console.warn(`  despesas pagas sem ${ausentes.join(', ')} (colunas do arquivo: ${Object.keys(colunas).join(', ')})`);
 }
