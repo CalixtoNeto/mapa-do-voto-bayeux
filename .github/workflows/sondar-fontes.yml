@@ -1,0 +1,85 @@
+name: Sondar fontes do perfil
+
+# Só lê e imprime no log: onde estão os dados abertos do TCE-PB (Sagres), das emendas parlamentares e da
+# Câmara de Bayeux, e as primeiras linhas de Bayeux em cada arquivo. Serve para escrever as fontes do perfil
+# dos políticos com as colunas reais, já que o ambiente de desenvolvimento não alcança esses sites.
+on:
+  workflow_dispatch:
+  push:
+    paths: ['.github/workflows/sondar-fontes.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  sondar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Páginas de dados abertos
+        continue-on-error: true
+        run: |
+          for pagina in https://portal.tce.pb.gov.br/dados-abertos-do-sagres-tcepb/ https://dados.tce.pb.gov.br/ \
+              https://tce.pb.gov.br/dados-abertos https://tce.pb.gov.br/servicos/dados-abertos; do
+            echo "::group::$pagina"
+            curl -sSL -m 60 -A 'Mozilla/5.0' -o pagina.html -w 'HTTP %{http_code} -> %{url_effective}\n' "$pagina" || true
+            grep -oiE 'href="[^"]+"' pagina.html | sed 's/^href="//;s/"$//' | grep -iE 'sagres|dados|\.(gz|zip|csv|txt|json)' | sort -u | head -150
+            echo "::endgroup::"
+          done
+
+      - name: Links de arquivos encontrados em todas as páginas
+        continue-on-error: true
+        run: |
+          : > links.txt
+          for pagina in https://portal.tce.pb.gov.br/dados-abertos-do-sagres-tcepb/ https://dados.tce.pb.gov.br/ \
+              https://tce.pb.gov.br/dados-abertos; do
+            curl -sSL -m 60 -A 'Mozilla/5.0' "$pagina" | grep -oiE 'href="[^"]+\.(gz|zip|csv|txt)"' \
+              | sed 's/^href="//;s/"$//' | while read -r l; do
+                case "$l" in http*) echo "$l";; /*) echo "$(echo "$pagina" | cut -d/ -f1-3)$l";; *) echo "$pagina$l";; esac
+              done >> links.txt || true
+          done
+          sort -u links.txt -o links.txt
+          echo "$(wc -l < links.txt) arquivos"
+          while read -r l; do
+            echo "$(curl -sSIL -m 30 -A 'Mozilla/5.0' "$l" | grep -i '^content-length' | tail -1 | tr -d '\r') $l"
+          done < links.txt
+          cp links.txt "$RUNNER_TEMP/links.txt"
+
+      - name: Primeiras linhas de Bayeux nos arquivos municipais
+        continue-on-error: true
+        run: |
+          amostrar() {
+            echo "::group::$1"
+            case "$1" in
+              *.gz) curl -sSL -A 'Mozilla/5.0' "$1" | gunzip -c ;;
+              *.zip) curl -sSL -A 'Mozilla/5.0' -o arq.zip "$1" && unzip -l arq.zip | head -20 && unzip -p arq.zip ;;
+              *) curl -sSL -A 'Mozilla/5.0' "$1" ;;
+            esac | iconv -f ISO-8859-1 -t UTF-8 | awk 'NR<=2 {print "CABEÇALHO: " $0} tolower($0) ~ /bayeux/ {print; if (++n == 6) exit}'
+            echo "::endgroup::"
+          }
+          grep -iE 'munic|empenh|folha|pagament|receit|licita|contrat|fornecedor|servidor' "$RUNNER_TEMP/links.txt" \
+            | grep -viE 'estadual' | head -12 | while read -r l; do timeout 900 bash -c "$(declare -f amostrar); amostrar '$l'" || echo "falhou ou demorou: $l"; done
+
+      - name: Emendas parlamentares destinadas a Bayeux (Portal da Transparência)
+        continue-on-error: true
+        run: |
+          curl -sSL -m 600 -A 'Mozilla/5.0' -o emendas.zip -w 'HTTP %{http_code} %{size_download} bytes\n' \
+            https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO
+          unzip -l emendas.zip
+          for f in $(unzip -Z1 emendas.zip); do
+            echo "::group::$f"
+            unzip -p emendas.zip "$f" | iconv -f ISO-8859-1 -t UTF-8 | awk 'NR<=2 {print "CABEÇALHO: " $0} tolower($0) ~ /bayeux/ {print; if (++n == 8) exit}'
+            echo "::endgroup::"
+          done
+
+      - name: Câmara Municipal de Bayeux
+        continue-on-error: true
+        run: |
+          for site in https://www.bayeux.pb.leg.br/ https://bayeux.pb.leg.br/ https://sapl.bayeux.pb.leg.br/api/ \
+              https://www.camarabayeux.pb.gov.br/ https://camaradebayeux.pb.gov.br/ https://www.bayeux.pb.gov.br/; do
+            echo "::group::$site"
+            curl -sSL -m 30 -A 'Mozilla/5.0' -o site.html -w 'HTTP %{http_code} -> %{url_effective}\n' "$site" || true
+            grep -oiE 'href="[^"]+"' site.html | sed 's/^href="//;s/"$//' \
+              | grep -iE 'sapl|sess|vereador|vota|ata|transpar|diaria|projeto|api' | sort -u | head -60
+            echo "::endgroup::"
+          done
