@@ -14,7 +14,7 @@ O partido vem dos votos de legenda do arquivo por seção e pode faltar quando o
 
 ## Comparar a evolução de um candidato
 
-![Comparando a votação de um candidato entre eleições](docs/comparar.gif)
+![Comparando a votação do prefeito Expedito Pereira em 2012 e 2016](docs/comparar.gif)
 
 Quando o candidato disputou mais de uma eleição, a seção **Evolução do candidato** mostra os votos dele em cada uma, com a parcela dos votos nominais e a posição. A ligação entre eleições é feita pelo nome completo no TSE, inclusive entre cargos diferentes (por exemplo, vereador em 2016 e deputado em 2018).
 
@@ -28,6 +28,8 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 
 **Na ficha do candidato** (botão *Candidato*):
 
+![Análises da ficha de Tarcyanna Macedo (prefeita, 2024): força do voto, dinheiro da campanha, doadores e fornecedores, perfil e dobradinhas com os vereadores](docs/candidato.gif)
+
 - **Dinheiro da campanha**: quanto recebeu, quanto declarou ter gasto, **custo por voto**, quanto veio do **fundo eleitoral** e a origem do dinheiro (fundo eleitoral, fundo partidário e partido, doações, recursos próprios e de outros candidatos); a **posição entre os candidatos do cargo** no recebido, no gasto e no fundo eleitoral, com a mediana do cargo; **para onde foi o dinheiro** (todas as categorias de despesa); **quem doou** (os dez maiores doadores, com a parcela de cada um no recebido) e **quem recebeu os pagamentos** (os dez maiores fornecedores); quanto **ficou sem pagar**, quanto veio do **maior doador** e de **recursos próprios**; **doadores e fornecedores em comum** com outras campanhas; **quando o dinheiro chegou** (por semana); e o dinheiro da mesma pessoa **em cada eleição** (recebido, gasto, votos e custo por voto).
 - **Quem é**: gênero, cor ou raça, idade, escolaridade, ocupação, se tentou a reeleição, a situação final e o total de bens declarados.
 - **Evolução patrimonial**: bens declarados em cada eleição, a variação entre elas (no total e por ano), **de que são os bens** (casa, veículos, aplicações…) e quanto o candidato pôs na própria campanha.
@@ -36,6 +38,8 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 - **Dobradinhas prováveis**: para cada outro cargo da mesma eleição (e, para senador, os outros senadores), os candidatos cuja votação sobe e desce nos mesmos bairros. Em cargos com poucos candidatos (governador, senador, prefeito) aparecem todos, inclusive os que andam ao contrário; nos outros, os cinco mais parecidos. Cada um traz a força da correlação (fraca, moderada ou forte).
 
 **No panorama do cargo** (botão *Panorama do cargo*):
+
+![Panorama de vereador em 2024: quem venceu, abstenção, gasto × votos, o dinheiro elege?, partidos, fundo eleitoral, perfil, concentração e análises por lugar](docs/panorama.gif)
 
 - Mapa de **quem venceu** em cada bairro e de **abstenção, brancos e nulos**, com os totais da cidade.
 - **Gasto × votos** de todos os candidatos, com diagonais de custo por voto, e rankings de menor e maior custo por voto, mais fundo eleitoral, mais dinheiro recebido e maior gasto.
