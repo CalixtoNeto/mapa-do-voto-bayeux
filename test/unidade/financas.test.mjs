@@ -43,10 +43,10 @@ test('cada candidato guarda os dez maiores doadores e quantos doaram ao todo', (
   for (let i = 1; i <= 12; i++) somarReceita(financas, 'A', { origem: 'pf', valor: i * 10, doador: { id: `${i}`, nome: `D${i}`, tipo: 'pf' } });
   somarReceita(financas, 'B', { origem: 'pj', valor: 5, doador: { id: '1', nome: 'D1', tipo: 'pf' } });
   const { c } = resumoDasFinancas(financas, '2022', agora);
-  assert.deepEqual(c.A.doa.slice(0, 2), [['D12', 'pf', 120], ['D11', 'pf', 110]]);
+  assert.deepEqual(c.A.doa.slice(0, 2), [['D12', 'pf', 120, 0], ['D11', 'pf', 110, 1]]);
   assert.equal(c.A.doa.length, 10);
   assert.equal(c.A.nd, 12);
-  assert.deepEqual([c.B.doa, c.B.nd], [[['D1', 'pf', 5]], 1]);
+  assert.deepEqual([c.B.doa, c.B.nd], [[['D1', 'pf', 5, 11]], 1]);
 });
 
 test('cada candidato guarda os fornecedores mais pagos, sem contar os repasses', () => {
@@ -57,7 +57,7 @@ test('cada candidato guarda os fornecedores mais pagos, sem contar os repasses',
   somarDespesa(financas, 'A', { categoria: 'Combustíveis', valor: 100, fornecedor: posto });
   somarDespesa(financas, 'A', { categoria: 'Doações', valor: 900, repasse: true, fornecedor: { id: '7', nome: 'OUTRO' } });
   const { c } = resumoDasFinancas(financas, '2022', agora);
-  assert.deepEqual([c.A.fo, c.A.nf], [[['GRAFICA', 500], ['POSTO', 100]], 2]);
+  assert.deepEqual([c.A.fo, c.A.nf], [[['GRAFICA', 500, 0], ['POSTO', 100, 1]], 2]);
 });
 
 test('guarda todas as categorias de despesa, não só as maiores', () => {

@@ -11,7 +11,8 @@ import { acrescentarAnalises } from './fixtures/cenario-analises.mjs';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const ESPERADO = join(RAIZ, 'test/fixtures/esperado/analises');
-const ARQUIVOS_GERADOS = ['2024-candidatos.json', '2024-financas.json', '2024-t1-comparecimento.json', 'analises.json', 'patrimonio.json'];
+const ARQUIVOS_GERADOS = ['2024-candidatos.json', '2024-financas.json', '2024-t1-comparecimento.json', '2024-eleitorado.json',
+  'analises.json', 'patrimonio.json', 'dinheiro.json'];
 
 function semDataDeGeracao(json) {
   const dados = JSON.parse(json);

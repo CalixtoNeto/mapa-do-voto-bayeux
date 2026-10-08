@@ -17,7 +17,8 @@ export async function candidatosViaCsv(ano) {
   const alvos = arquivosDaEleicao('consulta_cand', ano).map(({ padrao, cargoAceito }) =>
     ({ padrao, aoLinha: leitorDeCandidatos({ ano, candidatos, cargoAceito }) }));
   if (!(await lerCsvsDoZip(zip, alvos))[0]) throw new Error(`o .zip não tem o arquivo da UF (${alvos[0].padrao})`);
-  return perfisComBens(candidatos, await bensViaCsv(ano, cargoDoSequencial(candidatos)));
+  const bens = await bensViaCsv(ano, cargoDoSequencial(candidatos));
+  return perfisComBens(candidatos, bens?.total, bens?.tipos);
 }
 
 export function leitorDeCandidatos({ ano, candidatos, cargoAceito }) {
@@ -47,9 +48,14 @@ function registrar({ perfis, escolhidos }, chave, candidato, perfil) {
 
 const cargoDoSequencial = ({ escolhidos }) => new Map([...escolhidos.values()].map(c => [c.sq, c.cargo]));
 
-export function perfisComBens({ perfis, escolhidos }, bensPorSequencial) {
+// b é o total declarado e bt os maiores tipos de bem, para a ficha mostrar de que é feito o patrimônio.
+export function perfisComBens({ perfis, escolhidos }, bensPorSequencial, tiposPorSequencial) {
   return Object.fromEntries([...perfis].map(([chave, perfil]) => {
-    const bens = bensPorSequencial?.get(escolhidos.get(chave).sq);
-    return [chave, bens ? { ...perfil, b: emReais(bens) } : perfil];
+    const sq = escolhidos.get(chave).sq, bens = bensPorSequencial?.get(sq), tipos = tiposPorSequencial?.get(sq);
+    if (!bens) return [chave, perfil];
+    return [chave, { ...perfil, b: emReais(bens), ...(tipos?.size ? { bt: maioresTipos(tipos) } : {}) }];
   }));
 }
+
+const TIPOS_NA_FICHA = 6;
+const maioresTipos = tipos => [...tipos].sort((a, b) => b[1] - a[1]).slice(0, TIPOS_NA_FICHA).map(([tipo, v]) => [tipo, emReais(v)]);
