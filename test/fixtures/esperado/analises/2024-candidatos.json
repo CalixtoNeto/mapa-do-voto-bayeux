@@ -1,0 +1,25 @@
+{
+ "ano": "2024",
+ "c": {
+  "13|12345": {
+   "g": "FEMININO",
+   "r": "PARDA",
+   "i": 39,
+   "e": "SUPERIOR COMPLETO",
+   "o": "PROFESSOR",
+   "re": 1,
+   "s": "ELEITO POR QP",
+   "p": "PARTIDO DOZE",
+   "b": 150000
+  },
+  "13|45678": {
+   "g": "MASCULINO",
+   "r": "BRANCA",
+   "i": 53,
+   "e": "ENSINO MÉDIO COMPLETO",
+   "o": "COMERCIANTE",
+   "s": "SUPLENTE",
+   "p": "PARTIDO 45"
+  }
+ }
+}

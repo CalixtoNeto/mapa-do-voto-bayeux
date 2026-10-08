@@ -1,0 +1,31 @@
+{
+ "ano": "2024",
+ "final": true,
+ "c": {
+  "13|12345": {
+   "r": {
+    "fefc": 20000
+   },
+   "d": 17000,
+   "dc": [
+    [
+     "Publicidade por materiais impressos",
+     17000
+    ]
+   ]
+  },
+  "13|45678": {
+   "r": {
+    "prop": 3000
+   },
+   "d": 2500,
+   "dc": [
+    [
+     "Combustíveis e lubrificantes",
+     2500
+    ]
+   ]
+  }
+ },
+ "doadores": []
+}
