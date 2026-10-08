@@ -32,7 +32,11 @@ jobs:
       FORCAR: ${{ inputs.forcar && '--forcar' || '' }}
       GH_TOKEN: ${{ github.token }}
     steps:
+      # Na fila (concurrency), o job pode começar depois que outro já commitou dados: sem ref, o checkout pegaria
+      # o commit da hora do disparo e o pull --rebase do fim daria conflito nos mesmos arquivos.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - uses: actions/setup-node@v4
         with:
