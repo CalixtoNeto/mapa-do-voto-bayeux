@@ -9,6 +9,7 @@
     "secoes": "node scripts/gerar-secoes.mjs",
     "dados": "npm run contorno && npm run secoes",
     "eleicoes": "node scripts/gerar-dados.mjs",
+    "analises": "node scripts/gerar-analises.mjs",
     "dev": "npx --yes serve public -l 5174",
     "test": "node --test 'test/**/*.test.mjs'"
   },

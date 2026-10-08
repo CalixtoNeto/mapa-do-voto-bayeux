@@ -22,6 +22,52 @@ Clique em **Comparar** numa delas para ver no mapa onde o candidato ganhou e per
 
 O uso pensado é comparar **o mesmo cargo** (e o mesmo turno). É possível comparar cargos ou turnos diferentes, mas o botão traz "(outro cargo)" ou "(outro turno)" e o site mostra um aviso: mudam o tipo de disputa, o número de candidatos e os votos por eleitor (em anos de dois senadores, cada eleitor tem dois votos), então a variação não mede, por si só, crescimento ou queda de apoio.
 
+## Análises
+
+Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos Dados Abertos do TSE.
+
+**Na ficha do candidato** (botão *Candidato*):
+
+- **Dinheiro da campanha**: quanto recebeu, quanto declarou ter gasto, **custo por voto** (e a posição entre os candidatos do cargo), quanto veio do **fundo eleitoral**, a origem do dinheiro (fundo eleitoral, fundo partidário e partido, doações, recursos próprios e de outros candidatos) e as maiores despesas.
+- **Quem é**: gênero, cor ou raça, idade, escolaridade, ocupação, se tentou a reeleição, a situação final e os **bens declarados**, com a evolução entre eleições.
+- **Concentração do voto**: de quantos bairros veio metade dos votos e o número efetivo de bairros (voto de reduto ou espalhado).
+- **Dobradinhas prováveis**: candidatos do cargo parceiro (deputado federal ↔ estadual, governador ↔ senador) com votação parecida nos mesmos bairros.
+
+**No panorama do cargo** (botão *Panorama do cargo*):
+
+- Mapa de **quem venceu** em cada bairro e de **abstenção, brancos e nulos**, com os totais da cidade.
+- **Gasto × votos** de todos os candidatos, com diagonais de custo por voto, e rankings de menor e maior custo por voto, mais fundo eleitoral, mais dinheiro recebido e maior gasto.
+- **Fundo eleitoral por partido**, com a parcela para mulheres e para pessoas negras (pretas e pardas) e um aviso quando a parcela das mulheres fica abaixo de 30%.
+- **Quem disputou e quem se elegeu**: gênero e cor ou raça de candidatos e eleitos.
+- **Voto de reduto ou espalhado**: candidatos ordenados pela concentração do voto.
+- **Maiores doadores** dos candidatos do cargo, somados pelo CPF/CNPJ (que o site não mostra).
+
+Cuidados que o site mostra junto dos números:
+
+- **Gasto** é o total de despesas contratadas declaradas ao TSE, sem as doações a outras campanhas (que são gasto de quem recebe). **Custo por voto** é esse gasto dividido pelos votos do candidato em Bayeux.
+- O **dinheiro de campanha** aparece só para vereador: a campanha de deputado, senador ou governador é estadual e não dá para dividi-la pelos votos de Bayeux. O perfil e os bens aparecem para todos os cargos.
+- O dinheiro que veio **de outros candidatos** fica separado, para não ser contado duas vezes (pode incluir fundo eleitoral repassado).
+- A **prestação de contas é parcial** até o prazo da prestação final (cerca de 30 dias depois da eleição); o site avisa, e os números mudam quando o workflow roda de novo.
+- O **fundo eleitoral** existe desde 2018 (nas eleições municipais, desde 2020), e a prestação de contas neste formato também. Para 2012, 2014 e 2016 o site diz que o dado não existe.
+- A **regra dos 30% do fundo para mulheres** vale para o total nacional de cada partido; a parcela em Bayeux indica como o dinheiro foi distribuído na cidade, não uma irregularidade.
+- **Dobradinhas** são candidatos cujas parcelas de voto sobem e descem nos mesmos bairros (correlação): votos no mesmo eleitorado, não prova de acordo político.
+- **Bens** são valores nominais, sem correção pela inflação; a ligação entre eleições é pelo nome completo, como na evolução do candidato.
+- No mapa de quem venceu, só os três candidatos que mais venceram têm cor própria; com mais cores elas deixam de ser distinguíveis, inclusive para daltônicos.
+
+### De onde vêm as análises
+
+O gerador `scripts/gerar-analises.mjs` grava, ao lado dos arquivos de votação:
+
+| Arquivo | Fonte do TSE | Conteúdo |
+|---|---|---|
+| `ANO-candidatos.json` | Candidatos (`consulta_cand`) e bens (`bem_candidato`) | Perfil e total de bens de cada candidato |
+| `ANO-financas.json` | Prestação de contas dos candidatos (receitas e despesas contratadas) | Dinheiro por origem, gasto, repasses e maiores despesas dos vereadores, e os maiores doadores |
+| `ANO-tTURNO-comparecimento.json` | Detalhe da votação por seção | Aptos, comparecimento, brancos e nulos por local de votação, cargo e turno (o site soma por bairro) |
+| `analises.json` | — | O que existe de cada ano (o site só pede os arquivos que existem) |
+| `patrimonio.json` | — | Bens da mesma pessoa em cada eleição |
+
+Para gerar ou atualizar: **Actions → Gerar análises → Run workflow** (em branco, refaz todos os anos; ou informe, por exemplo, `2020 2024`). O workflow **Atualizar dados de uma eleição** também gera as análises do ano. Localmente: `npm run analises -- 2024`.
+
 ## De onde vêm os dados
 
 Os resultados ficam no repositório, em `public/data/eleicoes/`: um `ANO-tTURNO.json` por eleição e turno um `index.json` que o site lê para listar as eleições e um `pessoas.json` que liga o mesmo candidato entre eleições (pelo nome completo). A tabela de locais de votação de cada ano fica em `public/data/secoes-ANO.json`. O site é totalmente estático: o navegador do visitante nunca chama o TSE.
@@ -77,19 +123,21 @@ Rodam offline, em menos de um segundo, sem baixar nada do TSE:
 |---|---|
 | `scripts/gerar-dados.mjs` | Linha de comando dos votos: escolhe os anos e encadeia as etapas |
 | `scripts/gerar-secoes.mjs` | Linha de comando da tabela seção → local de votação → bairro |
+| `scripts/gerar-analises.mjs` | Linha de comando das análises: cadastro, bens, prestação de contas e comparecimento |
 | `scripts/eleicao/` | Configuração (município, cargos) e a apuração (soma de votos por local) |
 | `scripts/fontes/` | CSV por seção, API de resultados e leitura da tabela de seções |
 | `scripts/secoes/` | Bairros, coordenadas e montagem da tabela de seções |
-| `scripts/saida/` | `pessoas.json`, `index.json` e escrita dos arquivos |
+| `scripts/analises/` | Regras das análises: classificação do dinheiro, perfil, comparecimento, patrimônio e o escopo do site |
+| `scripts/saida/` | `pessoas.json`, `index.json`, arquivos das análises e escrita |
 | `scripts/lib/` | CSV do TSE, texto e acesso à rede (retentativa, cache em disco, leitura de .zip) |
 
 Cada fonte separa o tratamento de uma linha (função pura, testada sem .zip) da leitura do arquivo.
 
 ## Stack
 
-Preact + htm e Canvas 2D. fflate só nos scripts. Sem etapa de build: a pasta `public/` é o site.
+Preact + htm, Canvas 2D, SVG (gráfico gasto × votos) e módulos ES nativos para as análises (`public/js/*.mjs`). fflate só nos scripts. Sem etapa de build: a pasta `public/` é o site.
 
 ## Fontes
 
-- TSE: Portal de Dados Abertos (votação por seção e eleitorado por local de votação) e API de resultados.
+- TSE: Portal de Dados Abertos (votação por seção, detalhe da votação por seção, eleitorado por local de votação, candidatos, bens de candidatos e prestação de contas eleitorais) e API de resultados.
 - Contorno municipal: IBGE, API de malhas.

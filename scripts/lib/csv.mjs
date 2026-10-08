@@ -47,3 +47,6 @@ export function porRegistro({ aoCabecalho = () => {}, aoRegistro, descartarRapid
     if (!descartarRapido(linha)) aoRegistro(camposDaLinha(linha), colunas);
   };
 }
+
+// Coluna que nem todo ano do TSE traz: vazio quando o arquivo não a tem.
+export const campo = (campos, colunas, nome) => colunas[nome] != null ? campos[colunas[nome]] ?? '' : '';

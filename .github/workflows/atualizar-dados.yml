@@ -49,6 +49,11 @@ jobs:
           [[ "$ANO" =~ ^[0-9]{4}$ ]] || { echo "Ano inválido: $ANO"; exit 1; }
           node scripts/gerar-dados.mjs "$ANO" $FORCAR
 
+      # Perfil e bens dos candidatos, prestação de contas e comparecimento. Cada fonte que o TSE ainda
+      # não publicou fica de fora sem derrubar o workflow; rode de novo depois para completar.
+      - name: Gerar as análises
+        run: node scripts/gerar-analises.mjs "$ANO"
+
       - name: Commitar e publicar
         run: |
           git config user.name "github-actions[bot]"

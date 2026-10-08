@@ -12,6 +12,17 @@ e `scripts/gerar-dados.mjs` (votos), a partir do TSE.
 - Regra nova ou caso novo dos dados do TSE: escreva primeiro o teste em `test/unidade/`, veja falhar, depois o código.
 - Não rode os geradores contra o TSE para testar; os arquivos em `public/data/` são o que o site publica.
 
+## Análises
+
+- `scripts/gerar-analises.mjs` gera `ANO-candidatos.json`, `ANO-financas.json`, `ANO-tTURNO-comparecimento.json`,
+  `analises.json` e `patrimonio.json`; o golden master dele é `test/caracterizacao-analises.test.mjs`.
+- `scripts/analises/escopo.mjs` é o que muda entre os dois repositórios (quem entra e qual é a chave do candidato).
+  O resto de `scripts/analises/`, `scripts/fontes/{candidatos,bens,prestacao-contas}.mjs`, `scripts/saida/analises.mjs`
+  e os módulos `public/js/*.mjs` são iguais nos dois; uma correção num vale para o outro.
+- Os cálculos do site ficam em `public/js/calculos*.mjs`, sem DOM, testados em `test/unidade/calculos.test.mjs`.
+- Nomes curtos das análises que o site lê: `c`, `r`, `d`, `rep`, `dc`, `doadores` (`n`, `t`, `v`) em finanças;
+  `g`, `r`, `i`, `e`, `o`, `re`, `s`, `p`, `b` no perfil; `[aptos, comparecimento, brancos, nulos]` no comparecimento.
+
 ## Como o código está organizado
 
 - Uma responsabilidade por arquivo, arquivos com menos de 100 linhas e funções com menos de 20.
