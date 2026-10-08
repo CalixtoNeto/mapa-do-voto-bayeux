@@ -23,10 +23,10 @@ test('perfil do vereador de Bayeux, com a idade pela data de nascimento', () => 
     g: 'FEMININO', r: 'PRETA', i: 33, e: 'ENSINO MÉDIO COMPLETO', o: 'COMERCIANTE', s: 'ELEITO POR QP', p: 'PART' });
 });
 
-test('deputados entram pela UF; vereadores de outra cidade e prefeitos ficam de fora', () => {
+test('deputados entram pela UF e o prefeito pelo município; vereadores de outra cidade ficam de fora', () => {
   const perfis = perfisComBens(lerCandidatos([candidata({ ue: 'PB', cargo: '6' }), candidata({ ue: '20516' }),
     candidata({ cargo: '11' })]), new Map());
-  assert.deepEqual(Object.keys(perfis), ['6|12345']);
+  assert.deepEqual(Object.keys(perfis), ['6|12345', '11|12345']);
 });
 
 test('com o mesmo número, fica o candidato apto a receber votos (o substituto)', () => {

@@ -48,7 +48,7 @@ const pct = (v, d = 2) => (v * 100).toLocaleString('pt-BR', { minimumFractionDig
 const LOWER = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di', 'du']);
 const titleCase = s => String(s || '').toLowerCase().split(/\s+/).map((w, i) => (i && LOWER.has(w)) ? w : w.replace(/^(\p{L})/u, c => c.toUpperCase())).join(' ');
 const sentence = s => { s = String(s || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
-const CARGO_ORDER = { '1': 0, '3': 1, '5': 2, '6': 3, '7': 4, '13': 5 };
+const CARGO_ORDER = { '1': 0, '3': 1, '5': 2, '6': 3, '7': 4, '11': 5, '13': 6 };
 // Partido pelo prefixo do número (os votos de legenda do arquivo trazem o nome do partido)
 const partidoDe = (ds, ano, nr) => (ds.partidos && ds.partidos[ano] && ds.partidos[ano][String(nr).slice(0, 2)]) || '';
 // Nome de escola/local: título em caixa mista, mas siglas (EMEF, E.E.E.F.M., CRAS…) continuam em maiúsculas
@@ -89,7 +89,7 @@ const rampIndex = (cls, n) => n <= 1 ? 5 : Math.round(cls * 5 / (n - 1));
 const metricOf = (b, metric) => metric === 'votos' ? b.v : b.p;
 
 // ---------- Comparação entre eleições ----------
-const CARGO_NOMES = { '1': 'Presidente', '3': 'Governador', '5': 'Senador', '6': 'Deputado federal', '7': 'Deputado estadual', '13': 'Vereador' };
+const CARGO_NOMES = { '1': 'Presidente', '3': 'Governador', '5': 'Senador', '6': 'Deputado federal', '7': 'Deputado estadual', '11': 'Prefeito', '13': 'Vereador' };
 const LIM_VAR = [0.01, 0.0025];   // 1 e 0,25 ponto percentual da parcela de votos do bairro
 const LIM_REL = [0.25, 0.05];   // 25% e 5% de variação nos votos
 const binRel = r => r === Infinity ? 4 : r < -LIM_REL[0] ? 0 : r < -LIM_REL[1] ? 1 : r <= LIM_REL[1] ? 2 : r <= LIM_REL[0] ? 3 : 4;
@@ -112,9 +112,9 @@ const CFG = {
   lugares: ds => bairrosDe(ds.ano).map(b => b.key), lugarNome: 'bairro', lugaresNome: 'bairros', regiao: 'em Bayeux',
   agrupar: (ano, porLocal) => somaPorBairro(ano, porLocal),
   nomeDoLugar: (key, ds) => (bairrosDe(ds.ano).find(b => b.key === key) || { name: key }).name,
-  foraDasFinancas: c => c.cargo !== '13' ? 'O site mostra o dinheiro de campanha só dos candidatos a vereador: a campanha dos outros cargos é estadual e não dá para dividi-la pelos votos de Bayeux.' : '',
-  ehMajoritario: () => false,
-  cargoPar: { '6': '7', '7': '6', '3': '5', '5': '3' }, nomeDoCargo: CARGO_NOMES,
+  foraDasFinancas: c => c.cargo !== '11' && c.cargo !== '13' ? 'O site mostra o dinheiro de campanha só dos candidatos a prefeito e vereador: a campanha dos outros cargos é estadual e não dá para dividi-la pelos votos de Bayeux.' : '',
+  ehMajoritario: c => c.cargo === '11',
+  nomeDoCargo: CARGO_NOMES,
 };
 const PAINEL = AN.criarPainelDoCandidato(CFG), Panorama = AN.criarPanorama(CFG);
 const CAMADAS = [['vencedor', 'Quem venceu'], ['abstencao', 'Abstenção'], ['brancos', 'Brancos'], ['nulos', 'Nulos']];

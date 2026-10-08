@@ -9,6 +9,7 @@ test('voto nominal precisa do número de dígitos do cargo e não pode ser branc
   assert.equal(ehVotoNominal('3', '95'), false, 'branco');
   assert.equal(ehVotoNominal('3', '96'), false, 'nulo');
   assert.equal(ehVotoNominal('3', '40'), true);
+  assert.equal(ehVotoNominal('11', '45'), true, 'prefeito');
 });
 
 const CABECALHO = '"ANO_ELEICAO";"NR_TURNO";"SG_UF";"CD_MUNICIPIO";"NR_ZONA";"NR_SECAO";"CD_CARGO";"DS_CARGO";'
@@ -47,8 +48,14 @@ test('voto de legenda guarda o nome do partido, mas não para governador', () =>
   assert.equal(apuracao.esp['2024|1|13'].legenda, 1);
 });
 
-test('ignora outro município e cargo que o site não mostra (prefeito)', () => {
-  assert.deepEqual(ler([voto({ mun: '19003' }), voto({ cargo: '11', nr: '12' })]).apuracao, undefined);
+test('ignora outro município e cargo que o site não mostra (presidente, que o CSV da UF não traz)', () => {
+  assert.deepEqual(ler([voto({ mun: '19003' }), voto({ cargo: '1', nr: '13' })]).apuracao, undefined);
+});
+
+test('prefeito: o número de 2 dígitos é o candidato, não voto de legenda nem nome de partido', () => {
+  const { apuracao, partidos } = ler([voto({ cargo: '11', nr: '12', nome: 'FULANO PREFEITO', votos: '5' })]);
+  assert.deepEqual(apuracao.cands.get('2024|1|11|12').loc, { 0: 5 });
+  assert.deepEqual(partidos, {});
 });
 
 test('falha com a lista de colunas ausentes', () => {
