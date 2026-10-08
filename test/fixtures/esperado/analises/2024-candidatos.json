@@ -10,7 +10,13 @@
    "re": 1,
    "s": "ELEITO POR QP",
    "p": "PARTIDO DOZE",
-   "b": 150000
+   "b": 150000,
+   "bt": [
+    [
+     "Apartamento",
+     150000
+    ]
+   ]
   },
   "13|45678": {
    "g": "MASCULINO",

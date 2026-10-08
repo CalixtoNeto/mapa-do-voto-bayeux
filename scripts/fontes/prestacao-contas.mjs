@@ -5,7 +5,7 @@ import { porRegistro, campo } from '../lib/csv.mjs';
 import { reais } from '../lib/valores.mjs';
 import { informado } from '../lib/texto.mjs';
 import { origemDaReceita, ehRepasse } from '../analises/receitas.mjs';
-import { novasFinancas, somarReceita, somarDespesa } from '../analises/financas.mjs';
+import { novasFinancas, somarReceita, somarDespesa, somarDespesaPaga } from '../analises/financas.mjs';
 import { identificacao, ehDoAno } from '../analises/identificacao.mjs';
 import { candidatoDasFinancas, chaveDoCandidato } from '../analises/escopo.mjs';
 import { UF, PASTA_DOWNLOADS } from '../eleicao/config.mjs';
@@ -17,6 +17,7 @@ export async function financasViaCsv(ano) {
   const [temReceitas] = await lerCsvsDoZip(zip, [
     { padrao: new RegExp(`^receitas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeReceitas({ ano, financas }) },
     { padrao: new RegExp(`^despesas_contratadas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeDespesas({ ano, financas }) },
+    { padrao: new RegExp(`^despesas_pagas_candidatos_${ano}_${UF}\\.csv$`, 'i'), aoLinha: leitorDeDespesasPagas({ ano, financas }) },
   ]);
   if (!temReceitas) throw new Error(`o .zip não tem receitas_candidatos_${ano}_${UF}.csv`);
   return financas;
@@ -36,7 +37,7 @@ export function leitorDeReceitas({ ano, financas }) {
     const valor = nome => campo(campos, colunas, nome);
     const origem = origemDaReceita(valor('DS_FONTE_RECEITA'), valor('DS_ORIGEM_RECEITA'));
     const doador = origem === 'pf' || origem === 'pj' ? doadorDaReceita(valor, origem) : null;
-    somarReceita(financas, chave, { origem, valor: reais(valor('VR_RECEITA')), doador });
+    somarReceita(financas, chave, { origem, valor: reais(valor('VR_RECEITA')), doador, data: valor('DT_RECEITA') });
   });
 }
 
@@ -48,8 +49,23 @@ function doadorDaReceita(valor, tipo) {
 
 export function leitorDeDespesas({ ano, financas }) {
   return leitorDoCandidato(ano, (chave, campos, colunas) => {
-    const categoria = informado(campo(campos, colunas, 'DS_ORIGEM_DESPESA')) || 'Outras';
-    const valor = reais(campo(campos, colunas, 'VR_DESPESA_CONTRATADA'));
-    somarDespesa(financas, chave, { categoria, valor, repasse: ehRepasse(categoria) });
+    const valor = nome => campo(campos, colunas, nome);
+    const categoria = informado(valor('DS_ORIGEM_DESPESA')) || 'Outras';
+    somarDespesa(financas, chave, {
+      categoria, valor: reais(valor('VR_DESPESA_CONTRATADA')), repasse: ehRepasse(categoria), fornecedor: fornecedorDaDespesa(valor),
+    });
+  });
+}
+
+function fornecedorDaDespesa(valor) {
+  const nome = informado(valor('NM_FORNECEDOR_RFB')) || informado(valor('NM_FORNECEDOR'));
+  return nome ? { id: informado(valor('NR_CPF_CNPJ_FORNECEDOR')) || nome, nome } : null;
+}
+
+// Despesa contratada e não paga até a prestação de contas vira dívida de campanha.
+export function leitorDeDespesasPagas({ ano, financas }) {
+  return leitorDoCandidato(ano, (chave, campos, colunas) => {
+    if (ehRepasse(campo(campos, colunas, 'DS_ORIGEM_DESPESA'))) return;
+    somarDespesaPaga(financas, chave, reais(campo(campos, colunas, 'VR_PAGTO_DESPESA')));
   });
 }

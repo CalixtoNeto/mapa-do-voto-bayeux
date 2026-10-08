@@ -15,13 +15,17 @@ e `scripts/gerar-dados.mjs` (votos), a partir do TSE.
 ## Análises
 
 - `scripts/gerar-analises.mjs` gera `ANO-candidatos.json`, `ANO-financas.json`, `ANO-tTURNO-comparecimento.json`,
-  `analises.json` e `patrimonio.json`; o golden master dele é `test/caracterizacao-analises.test.mjs`.
+  `ANO-eleitorado.json`, `analises.json`, `patrimonio.json` e `dinheiro.json`; o golden master dele é
+  `test/caracterizacao-analises.test.mjs`.
 - `scripts/analises/escopo.mjs` é o que muda entre os dois repositórios (quem entra e qual é a chave do candidato).
-  O resto de `scripts/analises/`, `scripts/fontes/{candidatos,bens,prestacao-contas}.mjs`, `scripts/saida/analises.mjs`
+  O resto de `scripts/analises/`, `scripts/fontes/{candidatos,bens,prestacao-contas,eleitorado}.mjs`, `scripts/saida/analises.mjs`
   e os módulos `public/js/*.mjs` são iguais nos dois; uma correção num vale para o outro.
-- Os cálculos do site ficam em `public/js/calculos*.mjs`, sem DOM, testados em `test/unidade/calculos.test.mjs`.
-- Nomes curtos das análises que o site lê: `c`, `r`, `d`, `rep`, `dc`, `doadores` (`n`, `t`, `v`) em finanças;
-  `g`, `r`, `i`, `e`, `o`, `re`, `s`, `p`, `b` no perfil; `[aptos, comparecimento, brancos, nulos]` no comparecimento.
+- Os cálculos do site ficam em `public/js/calculos*.mjs`, sem DOM, testados em `test/unidade/calculos*.test.mjs`.
+  O que cada site faz diferente (lugares, chave do candidato) entra pelo `CFG` de `app.js` (`agrupar`, `nomeDoLugar`…).
+- Nomes curtos das análises que o site lê: `c`, `r`, `d`, `rep`, `pg`, `dc`, `rs`, `doa`, `nd`, `fo`, `nf`, `doadores` e
+  `fornecedores` (`n`, `t`, `v`, `c`) em finanças; `g`, `r`, `i`, `e`, `o`, `re`, `s`, `p`, `b`, `bt` no perfil;
+  `[aptos, comparecimento, brancos, nulos, legenda?]` no comparecimento; `[eleitores, mulheres, jovens, idosos,
+  superior, pouco estudo]` no eleitorado. Em `doa` e `fo`, o último número é o índice na lista do arquivo.
 
 ## Como o código está organizado
 

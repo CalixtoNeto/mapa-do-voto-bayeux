@@ -75,3 +75,6 @@ export function coresDosVencedores(contagem) {
 }
 
 export * from './calculos-dinheiro.mjs';
+export * from './calculos-candidato.mjs';
+export * from './calculos-cargo.mjs';
+export * from './calculos-lugares.mjs';
