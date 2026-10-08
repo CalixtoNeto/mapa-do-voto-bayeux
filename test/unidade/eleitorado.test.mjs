@@ -25,3 +25,15 @@ test('soma por lugar: eleitores, mulheres, jovens (até 24), idosos (60+), super
   ]);
   assert.deepEqual(lugares, { JP: [20, 12, 12, 5, 10, 10] });
 });
+
+test('aceita a quantidade de eleitores com outro nome de coluna, mas não as de biometria e deficiência', () => {
+  const lugares = {}, aoLinha = leitorDoEleitorado({ ano: '2026', lugarDe: () => 'JP', lugares });
+  aoLinha(linha(['SG_UF', 'QT_ELEITORES_BIOMETRIA', 'DS_GENERO', 'DS_FAIXA_ETARIA', 'DS_GRAU_ESCOLARIDADE', 'QT_ELEITORES']), true);
+  aoLinha(linha(['PB', '9', 'FEMININO', '30 a 34 anos', 'SUPERIOR COMPLETO', '4']), false);
+  assert.deepEqual(lugares, { JP: [4, 4, 0, 0, 4, 0] });
+});
+
+test('sem a coluna da quantidade, o erro diz quais colunas o arquivo tem', () => {
+  const aoLinha = leitorDoEleitorado({ ano: '2026', lugarDe: () => 'JP', lugares: {} });
+  assert.throws(() => aoLinha(linha(['SG_UF', 'DS_GENERO', 'DS_FAIXA_ETARIA', 'DS_GRAU_ESCOLARIDADE']), true), /colunas do arquivo: SG_UF, DS_GENERO/);
+});

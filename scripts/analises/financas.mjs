@@ -3,7 +3,9 @@
 // O formato que o site lê está em resumo-financas.mjs.
 export { resumoDasFinancas } from './resumo-financas.mjs';
 
-export const novasFinancas = () => ({ candidatos: new Map(), doadores: new Map(), fornecedores: new Map() });
+export const novasFinancas = () => ({
+  candidatos: new Map(), doadores: new Map(), fornecedores: new Map(), prestadores: new Map(), pagoPorPrestador: new Map(),
+});
 
 function doCandidato(financas, chave) {
   if (!financas.candidatos.has(chave)) {
@@ -40,6 +42,24 @@ export function somarDespesa(financas, chave, { categoria, valor, repasse, forne
 
 export function somarDespesaPaga(financas, chave, valor) {
   doCandidato(financas, chave).pg += valor;
+}
+
+// O arquivo de despesas pagas não identifica o candidato, só a prestação de contas (SQ_PRESTADOR_CONTAS);
+// receitas e despesas contratadas dizem de quem é cada prestação. Os arquivos chegam em qualquer ordem.
+export function registrarPrestador(financas, prestador, chave) {
+  if (prestador) financas.prestadores.set(prestador, chave);
+}
+
+export function somarPagoDoPrestador(financas, prestador, valor) {
+  somarEm(financas.pagoPorPrestador, prestador, valor);
+}
+
+export function atribuirPagamentos(financas) {
+  for (const [prestador, valor] of financas.pagoPorPrestador) {
+    const chave = financas.prestadores.get(prestador);
+    if (chave) somarDespesaPaga(financas, chave, valor);
+  }
+  financas.pagoPorPrestador.clear();
 }
 
 // O TSE escreve as datas como dd/mm/aaaa; a semana começa na segunda-feira, como no calendário eleitoral.
