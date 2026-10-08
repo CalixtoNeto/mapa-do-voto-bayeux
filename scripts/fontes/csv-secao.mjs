@@ -4,7 +4,7 @@ import { CDN, baixar, lerCsvDoZip } from '../lib/tse.mjs';
 import { porRegistro, inteiro } from '../lib/csv.mjs';
 import { novaApuracao, chaveDoCargo, somarVotoNoLocal, somarVotoEspecial, ehBrancoOuNulo }
   from '../eleicao/apuracao.mjs';
-import { UF, MUNICIPIO_TSE, CARGOS, DIGITOS_DO_CANDIDATO, PASTA_DOWNLOADS } from '../eleicao/config.mjs';
+import { UF, MUNICIPIO_TSE, DIGITOS_DO_CANDIDATO, PASTA_DOWNLOADS } from '../eleicao/config.mjs';
 import { carregarTabelaDeSecoes, localizadorDeSecoes } from './tabela-secoes.mjs';
 
 const COLUNAS_OBRIGATORIAS = ['ANO_ELEICAO', 'NR_TURNO', 'SG_UF', 'CD_MUNICIPIO', 'NR_ZONA', 'NR_SECAO', 'CD_CARGO',
@@ -60,9 +60,10 @@ export function ehVotoNominal(cargo, numero) {
   return numero.length >= DIGITOS_DO_CANDIDATO[cargo] && !ehBrancoOuNulo(numero);
 }
 
-// No voto de legenda (número de 2 dígitos), o "nome votável" é o nome do partido.
+// No voto de legenda (número de 2 dígitos), o "nome votável" é o nome do partido. Em governador e prefeito,
+// o número de 2 dígitos já é o do candidato.
 function registrarPartido(partidos, cargo, numero, nome) {
-  if (numero.length === 2 && !ehBrancoOuNulo(numero) && cargo !== CARGOS.GOVERNADOR) partidos[numero] ||= nome;
+  if (numero.length === 2 && !ehBrancoOuNulo(numero) && DIGITOS_DO_CANDIDATO[cargo] > 2) partidos[numero] ||= nome;
 }
 
 function candidatoDoRegistro(campos, colunas, ano) {

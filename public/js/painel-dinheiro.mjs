@@ -28,7 +28,7 @@ function notasDoDinheiro(r, financas, cfg, cand) {
     !financas.final && 'Prestação de contas parcial: a final é entregue até 30 dias depois da eleição.',
     'Gasto: despesas contratadas declaradas ao TSE' + (r.repasses ? `, sem ${dinheiro(r.repasses)} doados a outras campanhas.` : '.'),
     `Custo por voto: gasto dividido pelos votos ${cfg.regiao}.`,
-    cfg.ehMajoritario(cand) && 'Em cargos majoritários, o dinheiro é da chapa e cobre os dois turnos.',
+    cfg.ehMajoritario(cand) && 'Em cargos majoritários, o dinheiro é da chapa (com vice ou suplentes) e, quando há 2º turno, cobre os dois.',
     r.deCandidatos ? `${dinheiro(r.deCandidatos)} vieram de outros candidatos (podem incluir fundo eleitoral repassado).` : '',
   ].filter(Boolean);
 }

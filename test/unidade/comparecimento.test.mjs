@@ -24,7 +24,7 @@ test('soma as seções no local de votação onde funcionam', () => {
 
 test('ignora outra cidade, cargo fora do site e seção sem local', () => {
   assert.deepEqual(ler([
-    secao('100', { mun: '20516' }, '1', '1', '0', '0', '0'), secao('100', { cargo: '11' }, '1', '1', '0', '0', '0'),
+    secao('100', { mun: '20516' }, '1', '1', '0', '0', '0'), secao('100', { cargo: '1' }, '1', '1', '0', '0', '0'),
     secao('999', {}, '1', '1', '0', '0', '0'),
   ]), {});
 });

@@ -8,11 +8,28 @@
  "atualizadoEm": "<data>",
  "cargos": [
   {
+   "cd": "11",
+   "nome": "Prefeito"
+  },
+  {
    "cd": "13",
    "nome": "Vereador"
   }
  ],
  "cands": [
+  {
+   "key": "2024|1|11|12",
+   "ano": "2024",
+   "turno": "1",
+   "cargo": "11",
+   "cargoNome": "Prefeito",
+   "nr": "12",
+   "nome": "FULANO PREFEITO",
+   "total": 999,
+   "loc": {
+    "0": 999
+   }
+  },
   {
    "key": "2024|1|13|12345",
    "ano": "2024",
@@ -50,6 +67,9 @@
    "1": 36,
    "2": 15,
    "3": 5
+  },
+  "2024|1|11": {
+   "0": 999
   }
  },
  "esp": {

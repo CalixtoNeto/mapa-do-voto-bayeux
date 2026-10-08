@@ -2,7 +2,7 @@ Site: https://calixtoneto.github.io/mapa-do-voto-bayeux/
 
 # Mapa do voto · Bayeux
 
-Votos de candidatos a vereador, deputado federal, deputado estadual, senador e governador em cada bairro de Bayeux (PB), a partir dos resultados oficiais do TSE.
+Votos de candidatos a prefeito, vereador, deputado federal, deputado estadual, senador e governador em cada bairro de Bayeux (PB), a partir dos resultados oficiais do TSE.
 
 ## Como usar
 
@@ -33,7 +33,7 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 - **Evolução patrimonial**: bens declarados em cada eleição, a variação entre elas (no total e por ano), **de que são os bens** (casa, veículos, aplicações…) e quanto o candidato pôs na própria campanha.
 - **Força do voto**: nos cargos proporcionais, a parcela do **quociente eleitoral** e dos votos do partido, e a distância entre o eleito menos votado e o não eleito mais votado; os bairros **onde vai melhor** do que no conjunto; e o **perfil do eleitorado** (mulheres, jovens, idosos, escolaridade) dos bairros de onde vêm os votos.
 - **Concentração do voto**: de quantos bairros veio metade dos votos e o número efetivo de bairros (voto de reduto ou espalhado).
-- **Dobradinhas prováveis**: candidatos do cargo parceiro (deputado federal ↔ estadual, governador ↔ senador) com votação parecida nos mesmos bairros.
+- **Dobradinhas prováveis**: para cada outro cargo da mesma eleição (e, para senador, os outros senadores), os candidatos cuja votação sobe e desce nos mesmos bairros. Em cargos com poucos candidatos (governador, senador, prefeito) aparecem todos, inclusive os que andam ao contrário; nos outros, os cinco mais parecidos. Cada um traz a força da correlação (fraca, moderada ou forte).
 
 **No panorama do cargo** (botão *Panorama do cargo*):
 
@@ -51,12 +51,12 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 Cuidados que o site mostra junto dos números:
 
 - **Gasto** é o total de despesas contratadas declaradas ao TSE, sem as doações a outras campanhas (que são gasto de quem recebe). **Custo por voto** é esse gasto dividido pelos votos do candidato em Bayeux.
-- O **dinheiro de campanha** aparece só para vereador: a campanha de deputado, senador ou governador é estadual e não dá para dividi-la pelos votos de Bayeux. O perfil e os bens aparecem para todos os cargos.
+- O **dinheiro de campanha** aparece só para prefeito e vereador: a campanha de deputado, senador ou governador é estadual e não dá para dividi-la pelos votos de Bayeux. O perfil e os bens aparecem para todos os cargos.
 - O dinheiro que veio **de outros candidatos** fica separado, para não ser contado duas vezes (pode incluir fundo eleitoral repassado).
 - A **prestação de contas é parcial** até o prazo da prestação final (cerca de 30 dias depois da eleição); o site avisa, e os números mudam quando o workflow roda de novo.
 - O **fundo eleitoral** existe desde 2018 (nas eleições municipais, desde 2020), e a prestação de contas neste formato também. Para 2012, 2014 e 2016 o site diz que o dado não existe.
 - A **regra dos 30% do fundo para mulheres** vale para o total nacional de cada partido; a parcela em Bayeux indica como o dinheiro foi distribuído na cidade, não uma irregularidade.
-- **Dobradinhas** são candidatos cujas parcelas de voto sobem e descem nos mesmos bairros (correlação): votos no mesmo eleitorado, não prova de acordo político.
+- **Dobradinhas** são candidatos cujas parcelas de voto sobem e descem nos mesmos bairros (correlação): votos no mesmo eleitorado, não prova de acordo político. Correlação negativa quer dizer que um vai melhor onde o outro vai pior; abaixo de 0,3 (em módulo) a relação é fraca.
 - O **perfil do eleitorado** é o dos bairros de onde vêm os votos, ponderado pelos votos: descreve os lugares, não quem votou no candidato (o voto é secreto).
 - O **quociente eleitoral** soma os votos de legenda quando o arquivo do TSE traz; senão, o site avisa que a conta é sem legenda. As vagas são os eleitos do cargo no cadastro do TSE.
 - **Doadores e fornecedores em comum** mostram quem se liga a mais de uma campanha, não irregularidade nem acordo.
@@ -70,7 +70,7 @@ O gerador `scripts/gerar-analises.mjs` grava, ao lado dos arquivos de votação:
 | Arquivo | Fonte do TSE | Conteúdo |
 |---|---|---|
 | `ANO-candidatos.json` | Candidatos (`consulta_cand`) e bens (`bem_candidato`) | Perfil, total de bens e os maiores tipos de bem de cada candidato |
-| `ANO-financas.json` | Prestação de contas dos candidatos (receitas, despesas contratadas e pagas) | Dinheiro por origem, gasto, repasses e maiores despesas dos vereadores, e os maiores doadores; por candidato, os maiores doadores e fornecedores, o recebido por semana e o pago; a lista dos maiores doadores e fornecedores e de quem se liga a mais de um candidato |
+| `ANO-financas.json` | Prestação de contas dos candidatos (receitas, despesas contratadas e pagas) | Dinheiro por origem, gasto, repasses e maiores despesas de prefeitos e vereadores, e os maiores doadores; por candidato, os maiores doadores e fornecedores, o recebido por semana e o pago; a lista dos maiores doadores e fornecedores e de quem se liga a mais de um candidato |
 | `ANO-tTURNO-comparecimento.json` | Detalhe da votação por seção | Aptos, comparecimento, brancos, nulos e (quando o TSE traz) votos de legenda por local de votação, cargo e turno (o site soma por bairro) |
 | `ANO-eleitorado.json` | Perfil do eleitorado por seção (`perfil_eleitor_secao`) | Eleitores, mulheres, jovens, idosos e escolaridade por local de votação (o site soma por bairro) |
 | `analises.json` | — | O que existe de cada ano (o site só pede os arquivos que existem) |

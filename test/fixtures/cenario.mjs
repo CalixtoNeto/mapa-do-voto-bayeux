@@ -44,7 +44,7 @@ const SECAO_2024 = [
   voto('100', '13', '12', 'PARTIDO DOZE', '7'),
   voto('100', '13', '95', 'VOTO BRANCO', '8'),
   voto('100', '13', '96', 'VOTO NULO', '9'),
-  voto('100', '11', '12', 'PREFEITO FORA', '999'),
+  voto('100', '11', '12', 'FULANO PREFEITO', '999'),
   ['2024', '1', 'PB', '19003', '61', '100', '13', 'Vereador', '12345', 'OUTRA CIDADE', '999', ''],
 ];
 
