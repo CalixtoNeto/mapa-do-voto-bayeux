@@ -44,3 +44,11 @@ test('campanha pequena ou sem comparação suficiente não gera alerta', () => {
   assert.deepEqual(alertasDaCampanha(cands[0], { ...contexto(despesa(100000)), cands: cands.slice(0, 3) })
     .filter(a => a[0] === 'categoria' || a[0] === 'custo'), []);
 });
+
+test('no máximo cinco categorias, as que mais destoam primeiro', () => {
+  const nomes = ['a', 'b', 'c', 'd', 'e', 'f'];
+  const comTodas = (v, extra = {}) => ({ r: { fefc: 1 }, d: 1, dc: nomes.map((n, i) => [n, v * (extra[n] || 1) * (i + 1)]) });
+  const c = { A: comTodas(10000, { f: 100 }), B: comTodas(100), C: comTodas(100), D: comTodas(100), E: comTodas(100), F: comTodas(100) };
+  const a = alertasDaCampanha(cands[0], { cands, chaveDe: x => x.nr, financas: { c }, perfis: { c: {} } }).filter(x => x[0] === 'categoria');
+  assert.deepEqual(a.map(x => x[1]), ['f', 'a', 'b', 'c', 'd']);
+});

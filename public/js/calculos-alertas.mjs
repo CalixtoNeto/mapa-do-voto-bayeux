@@ -4,21 +4,21 @@ import { resumoFinanceiro, custoPorVoto, mediana } from './calculos-dinheiro.mjs
 import { NORM } from './formato.mjs';
 
 const VEZES = 3, MINIMO_POR_CATEGORIA = 5000, MINIMO_DA_CAMPANHA = 10000, COMPARAVEIS = 5;
-const MAIORIA = 0.5, SEM_PAGAR = 0.3, MINIMO_SEM_PAGAR = 5000;
+const MAIORIA = 0.5, SEM_PAGAR = 0.3, MINIMO_SEM_PAGAR = 5000, CATEGORIAS_MOSTRADAS = 5;
 
 function outrasCampanhas(cand, ctx) {
   const chave = ctx.chaveDe(cand);
   return ctx.cands.filter(c => ctx.chaveDe(c) !== chave).map(c => ({ c, f: ctx.financas?.c?.[ctx.chaveDe(c)] })).filter(o => o.f);
 }
 
-// [categoria, valor, mediana de quem também gastou nela, quantos gastaram]
+// [categoria, valor, mediana de quem também gastou nela, quantos gastaram], as que mais destoam primeiro.
 function categorias(f, outras) {
   return (f.dc || []).flatMap(([nome, v]) => {
     const deles = outras.map(o => (o.f.dc || []).find(c => c[0] === nome)?.[1]).filter(x => x > 0);
     if (deles.length < COMPARAVEIS || v < MINIMO_POR_CATEGORIA) return [];
     const m = mediana(deles);
     return v >= VEZES * m ? [['categoria', nome, v, m, deles.length]] : [];
-  });
+  }).sort((a, b) => b[2] / b[3] - a[2] / a[3]).slice(0, CATEGORIAS_MOSTRADAS);
 }
 
 function custo(cand, r, outras) {
