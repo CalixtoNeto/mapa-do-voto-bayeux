@@ -62,17 +62,6 @@ export function agruparLigacoes(ligacoes) {
     anos: [...g.pagoPorAno.keys()].sort(), campanhas: [...g.campanhas.values()] })).sort((a, b) => b.pago - a.pago);
 }
 
-// Ramo da árvore de decomposição no caminho escolhido (lista de nomes a partir da raiz).
-export function ramoDaArvore(arvore, caminho) {
-  let filhos = arvore.filhos, valor = arvore.v;
-  for (const nome of caminho) {
-    const ramo = (filhos || []).find(f => f[0] === nome);
-    if (!ramo) break;
-    [, valor, filhos] = ramo;
-  }
-  return { valor, filhos: filhos || [] };
-}
-
 const comAnoCompleto = a => a?.despesas?.meses?.length === 12;
 // Tipos de compra que pelo menos dobraram de um ano completo para o seguinte e cresceram R$ 1 milhão ou mais.
 export function crescimentosAnormais(anos, ano) {

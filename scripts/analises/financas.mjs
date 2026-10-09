@@ -1,5 +1,5 @@
 // Acumula o dinheiro de campanha lido da prestação de contas: receitas por origem e por semana, gasto,
-// repasses, categorias de despesa, despesas pagas, e quem doou e quem foi pago (com os candidatos de cada um).
+// repasses, categorias de despesa (e quem recebeu em cada uma), despesas pagas, e quem doou e quem foi pago (com os candidatos de cada um).
 // O formato que o site lê está em resumo-financas.mjs.
 export { resumoDasFinancas } from './resumo-financas.mjs';
 
@@ -9,11 +9,12 @@ export const novasFinancas = () => ({
 
 function doCandidato(financas, chave) {
   if (!financas.candidatos.has(chave)) {
-    financas.candidatos.set(chave, { r: {}, d: 0, rep: 0, pg: 0, dc: new Map(), rs: new Map() });
+    financas.candidatos.set(chave, { r: {}, d: 0, rep: 0, pg: 0, dc: new Map(), df: new Map(), rs: new Map() });
   }
   return financas.candidatos.get(chave);
 }
 
+export const SEM_FORNECEDOR = 'Sem fornecedor informado';
 const somarEm = (mapa, chave, valor) => mapa.set(chave, (mapa.get(chave) || 0) + valor);
 
 export function somarReceita(financas, chave, { origem, valor, doador, data }) {
@@ -37,6 +38,8 @@ export function somarDespesa(financas, chave, { categoria, valor, repasse, forne
   if (repasse) { candidato.rep += valor; return; }
   candidato.d += valor;
   somarEm(candidato.dc, categoria, valor);
+  if (!candidato.df.has(categoria)) candidato.df.set(categoria, new Map());
+  somarEm(candidato.df.get(categoria), fornecedor?.nome || SEM_FORNECEDOR, valor);
   if (fornecedor) somarParticipante(financas.fornecedores, fornecedor, chave, valor);
 }
 

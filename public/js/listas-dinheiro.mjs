@@ -1,7 +1,9 @@
 // Detalhe do dinheiro de um candidato: posição entre os do cargo, para onde foi o gasto, quem doou e quem
 // recebeu os pagamentos. Os doadores e fornecedores vêm limitados aos dez maiores no arquivo de finanças.
 import { pct, sentence, titleCase, dinheiro } from './formato.mjs';
-import { ListaDeBarras, usarLimite } from './componentes.mjs';
+import { ArvoreDeBarras } from './arvore.mjs';
+import { arvoreDoGasto } from './calculos-arvore.mjs';
+import { ListaDeBarras } from './componentes.mjs';
 const { html } = window.htmPreact;
 
 const ordinal = ({ posicao, de }) => posicao > 0 ? `${posicao}º de ${de}` : null;
@@ -18,12 +20,15 @@ export function PosicaoNoCargo({ posicoes, nomeDoCargo }) {
       <span class="vv">${pos}</span><small>${qual}${med ? ` · mediana do cargo: ${dinheiro(med)}` : ''}</small></li>`)}</ul>`;
 }
 
+// Categoria de gasto → quem recebeu, na mesma árvore do perfil da Prefeitura.
+const quemRecebeu = (nome, nivel) => nivel === 1 && !/^(Outros \(|Sem fornecedor)/.test(nome) ? titleCase(nome) : sentence(nome);
+
 export function DespesasDoCandidato({ categorias }) {
-  const [limite, botao] = usarLimite(categorias.length);
   if (!categorias.length) return null;
-  const total = categorias.reduce((s, [, v]) => s + v, 0);
+  const comQuem = categorias.some(c => c[2]);
   return html`<h3>Para onde foi o dinheiro</h3>
-    <${ListaDeBarras} itens=${categorias.slice(0, limite).map(([n, v]) => ({ n: sentence(n), v, rotulo: `${dinheiro(v)} · ${pct(v / total, 0)}` }))} />${botao}`;
+    ${comQuem && html`<p class="hint">Categoria de gasto → quem recebeu. Toque numa categoria para ver os fornecedores.</p>`}
+    <div class="arvore"><${ArvoreDeBarras} arvore=${arvoreDoGasto(categorias)} rotulo=${quemRecebeu} /></div>`;
 }
 
 export function DoadoresDoCandidato({ doacoes, quantos, recebido }) {
