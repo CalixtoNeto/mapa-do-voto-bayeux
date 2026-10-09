@@ -15,33 +15,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: SAPL da Câmara de Bayeux
+      - name: Onde o portal do TCE-PB busca os dados
         continue-on-error: true
         run: |
-          api=https://sapl.bayeux.pb.leg.br/api
-          mostrar() { echo "::group::$1"; curl -sSL -m 60 -A 'Mozilla/5.0' -H 'Accept: application/json' "$api/$1" | head -c 2500; echo; echo "::endgroup::"; }
-          for caminho in '' 'parlamentares/parlamentar/?page_size=3' 'parlamentares/legislatura/' 'parlamentares/mandato/?page_size=3' \
-              'parlamentares/filiacao/?page_size=2' 'sessao/sessaoplenaria/?page_size=2' 'sessao/sessaoplenariapresenca/?page_size=3' \
-              'sessao/presencaordemdia/?page_size=3' 'sessao/registrovotacao/?page_size=2' 'sessao/votoparlamentar/?page_size=3' \
-              'sessao/ordemdia/?page_size=2' 'materia/materialegislativa/?page_size=2' 'materia/autoria/?page_size=3' \
-              'materia/tipomaterialegislativa/' 'base/autor/?page_size=3'; do
-            mostrar "$caminho"
-          done
-
-      - name: Portal de dados abertos do TCE-PB
-        continue-on-error: true
-        run: |
-          curl -sSL -m 60 -A 'Mozilla/5.0' -o tce.html -w 'HTTP %{http_code} -> %{url_effective}\n' https://dados-abertos.tce.pb.gov.br/
-          echo "::group::html"; head -c 4000 tce.html; echo; echo "::endgroup::"
-          echo "::group::links e scripts"
-          grep -oiE '(href|src|action)="[^"]+"' tce.html | sort -u | head -120
+          base=https://dados-abertos.tce.pb.gov.br
+          js=$(curl -sSL -m 60 "$base/" | grep -oE 'src="[^"]+\.js"' | sed 's/^src="//;s/"$//' | head -1)
+          curl -sSL -m 60 -o app.js "$base$js"
+          echo "::group::endereços no script"
+          grep -oE '"https?://[^"]{4,200}"' app.js | sort -u | head -80
+          grep -oE '`[^`]{0,40}(api|https?:)[^`]{0,160}`' app.js | sort -u | head -80
           echo "::endgroup::"
-          for js in $(grep -oiE 'src="[^"]+\.js[^"]*"' tce.html | sed 's/^src="//;s/"$//' | head -8); do
-            case "$js" in http*) url=$js;; /*) url=https://dados-abertos.tce.pb.gov.br$js;; *) url=https://dados-abertos.tce.pb.gov.br/$js;; esac
-            echo "::group::$url"
-            curl -sSL -m 60 "$url" | grep -oE '"(/|https?://)[^"]{3,120}"' | grep -iE 'api|dados|download|arquivo|sagres|\.(gz|zip|csv)' | sort -u | head -60
-            echo "::endgroup::"
-          done
-          for caminho in api api/ api/arquivos download downloads arquivos sagres municipal; do
-            echo "$(curl -sS -o /dev/null -m 30 -w '%{http_code} %{content_type}' https://dados-abertos.tce.pb.gov.br/$caminho) /$caminho"
-          done
+          echo "::group::trechos com fetch/axios/baseURL"
+          grep -oE '.{0,160}(fetch\(|baseURL|axios\.|\.get\(`).{0,200}' app.js | head -40
+          echo "::endgroup::"
+          echo "::group::arquivos e chunks importados"
+          grep -oE '"(\./|/assets/)[^"]+\.js"' app.js | sort -u | head -40
+          grep -oE '"[^"]{0,80}\.(zip|gz|csv|json)"' app.js | sort -u | head -40
+          echo "::endgroup::"
