@@ -1,0 +1,2 @@
+# Saídas gravadas do golden master: sempre LF, para o teste comparar igual no Windows e no Linux.
+test/fixtures/esperado/** text eol=lf

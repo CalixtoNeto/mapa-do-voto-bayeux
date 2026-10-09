@@ -14,7 +14,7 @@ function Prefeito({ p, anos, aoVerNoMapa }) {
   return html`<${Topo} titulo=${nomeProprio(p.nome)} linhas=${[`Prefeito(a) eleito(a) em ${p.ano}`, `${nf.format(p.votos)} votos`]}>
       <button type="button" class="link" onClick=${() => aoVerNoMapa(p.ano, p.chave)}>Ver os votos de ${p.ano} no mapa</button><//>
     <${Estatisticas} itens=${[rem && { rotulo: `Recebido em ${mesAno(rem.mes)}`, valor: dinheiro(rem.valor), nota: sentence(rem.cargo) }]} />
-    <${Secao} id="pc" titulo="Empresas presentes na campanha e entre os credores do município"><${Ligacoes} ligacoes=${ligacoesDoCandidato(anos, p.chave, p.ano)} /><//>`;
+    <${Secao} id="pc" titulo="Doadores e fornecedores da campanha que também receberam do município"><${Ligacoes} ligacoes=${ligacoesDoCandidato(anos, p.chave, p.ano)} /><//>`;
 }
 
 function Anos({ anos, ano, setAno }) {
@@ -35,7 +35,7 @@ export function PerfilPrefeitura({ anos, aoVerNoMapa }) {
     <${Secao} id="pa" titulo=${`Para onde foi o dinheiro em ${a.ano}`}><${ArvoreDeGastos} key=${a.ano} arvores=${detalhe?.arvores} ano=${a.ano} /><//>
     <${Secao} id="px" titulo=${`Valores atípicos nos pagamentos de ${a.ano}`}><${Alertas} a=${a} anos=${anos} /><//>
     <${FolhaDoAno} a=${a} detalhe=${detalhe} /><${LicitacoesDoAno} a=${a} detalhe=${detalhe} /><${EmendasRecebidas} a=${a} />
-    <${Secao} id="pd" titulo=${`Empresas presentes em campanhas e entre os credores do município em ${a.ano}`}><${Ligacoes} ligacoes=${ligacoesDoAno(a)} comCandidato /><//>
+    <${Secao} id="pd" titulo=${`Doadores e fornecedores de campanhas que também receberam do município em ${a.ano}`}><${Ligacoes} ligacoes=${ligacoesDoAno(a)} comCandidato /><//>
     <p class="hint">Fontes: TCE-PB (Sagres: despesas, folha, receitas e licitações da Prefeitura, da Câmara e dos demais órgãos municipais) e TSE. Mudanças de prefeito no meio do mandato (cassação, renúncia) não aparecem aqui.</p>
   </article>`;
 }

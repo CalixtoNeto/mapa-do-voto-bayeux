@@ -329,3 +329,4 @@ button.abre{cursor:pointer}
 .tabela-mapa th[scope="row"],.tabela-mapa thead th:first-child{text-align:left; font-weight:500}
 .tabela-mapa caption{text-align:left; font-weight:600; padding:6px 0}
 .seg.modo .grupo-modo{align-self:center; margin-left:8px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+.seg.modo .grupo-modo.primeiro{margin-left:0; margin-right:2px}

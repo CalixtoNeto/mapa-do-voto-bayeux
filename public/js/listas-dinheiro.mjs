@@ -1,5 +1,5 @@
-// Detalhe do dinheiro de um candidato: posição entre os do cargo, para onde foi o gasto, quem doou e quem
-// recebeu os pagamentos. Os doadores e fornecedores vêm limitados aos dez maiores no arquivo de finanças.
+// Detalhe do dinheiro de um candidato: posição entre os do cargo, para onde foi o gasto (categoria → todos os
+// fornecedores) e quem doou (os dez maiores no arquivo de finanças).
 import { pct, sentence, titleCase, dinheiro } from './formato.mjs';
 import { ArvoreDeBarras } from './arvore.mjs';
 import { arvoreDoGasto } from './calculos-arvore.mjs';
@@ -27,7 +27,7 @@ export function DespesasDoCandidato({ categorias }) {
   if (!categorias.length) return null;
   const comQuem = categorias.some(c => c[2]);
   return html`<h3>Para onde foi o dinheiro</h3>
-    ${comQuem && html`<p class="hint">Categoria de gasto → quem recebeu. Toque numa categoria para ver os fornecedores.</p>`}
+    ${comQuem && html`<p class="hint">Categoria de gasto → quem recebeu. Toque numa categoria para ver todos os fornecedores; a porcentagem é sobre o nível aberto.</p>`}
     <div class="arvore"><${ArvoreDeBarras} arvore=${arvoreDoGasto(categorias)} rotulo=${quemRecebeu} /></div>`;
 }
 
@@ -37,11 +37,4 @@ export function DoadoresDoCandidato({ doacoes, quantos, recebido }) {
     <${ListaDeBarras} itens=${doacoes.map(([n, t, v]) => ({ n: t === 'pj' ? html`${titleCase(n)} <small>(empresa)</small>` : titleCase(n), v,
       rotulo: recebido ? `${dinheiro(v)} · ${pct(v / recebido, 0)}` : dinheiro(v) }))} />
     <p class="hint">${quantos > doacoes.length ? `Os ${doacoes.length} maiores de ${quantos} doadores. ` : ''}Doações de pessoas e empresas, somadas pelo CPF/CNPJ (que o site não mostra); a porcentagem é sobre todo o dinheiro recebido.</p>`;
-}
-
-export function FornecedoresDoCandidato({ fornecedores, quantos, gasto }) {
-  if (!fornecedores?.length) return null;
-  return html`<h3>Quem recebeu os pagamentos</h3>
-    <${ListaDeBarras} itens=${fornecedores.map(([n, v]) => ({ n: titleCase(n), v, rotulo: gasto ? `${dinheiro(v)} · ${pct(v / gasto, 0)}` : dinheiro(v) }))} />
-    <p class="hint">${quantos > fornecedores.length ? `Os ${fornecedores.length} maiores de ${quantos} fornecedores. ` : ''}Despesas contratadas, pelo nome registrado na Receita Federal; a porcentagem é sobre o gasto declarado.</p>`;
 }

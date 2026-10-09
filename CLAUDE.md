@@ -36,8 +36,8 @@ e `scripts/gerar-dados.mjs` (votos), a partir do TSE.
 - As árvores de decomposição (`scripts/perfis/arvores.mjs`) vão para `prefeitura-ANO-detalhe.json`, lido só quando o ano é
   aberto; os alertas (`scripts/perfis/alertas.mjs`) vão no `prefeitura-ANO.json`. Todo alerta aparece com a ressalva de que é
   uma conta do site e não avalia a legalidade da despesa, sem citar lei junto do dado e com títulos descritivos
-  ("valores atípicos", nunca "irregular", "fora do padrão" ou "fracionamento"). O cruzamento campanha × credores só
-  considera credores com CNPJ. Todo ano, inclua em `LIMITES` o limite de dispensa do decreto que atualiza a Lei 14.133.
+  ("valores atípicos", nunca "irregular", "fora do padrão" ou "fracionamento"). O cruzamento campanha × credores é pelo
+  documento (`scripts/lib/documento.mjs`): CNPJ, ou dígitos centrais do CPF + nome; nunca publique CPF inteiro. Todo ano, inclua em `LIMITES` o limite de dispensa do decreto que atualiza a Lei 14.133.
 - O site lê os perfis em `public/js/perfil/` (cálculos em `calculos-perfil.mjs`, testados em `test/unidade/calculos-perfil.test.mjs`);
   não há perfis no repositório da Paraíba, então essa pasta não precisa ficar igual lá.
 

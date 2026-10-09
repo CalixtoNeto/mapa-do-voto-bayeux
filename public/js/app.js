@@ -556,8 +556,8 @@ function App() {
   const mapRef = useRef();
   const [pessoas, setPessoas] = useState({}), [comp, setComp] = useState(null), [dsB, setDsB] = useState(null);
   const [varModo, setVarModo] = useState(ls.get('mvb.varmodo') || 'rel');
-  const [modo, setModo] = useState(PERFIS.ehRotaDePerfil() ? 'perfis' : ls.get('mvb.modo') || 'perfis'), [camada, setCamada] = useState('vencedor');
-  useEffect(() => { ls.set('mvb.modo', modo); }, [modo]);
+  const [modo, setModo] = useState(PERFIS.ehRotaDePerfil() ? 'perfis' : (ls.get('mvb.modo') !== 'perfis' && ls.get('mvb.modo')) || 'candidato'), [camada, setCamada] = useState('vencedor');
+  useEffect(() => { if (modo !== 'perfis') ls.set('mvb.modo', modo); }, [modo]);
   // os perfis têm endereço próprio (#perfil/…); um link para eles abre a página mesmo vindo do mapa
   useEffect(() => {
     const aoMudar = () => { if (PERFIS.ehRotaDePerfil()) setModo('perfis'); };
@@ -703,8 +703,8 @@ function App() {
   const semBairros = !!(ds && ds.semBairros);
 
   const botaoDeModo = ([m, rotulo]) => html`<button type="button" role="radio" aria-checked=${modo === m} onClick=${() => trocarModo(m)}>${rotulo}</button>`;
-  const seletorDeModo = [botaoDeModo(['perfis', 'Perfil do município']), html`<span class="grupo-modo" aria-hidden="true">Eleições</span>`,
-    botaoDeModo(['candidato', 'Candidato']), botaoDeModo(['panorama', 'Panorama do cargo'])];
+  const seletorDeModo = [html`<span class="grupo-modo primeiro" aria-hidden="true">Eleições</span>`, botaoDeModo(['candidato', 'Candidato']),
+    botaoDeModo(['panorama', 'Panorama do cargo']), botaoDeModo(['perfis', 'Perfil do município'])];
 
   return html`<div class=${'app' + (hasData || modo === 'perfis' ? '' : ' nodata') + (modo === 'perfis' ? ' com-perfis' : '')}>
     <header class="top">

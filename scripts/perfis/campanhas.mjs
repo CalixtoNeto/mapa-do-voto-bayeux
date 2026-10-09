@@ -15,8 +15,8 @@ export function eleitoNaEleicao(t1, perfis, cargo) {
 export function campanhasDaEleicao(ano, financas, cargos, nomes = {}) {
   return Object.entries(financas?.c || {}).filter(([chave]) => cargos.includes(chave.split('|')[0]))
     .map(([chave, f]) => ({ ano, chave, nome: nomes[chave] || '',
-      doadores: (f.doa || []).map(([nome, , valor]) => [nome, valor]),
-      fornecedores: (f.fo || []).map(([nome, valor]) => [nome, valor]) }));
+      doadores: (f.doa || []).map(([nome, , valor], i) => [nome, valor, f.doaK?.[i] || null]),
+      fornecedores: (f.fo || []).map(([nome, valor], i) => [nome, valor, f.foK?.[i] || null]) }));
 }
 
 export const nomesDosCandidatos = t1 => Object.fromEntries((t1?.cands || []).map(c => [`${c.cargo}|${c.nr}`, c.nome]));
