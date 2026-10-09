@@ -76,7 +76,7 @@ export function criarPanorama(cfg) {
       ${financas && perfis && html`<${FundoPorPartido} cfg=${cfg} cands=${cands} financas=${financas} perfis=${perfis} />`}
       ${perfis && html`<${PerfilDoCargo} cfg=${cfg} cands=${cands} perfis=${perfis} />`}
       ${ctx && html`<${DinheiroElege} linhas=${financas ? linhas : []} ctx=${ctx} />`}
-      ${ctx && html`<${Partidos} linhas=${linhas} ctx=${ctx} />`}
+      ${ctx && html`<${Partidos} linhas=${linhas} ctx=${ctx} onPick=${onPick} />`}
       ${ctx && html`<${ConcentracaoDoFundo} linhas=${financas ? linhas : []} ctx=${ctx} />`}
       <${Redutos} cfg=${cfg} cands=${cands} selecionado=${selecionado} onPick=${onPick} />
       ${ctx && html`<${LugaresDoCargo} ctx=${ctx} />`}

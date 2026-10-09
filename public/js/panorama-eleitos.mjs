@@ -2,7 +2,7 @@
 import { nf, pct, titleCase, dinheiro, centavos } from './formato.mjs';
 import { eleitosENaoEleitos, porPartido, concentracaoDoFundo, reeleicao } from './calculos.mjs';
 import { nomeDe, usarLimite } from './componentes.mjs';
-const { html, useMemo } = window.htmPreact;
+const { html, useMemo, useState } = window.htmPreact;
 
 export function DinheiroElege({ linhas, ctx }) {
   const r = useMemo(() => eleitosENaoEleitos(linhas, ctx.eleito), [linhas, ctx]);
@@ -16,14 +16,40 @@ export function DinheiroElege({ linhas, ctx }) {
     <p class="hint">Faixas com o mesmo número de candidatos (quartis), só entre os que declararam gasto. Mostra associação, não causa: quem já tem mais chance também atrai mais dinheiro.</p></section>`;
 }
 
-export function Partidos({ linhas, ctx }) {
+// Partidos em hierarquia, como a árvore do gasto: a lista dos partidos e, ao tocar num, os candidatos dele.
+const resumoDoPartido = p => `${p.eleitos} ${p.eleitos === 1 ? 'eleito' : 'eleitos'} de ${p.candidatos} candidatos${p.gasto ? ` · gastou ${dinheiro(p.gasto)} · ${centavos(p.custo)} por voto` : ''}${p.fefc ? ` · fundo eleitoral ${dinheiro(p.fefc)}` : ''}`;
+const resumoDoCandidato = (l, eleito) => `${eleito ? 'eleito · ' : ''}${l.gasto ? `gastou ${dinheiro(l.gasto)}` : 'sem gasto declarado'}${l.custo != null ? ` · ${centavos(l.custo)} por voto` : ''}${l.fefc ? ` · fundo eleitoral ${dinheiro(l.fefc)}` : ''}`;
+
+function Barra({ v, max }) {
+  return html`<span class="bar" aria-hidden="true"><i style=${`width:${(v / max * 100).toFixed(1)}%`}></i></span>`;
+}
+
+export function Partidos({ linhas, ctx, onPick }) {
   const lista = useMemo(() => porPartido(linhas, ctx.eleito), [linhas, ctx]);
+  const [aberto, setAberto] = useState(null);
   const [limite, botao] = usarLimite(lista.length);
   if (lista.length < 2) return null;
-  return html`<section class="analise" aria-labelledby="pt"><h2 id="pt">Partidos</h2>
-    <ul class="partidos">${lista.slice(0, limite).map(p => html`<li><span class="nm">${p.partido}</span><span class="vv">${nf.format(p.votos)} votos</span>
-      <span class="meta">${p.eleitos} ${p.eleitos === 1 ? 'eleito' : 'eleitos'} de ${p.candidatos} candidatos${p.gasto ? ` · gastou ${dinheiro(p.gasto)} · ${centavos(p.custo)} por voto` : ''}${p.fefc ? ` · fundo eleitoral ${dinheiro(p.fefc)}` : ''}</span></li>`)}</ul>${botao}
-    <p class="hint">Votos nominais dos candidatos de cada partido (sem os de legenda).</p></section>`;
+  const p = aberto && lista.find(x => x.partido === aberto);
+  const total = lista.reduce((s, x) => s + x.votos, 0);
+  const trilha = html`<nav class="trilha" aria-label="Caminho nos partidos"><button type="button" class="link" aria-current=${p ? null : 'true'} onClick=${() => setAberto(null)}>Todos os partidos · ${nf.format(total)} votos</button>
+    ${p && html`<span aria-hidden="true">›</span><button type="button" class="link" aria-current="true">${p.partido}</button>`}</nav>`;
+  if (p) {
+    const cands = linhas.filter(l => (l.cand.partido || '?') === p.partido).sort((a, b) => b.cand.total - a.cand.total);
+    const max = Math.max(1, ...cands.map(l => l.cand.total));
+    return html`<section class="analise" aria-labelledby="pt"><h2 id="pt">Partidos</h2>${trilha}
+      <p class="hint">${resumoDoPartido(p)}. Toque num candidato para vê-lo no mapa.</p>
+      <ul class="partidos">${cands.map(l => html`<li><button type="button" class="abre" onClick=${() => onPick && onPick(l.cand)}>
+        <span class="nm">${nomeDe(l.cand)}</span><span class="vv">${nf.format(l.cand.total)} votos <small>${pct(l.cand.total / p.votos, 0)}</small></span>
+        <${Barra} v=${l.cand.total} max=${max} /><span class="meta">${resumoDoCandidato(l, ctx.eleito(l.cand))}</span></button></li>`)}</ul>
+      <p class="hint">Votos nominais de cada candidato; a porcentagem é sobre os votos do partido.</p></section>`;
+  }
+  const max = Math.max(1, ...lista.map(x => x.votos));
+  return html`<section class="analise" aria-labelledby="pt"><h2 id="pt">Partidos</h2>${trilha}
+    <p class="hint">Partido → candidatos. Toque num partido para abrir.</p>
+    <ul class="partidos">${lista.slice(0, limite).map(x => html`<li><button type="button" class="abre" onClick=${() => setAberto(x.partido)}>
+      <span class="nm">${x.partido} ›</span><span class="vv">${nf.format(x.votos)} votos <small>${pct(x.votos / total, 0)}</small></span>
+      <${Barra} v=${x.votos} max=${max} /><span class="meta">${resumoDoPartido(x)}</span></button></li>`)}</ul>${botao}
+    <p class="hint">Votos nominais dos candidatos de cada partido (sem os de legenda); a porcentagem é sobre os votos nominais do cargo.</p></section>`;
 }
 
 export function ConcentracaoDoFundo({ linhas, ctx }) {
