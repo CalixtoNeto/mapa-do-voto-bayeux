@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, ramoDaArvore, crescimentosAnormais, contratacoesEmAnoDeEleicao, vereadoresEmOrdem, serieAnual, mesAno }
+import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, crescimentosAnormais, contratacoesEmAnoDeEleicao, vereadoresEmOrdem, serieAnual, mesAno }
   from '../../public/js/perfil/calculos-perfil.mjs';
 
 test('endereço do perfil a partir do nome', () => {
@@ -62,13 +62,6 @@ test('ligações agrupadas por credor: pago somado entre anos, cada campanha uma
     { credor: 'ZAPIER', pago: 176, anos: ['2024', '2025'], campanhas: [{ papel: 'doou', valor: 100, quem: 'TARCYANNA', eleicao: '2024' }, { papel: 'doou', valor: 100, quem: 'FULANO', eleicao: '2024' }] },
     { credor: 'GILSON', pago: 4, anos: ['2025'], campanhas: [{ papel: 'doou', valor: 100, quem: 'TARCYANNA', eleicao: '2024' }] },
   ]);
-});
-
-test('ramo da árvore no caminho escolhido; caminho que não existe para no último ramo achado', () => {
-  const arvore = { v: 190, filhos: [['Saúde', 160, [['Material', 160, [['FARMACIA', 160]]]]], ['Educação', 30]] };
-  assert.deepEqual(ramoDaArvore(arvore, []), { valor: 190, filhos: arvore.filhos });
-  assert.deepEqual(ramoDaArvore(arvore, ['Saúde', 'Material']), { valor: 160, filhos: [['FARMACIA', 160]] });
-  assert.deepEqual(ramoDaArvore(arvore, ['Educação']), { valor: 30, filhos: [] });
 });
 
 test('crescimento anormal: tipo de compra que dobrou e cresceu R$ 1 milhão entre dois anos completos', () => {

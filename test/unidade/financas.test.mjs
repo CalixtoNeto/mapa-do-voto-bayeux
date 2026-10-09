@@ -65,3 +65,16 @@ test('guarda todas as categorias de despesa, não só as maiores', () => {
   for (let i = 1; i <= 8; i++) somarDespesa(financas, 'A', { categoria: `C${i}`, valor: i });
   assert.equal(resumoDasFinancas(financas, '2022', agora).c.A.dc.length, 8);
 });
+
+test('cada categoria de gasto guarda quem recebeu: os cinco maiores e o resto somado', () => {
+  const financas = novasFinancas();
+  const pagar = (categoria, nome, valor) => somarDespesa(financas, 'A', { categoria, valor, fornecedor: { id: nome, nome } });
+  ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].forEach((g, i) => pagar('Impressos', g, 100 - i));
+  pagar('Impressos', 'G1', 50);
+  pagar('Combustíveis', 'POSTO', 80);
+  somarDespesa(financas, 'A', { categoria: 'Combustíveis', valor: 20 });
+  assert.deepEqual(resumoDasFinancas(financas, '2022', agora).c.A.dc, [
+    ['Impressos', 729, [['G1', 150], ['G2', 99], ['G3', 98], ['G4', 97], ['G5', 96], ['Outros (2)', 189]]],
+    ['Combustíveis', 100, [['POSTO', 80], ['Sem fornecedor informado', 20]]],
+  ]);
+});

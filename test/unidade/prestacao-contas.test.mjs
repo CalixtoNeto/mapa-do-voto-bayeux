@@ -39,7 +39,7 @@ test('despesas contratadas, separando os repasses', () => {
     [...vereador(), 'Publicidade por materiais impressos', '33', 'GRAF', 'GRAFICA LTDA', '700,00'],
     [...vereador(), 'Doações financeiras a outros candidatos/partidos', '44', 'FULANO', '#NULO#', '300,00'],
   ]);
-  assert.deepEqual(r.c['13|12345'], { r: {}, d: 700, rep: 300, dc: [['Publicidade por materiais impressos', 700]], fo: [['GRAFICA LTDA', 700, 0]], nf: 1 });
+  assert.deepEqual(r.c['13|12345'], { r: {}, d: 700, rep: 300, dc: [['Publicidade por materiais impressos', 700, [['GRAFICA LTDA', 700]]]], fo: [['GRAFICA LTDA', 700, 0]], nf: 1 });
 });
 
 test('despesas pagas chegam ao candidato pela prestação de contas (SQ_PRESTADOR_CONTAS), sem os repasses', () => {
