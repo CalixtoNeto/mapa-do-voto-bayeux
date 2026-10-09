@@ -316,3 +316,16 @@ button.abre{cursor:pointer}
 .grupo-alertas .locais{margin-top:6px}
 .grupo-alertas .ln{white-space:normal}
 .grupo-alertas .ln small{display:block; color:var(--muted); font-size:12.5px}
+
+/* ---------- aviso legal, pular para o conteúdo e tabela do mapa ---------- */
+.aviso-legal{order:5; grid-column:1 / -1; border-top:1px solid var(--line); padding-top:14px; font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:6px}
+.aviso-legal p{margin:0; max-width:80ch}
+.pular{position:absolute; left:-9999px}
+.pular:focus{left:16px; top:8px; z-index:3; background:var(--surface); color:var(--ink); padding:8px 12px; border-radius:8px}
+.tabela-mapa summary{cursor:pointer; padding:8px 0; font-size:14px}
+.tabela-mapa .rolagem{overflow:auto; max-height:420px}
+.tabela-mapa table{border-collapse:collapse; width:100%; font-size:14px}
+.tabela-mapa th,.tabela-mapa td{padding:6px 8px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap}
+.tabela-mapa th[scope="row"],.tabela-mapa thead th:first-child{text-align:left; font-weight:500}
+.tabela-mapa caption{text-align:left; font-weight:600; padding:6px 0}
+.seg.modo .grupo-modo{align-self:center; margin-left:8px; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}

@@ -3,6 +3,7 @@
 import { reaisDoTce } from '../fontes/tce-pb.mjs';
 import { normalizarNome } from '../lib/texto.mjs';
 import { centavos } from './somas.mjs';
+import { novaArvore, somarNaArvore, arvorePodada } from './arvores.mjs';
 
 export const novaFolha = () => ({ linhas: [], porNome: {} });
 
@@ -55,4 +56,11 @@ export function remuneracaoDe(folha, nome) {
     m[1] = centavos(m[1] + l.v);
   }
   return Object.values(meses).sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+// Árvore do total pago no ano: tipo de cargo → órgão.
+export function arvoreDaFolha({ linhas }) {
+  const raiz = novaArvore();
+  for (const l of linhas) somarNaArvore(raiz, [l.tipo, l.orgao], l.v);
+  return arvorePodada(raiz);
 }

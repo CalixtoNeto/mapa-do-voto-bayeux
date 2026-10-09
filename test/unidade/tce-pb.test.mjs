@@ -2,9 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { reaisDoTce, leitorDoTce } from '../../scripts/fontes/tce-pb.mjs';
 import { novasDespesas, somarDespesa, resumoDasDespesas } from '../../scripts/perfis/despesas.mjs';
-import { novaFolha, somarServidor, resumoDaFolha, remuneracaoDe } from '../../scripts/perfis/folha.mjs';
+import { novaFolha, somarServidor, resumoDaFolha, remuneracaoDe, arvoreDaFolha } from '../../scripts/perfis/folha.mjs';
 import { novasReceitas, somarReceita, resumoDasReceitas } from '../../scripts/perfis/receitas.mjs';
-import { novasLicitacoes, somarProposta, resumoDasLicitacoes } from '../../scripts/perfis/licitacoes.mjs';
+import { novasLicitacoes, somarProposta, resumoDasLicitacoes, arvoreDasLicitacoes } from '../../scripts/perfis/licitacoes.mjs';
 
 // Cabeçalhos e linhas como vêm nos arquivos do Sagres (sondados em outubro de 2026), só com as colunas usadas.
 const DESPESAS = 'municipio;descricao_unidade_gestora;mes;cpf_cnpj;nome_credor;valor_empenhado;valor_pago;funcao;elemento_despesa;modalidade_licitacao';
@@ -61,6 +61,9 @@ test('folha: pessoas no último mês e total do ano por órgão e tipo de cargo;
   assert.deepEqual(remuneracaoDe(folha, 'Ana Paula Borges da Silva'),
     [['202501', 2000, 'ASSESSOR TECNICO PARLAMENTAR', 'Câmara Municipal de Bayeux'], ['202502', 2000, 'ASSESSOR TECNICO PARLAMENTAR', 'Câmara Municipal de Bayeux']]);
   assert.deepEqual(remuneracaoDe(folha, 'Ninguém'), []);
+  assert.deepEqual(arvoreDaFolha(folha), { v: 10822.35, filhos: [
+    ['Efetivos', 6822.35, [['Câmara Municipal de Bayeux', 3822.35], ['Prefeitura Municipal de Bayeux', 3000]]],
+    ['Cargo Comissionado', 4000, [['Câmara Municipal de Bayeux', 4000]]]] }, 'tipo de cargo → órgão');
 });
 
 test('receitas: total lançado e o que veio de emendas parlamentares, por origem', () => {
@@ -84,4 +87,7 @@ test('licitações: quantas por modalidade, valor das vencedoras e quem mais gan
   const r = resumoDasLicitacoes(licitacoes);
   assert.deepEqual(r.modalidades, [['Pregão', 1, 308382.9], ['Credenciamento', 1, 266666.66]]);
   assert.deepEqual(r.vencedores[0], ['FIORI VEICULO LTDA', '35715234000876', 308382.9, 1]);
+  assert.deepEqual(arvoreDasLicitacoes(licitacoes), { v: 575049.56, filhos: [
+    ['Pregão', 308382.9, [['FIORI VEICULO LTDA', 308382.9]]],
+    ['Credenciamento', 266666.66, [['Condor Turismo', 133333.33], ['HP VIAGENS', 133333.33]]]] }, 'modalidade → vencedor');
 });

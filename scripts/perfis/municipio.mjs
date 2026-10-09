@@ -2,9 +2,9 @@
 import { lerConjuntoDoTce } from '../fontes/tce-pb.mjs';
 import { novasDespesas, somarDespesa, resumoDasDespesas, todosOsCredores, arvoresDasDespesas } from './despesas.mjs';
 import { alertasDoAno } from './alertas.mjs';
-import { novaFolha, somarServidor, resumoDaFolha, remuneracaoDe } from './folha.mjs';
+import { novaFolha, somarServidor, resumoDaFolha, remuneracaoDe, arvoreDaFolha } from './folha.mjs';
 import { novasReceitas, somarReceita, resumoDasReceitas } from './receitas.mjs';
-import { novasLicitacoes, somarProposta, resumoDasLicitacoes } from './licitacoes.mjs';
+import { novasLicitacoes, somarProposta, resumoDasLicitacoes, arvoreDasLicitacoes } from './licitacoes.mjs';
 import { credoresDasCampanhas } from './cruzamentos.mjs';
 
 const CONJUNTOS = {
@@ -32,4 +32,11 @@ export function resumoDoAno(ano, dados, { campanhas, prefeito, atualizadoEm }) {
 }
 
 // As árvores de decomposição ficam num arquivo à parte, lido só quando o ano é aberto no site.
-export const detalheDoAno = (ano, dados) => dados.despesas ? { ano: String(ano), arvores: arvoresDasDespesas(dados.despesas) } : null;
+export function detalheDoAno(ano, dados) {
+  const arvores = {
+    ...(dados.despesas ? arvoresDasDespesas(dados.despesas) : {}),
+    ...(dados.servidores ? { folha: arvoreDaFolha(dados.servidores) } : {}),
+    ...(dados.licitacoes ? { licitacoes: arvoreDasLicitacoes(dados.licitacoes) } : {}),
+  };
+  return Object.keys(arvores).length ? { ano: String(ano), arvores } : null;
+}

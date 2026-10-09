@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metodologia · Mapa da política · Bayeux</title>
+<link rel="stylesheet" href="css/styles.css">
+<style>.pagina{max-width:72ch; margin:0 auto; padding:20px 16px 48px} .pagina h1{font:650 clamp(28px,6vw,40px)/1.1 var(--serif); margin:12px 0 8px} .pagina h2{margin:28px 0 8px} .pagina p,.pagina li{line-height:1.6} .pagina li{margin:6px 0}</style>
+</head>
+<body>
+<main class="pagina">
+<p><a href="./">← Voltar ao mapa</a></p>
+<h1>Metodologia</h1>
+<h2>O que este site é</h2>
+<p>Um projeto pessoal, sem vínculo com partidos, candidatos, órgãos públicos ou veículos de imprensa, que reorganiza dados públicos oficiais em mapas e tabelas. Não recebe dinheiro de campanha e não faz impulsionamento. Não é pesquisa eleitoral nem projeção de resultado.</p>
+<h2>Dado oficial e dado calculado</h2>
+<p>Votos, comparecimento, bens declarados e valores da prestação de contas aparecem como o órgão publicou. Percentuais, medianas, índices (número efetivo, Gini), correlações, comparações entre anos e valores atípicos são cálculos do site, com a regra descrita junto de cada análise ("Como calculamos").</p>
+<h2>Fontes</h2>
+<ul><li>TSE, Portal de Dados Abertos: votação por seção, detalhe da votação por seção, eleitorado por local de votação, candidatos, bens de candidatos, prestação de contas eleitorais e perfil do eleitorado por seção.</li><li>TSE, API de resultados: só enquanto o arquivo por seção não é publicado (nesse caso o site mostra só o total da cidade).</li><li>TCE-PB (Sagres, dados abertos por município): despesas, folha, receitas e licitações da Prefeitura e da Câmara.</li><li>SAPL da Câmara Municipal de Bayeux: vereadores, sessões, presença, votos nominais e matérias.</li><li>CGU, Portal da Transparência: emendas parlamentares e convênios.</li><li>IBGE: contorno municipal.</li></ul>
+<p>A data em que cada arquivo foi processado aparece junto da fonte, na página do mapa.</p>
+<h2>Limitações</h2>
+<ul>
+<li><b>Bairro é o do local de votação.</b> Os votos de cada seção são somados no bairro do local onde ela funciona (campo NM_BAIRRO do cadastro do TSE). Isso mostra onde o voto foi depositado, não onde o eleitor mora, e o bairro do cadastro às vezes difere do bairro citado no endereço.</li><li><b>Locais e seções mudam entre eleições.</b> Seções são criadas, transferidas e agrupadas; na comparação entre anos, parte da variação de um bairro pode vir só dessa redistribuição.</li><li><b>Perfis da Prefeitura e da Câmara.</b> Os dados do TCE-PB do ano corrente são parciais. O cruzamento entre campanhas e credores do município considera só empresas (com CNPJ) e é feito pelo nome registrado.</li>
+<li><b>Ligação entre eleições pelo nome.</b> A evolução de votos, de bens declarados e de dinheiro de uma mesma pessoa liga as eleições pelo nome completo e pode juntar homônimos.</li>
+<li><b>Prestação de contas parcial.</b> Logo depois da eleição a prestação de contas é parcial; os números mudam quando a final é publicada.</li>
+<li><b>Valores nominais.</b> Valores em reais não são corrigidos pela inflação.</li>
+<li><b>Cores do mapa.</b> As classes de cor são sextis: cada cor reúne cerca de 1/6 dos lugares com voto, e as faixas mudam de um candidato para outro. Para comparar candidatos, use os números da lista.</li>
+</ul>
+<h2>Valores atípicos</h2>
+<p>Quando o site destaca um valor muito acima da mediana, é uma comparação estatística. Esses valores têm causas legítimas comuns: o tamanho do eleitorado, a base eleitoral do candidato, a redistribuição de seções entre locais, erro ou mudança no cadastro do bairro, contratos únicos de serviço contínuo e a forma de registro no sistema de origem. O site não avalia a legalidade de contas, contratos ou condutas; isso cabe à Justiça Eleitoral, aos tribunais de contas e aos demais órgãos de controle.</p>
+<h2>Reprodutibilidade</h2>
+<p>Todo o processamento está em <a href="https://github.com/CalixtoNeto/mapa-do-voto-bayeux">https://github.com/CalixtoNeto/mapa-do-voto-bayeux</a> (pasta <code>scripts/</code>). Os arquivos gerados ficam em <code>public/data/</code>, e qualquer pessoa pode refazer as contas com os comandos descritos no README.</p>
+<p><a href="correcoes.html">Encontrou um erro? Veja Correções e contato.</a></p>
+<p class="hint">Mapa da política · Bayeux é um projeto pessoal. Código e processamento em <a href="https://github.com/CalixtoNeto/mapa-do-voto-bayeux">https://github.com/CalixtoNeto/mapa-do-voto-bayeux</a>.</p>
+</main>
+</body>
+</html>

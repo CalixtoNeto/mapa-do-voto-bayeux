@@ -58,7 +58,7 @@ export function PerfilVereador({ v, camara, anos, aoVerNoMapa }) {
     <${Secao} id="vv" titulo="Votos nominais"><${Votacoes} v=${v} nomes=${nomes} /><//>
     <${Secao} id="vr" titulo="Remuneração"><${Remuneracao} rem=${resumoDaRemuneracao(v.remuneracao)} /><//>
     <${Secao} id="vp" titulo="Partido"><p class="hint">${v.partido ? `Filiado ao ${v.partido}.` : 'Sem filiação registrada no SAPL.'}</p><${Partidos} partidos=${v.partidos} /><//>
-    ${v.chave && html`<${Secao} id="vc" titulo="Campanha e credores do município"><${Ligacoes} ligacoes=${ligacoesDoCandidato(anos, v.chave, camara.eleicao)} /><//>`}
+    ${v.chave && html`<${Secao} id="vc" titulo="Empresas presentes na campanha e entre os credores do município"><${Ligacoes} ligacoes=${ligacoesDoCandidato(anos, v.chave, camara.eleicao)} /><//>`}
     <p class="hint">Fontes: SAPL da Câmara Municipal de Bayeux (legislatura ${camara.legislatura.numero}, desde ${ano(camara.legislatura.inicio)}), TCE-PB (folha e despesas) e TSE.</p>
   </article>`;
 }

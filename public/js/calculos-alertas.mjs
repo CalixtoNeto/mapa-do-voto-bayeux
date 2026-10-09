@@ -1,5 +1,5 @@
-// Comportamentos fora da curva numa campanha, comparada com as dos outros candidatos ao mesmo cargo
-// na mesma eleição. Não indicam irregularidade: mostram o que destoa e merece um olhar mais atento.
+// Valores distantes da mediana numa campanha, comparada com as dos outros candidatos ao mesmo cargo
+// na mesma eleição. São uma comparação estatística: descrevem o dado e não avaliam as contas.
 import { resumoFinanceiro, custoPorVoto, mediana } from './calculos-dinheiro.mjs';
 import { NORM } from './formato.mjs';
 

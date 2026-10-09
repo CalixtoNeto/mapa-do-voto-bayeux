@@ -6,10 +6,14 @@ import { legendaDoCargo } from './contexto.mjs';
 const { html, useMemo } = window.htmPreact;
 
 const PROPORCIONAIS = ['6', '7', '8', '13'];
+// O quociente só faz sentido quando os votos do site são os da circunscrição inteira (deputado na Paraíba,
+// vereador em Bayeux); cfg.cargosComQuociente restringe os cargos.
+const temQuociente = (cfg, cargo) => (cfg.cargosComQuociente || PROPORCIONAIS).includes(cargo);
 
-function Puxador({ cand, ctx }) {
+function Puxador({ cand, ctx, cfg }) {
+  if (!temQuociente(cfg, cand.cargo)) return null;
   const q = quocienteEleitoral(ctx.cands, ctx.eleito, legendaDoCargo(ctx.comparecimento));
-  if (!q || !PROPORCIONAIS.includes(cand.cargo)) return null;
+  if (!q) return null;
   const p = puxadorDeVotos(cand, ctx.cands, ctx.eleito);
   return html`<h3>Votos e vagas</h3><dl class="stats">
     <div><dt>Do quociente eleitoral</dt><dd>${parcela(cand.total / q.quociente)}</dd><small>quociente: ${nf.format(Math.round(q.quociente))} votos${q.comLegenda ? '' : ' (sem legenda)'}</small></div>
@@ -36,7 +40,7 @@ export function criarForcaDoVoto(cfg) {
   return function ForcaDoVoto({ cand, ctx }) {
     if (!cand || !ctx) return null;
     return html`<section class="analise" aria-labelledby="fv"><h2 id="fv">Força do voto</h2>
-      <${Puxador} cand=${cand} ctx=${ctx} />
+      <${Puxador} cand=${cand} ctx=${ctx} cfg=${cfg} />
       <${OndeVaiMelhor} cand=${cand} cfg=${cfg} ctx=${ctx} />
       <${EleitoradoDosVotos} cand=${cand} cfg=${cfg} ctx=${ctx} /></section>`;
   };

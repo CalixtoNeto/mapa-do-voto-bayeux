@@ -28,7 +28,7 @@ test('quem foi eleito prefeito e em que eleição começa cada mandato', () => {
   assert.equal(eleicaoDoMandato(2017), '2016');
 });
 
-test('credores da prefeitura que doaram ou prestaram serviço a campanhas municipais', () => {
+test('credores da prefeitura com CNPJ que doaram ou prestaram serviço a campanhas municipais', () => {
   const financas = { c: {
     '11|40': { doa: [['ERIKA ACIOLI GOMES PIMENTA', 'pf', 20000, 3]], fo: [['GEANCELIO DO NASCIMENTO ANDRADE', 1500], ['MUNICIPIO DE BAYEUX', 300]] },
     '13|40123': { doa: [['ERIKA ACIOLI GOMES PIMENTA', 'pf', 500]] },
@@ -42,7 +42,12 @@ test('credores da prefeitura que doaram ou prestaram serviço a campanhas munici
     ['MUNICIPIO DE BAYEUX', '08928517000157', 1e8, 9],
   ];
   assert.deepEqual(credoresDasCampanhas(credores, campanhas), [
-    ['ERIKA ACIOLI GOMES PIMENTA', 9000, [['2024', '11|40', 20000, 'doou', 'TARCYANNA'], ['2024', '13|40123', 500, 'doou', 'ADRIANO']]],
     ['58.909.863 GEANCELIO DO NASCIMENTO ANDRADE', 5200, [['2024', '11|40', 1500, 'recebeu', 'TARCYANNA']]],
   ]);
+});
+
+test('credor pessoa física (CPF ou sem documento) não é ligado a campanhas pelo nome', () => {
+  const campanhas = [{ ano: '2024', chave: '13|40123', nome: 'ADRIANO', doadores: [['JOSE DA SILVA SANTOS', 300]], fornecedores: [] }];
+  assert.deepEqual(credoresDasCampanhas([['JOSE DA SILVA SANTOS', '123.456.789-01', 800, 1]], campanhas), []);
+  assert.deepEqual(credoresDasCampanhas([['JOSE DA SILVA SANTOS', '', 800, 1]], campanhas), []);
 });

@@ -26,10 +26,11 @@ export function criarPatrimonio(cfg) {
     const declaracoes = ctx?.patrimonio?.[NORM(cand?.nome || cand?.urna)] || [];
     if (!perfil || (perfil.b == null && declaracoes.length < 2)) return null;
     const proprios = ctx.financas?.c?.[cfg.chaveDe(cand)]?.r?.prop || 0;
-    return html`<section class="analise" aria-labelledby="ep"><h2 id="ep">Evolução patrimonial</h2>
+    return html`<section class="analise" aria-labelledby="ep"><h2 id="ep">Bens declarados ao TSE</h2>
+      ${declaracoes.length > 1 && html`<p class="ressalva" role="note">As declarações de outras eleições foram ligadas pelo nome completo e podem ser de outra pessoa com o mesmo nome. Valores nominais, informados pelo próprio candidato na candidatura.</p>`}
       ${perfil.b != null && html`<dl class="stats"><div><dt>Bens declarados em ${cand.ano}</dt><dd>${dinheiro(perfil.b)}</dd></div>
-        ${proprios > 0 && html`<div><dt>Pôs na própria campanha</dt><dd>${dinheiro(proprios)}</dd>${perfil.b ? html`<small>${pct(proprios / perfil.b, 1)} dos bens</small>` : null}</div>`}</dl>`}
-      ${declaracoes.length > 1 && html`<h3>Bens declarados em cada eleição</h3><${Evolucao} declaracoes=${declaracoes} />`}
+        ${proprios > 0 && html`<div><dt>Recursos próprios na campanha</dt><dd>${dinheiro(proprios)}</dd>${perfil.b ? html`<small>${pct(proprios / perfil.b, 1)} dos bens</small>` : null}</div>`}</dl>`}
+      ${declaracoes.length > 1 && html`<h3>Total declarado em cada candidatura</h3><${Evolucao} declaracoes=${declaracoes} />`}
       <${Composicao} tipos=${perfil.bt} total=${perfil.b} />
       <p class="hint">Valores declarados ao TSE na candidatura, nominais (sem correção pela inflação); a ligação entre eleições é pelo nome completo. ${declaracoes.length < 2 ? 'Só há declaração de bens desta eleição para esta pessoa.' : ''}</p>
     </section>`;

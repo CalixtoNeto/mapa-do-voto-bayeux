@@ -31,9 +31,14 @@ function ligacoesPorNome(campanhas) {
   return ligacoes;
 }
 
+// Só credores com CNPJ: nome de pessoa física coincide com frequência, e o site não liga
+// pessoas físicas a dinheiro público pelo nome.
+const ehPessoaJuridica = doc => /^\d{14}$/.test(String(doc || '').replace(/\D/g, ''));
+
 // credores: [[nome, doc, pago, vezes]] → [[nome, pago pela prefeitura, [[ano, candidato, valor, doou|recebeu, nome do candidato]]]]
 export function credoresDasCampanhas(credores, campanhas) {
   const ligacoes = ligacoesPorNome(campanhas);
-  return credores.map(([nome, , pago]) => [nome, pago, ligacoes.get(nomeDoCredor(nome))])
+  return credores.filter(([, doc]) => ehPessoaJuridica(doc))
+    .map(([nome, , pago]) => [nome, pago, ligacoes.get(nomeDoCredor(nome))])
     .filter(([, , ligado]) => ligado).sort((a, b) => b[1] - a[1]);
 }

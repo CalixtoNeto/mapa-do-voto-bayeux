@@ -114,6 +114,7 @@ const CFG = {
   nomeDoLugar: (key, ds) => (bairrosDe(ds.ano).find(b => b.key === key) || { name: key }).name,
   foraDasFinancas: c => c.cargo !== '11' && c.cargo !== '13' ? 'O site mostra o dinheiro de campanha só dos candidatos a prefeito e vereador: a campanha dos outros cargos é estadual e não dá para dividi-la pelos votos de Bayeux.' : '',
   ehMajoritario: c => c.cargo === '11',
+  cargosComQuociente: ['13'],
   nomeDoCargo: CARGO_NOMES,
 };
 const PAINEL = AN.criarPainelDoCandidato(CFG), Panorama = AN.criarPanorama(CFG);
@@ -446,11 +447,11 @@ function Stats({ view, semBairros }) {
 
 function Fonte({ item }) {
   if (!item) return null;
-  const quando = item.atualizadoEm && item.fonte === 'api' ? new Date(item.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+  const quando = item.atualizadoEm ? new Date(item.atualizadoEm).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
   return html`<section class="source compact">
     <p>${item.fonte === 'api'
       ? html`<strong>API de resultados do TSE</strong> · ${item.final ? 'apuração concluída' : 'apuração em andamento'}${quando ? ` · atualizado em ${quando}` : ''}`
-      : html`<strong>Dados Abertos do TSE</strong> · votação por seção eleitoral${item.fonte === 'csv+api' ? ' · completado com a API de resultados' : ''} · ${item.final ? 'resultado final' : 'resultado parcial'}`}</p>
+      : html`<strong>Dados Abertos do TSE</strong> · <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener">votação por seção eleitoral</a>${item.fonte === 'csv+api' ? ' · completado com a API de resultados' : ''} · ${item.final ? 'resultado final' : 'resultado parcial'}${quando ? ` · arquivo processado em ${quando}` : ''}`}</p>
   </section>`;
 }
 
@@ -504,6 +505,45 @@ function somaPorBairro(ano, porLocal) {
 }
 const comparecimentoPorBairro = somaPorBairro;
 
+// Equivalente em texto do mapa do panorama: o canvas não é lido por leitor de tela.
+function TabelaDoPanorama({ ano, camada, vence, cands, comp }) {
+  const bairros = bairrosDe(ano);
+  const linhas = useMemo(() => {
+    if (camada !== 'vencedor') {
+      if (!comp) return null;
+      const c = AN.camadaDoComparecimento(camada, comp);
+      return bairros.map(b => { const [v, t] = c[b.key] || [0, 0]; return [titleCase(b.name), t ? pct(v / t) : '—', nf.format(v), nf.format(t)]; });
+    }
+    return bairros.map(b => {
+      const votosDe = x => CFG.votosDe(x)[b.key] || 0;
+      const c = cands.find(x => x.key === vence.porLugar[b.key]), total = cands.reduce((s, x) => s + votosDe(x), 0);
+      return c ? [titleCase(b.name), `${titleCase(c.nome)}${c.partido ? ` (${c.partido})` : ''}`, nf.format(votosDe(c)), pct(votosDe(c) / total)] : [titleCase(b.name), '—', '—', '—'];
+    });
+  }, [ano, camada, vence, cands, comp]);
+  if (!linhas) return null;
+  const nome = CAMADAS.find(c => c[0] === camada)[1];
+  const cab = camada === 'vencedor' ? ['Bairro', 'Mais votado', 'Votos', '% dos nominais']
+    : ['Bairro', `${nome} (%)`, nome, camada === 'abstencao' ? 'Eleitores aptos' : 'Compareceram'];
+  return html`<details class="tabela-mapa"><summary>Ver os dados do mapa em tabela (${bairros.length} bairros)</summary>
+    <div class="rolagem" tabindex="0" role="region" aria-label="Tabela do mapa"><table>
+      <caption>${nome} por bairro do local de votação · ${CIDADE}</caption>
+      <thead><tr>${cab.map(t => html`<th scope="col">${t}</th>`)}</tr></thead>
+      <tbody>${linhas.map(([bairro, ...resto]) => html`<tr><th scope="row">${bairro}</th>${resto.map(v => html`<td>${v}</td>`)}</tr>`)}</tbody>
+    </table></div></details>`;
+}
+
+// ---------- Aviso legal ----------
+// Do início da campanha ao último turno; inclua os próximos pleitos (confira as datas no calendário do TSE).
+const PERIODOS_ELEITORAIS = [['2026-08-16', '2026-10-25']];
+const emPeriodoEleitoral = (hoje = new Date().toISOString().slice(0, 10)) => PERIODOS_ELEITORAIS.some(([de, ate]) => hoje >= de && hoje <= ate);
+function AvisoLegal() {
+  return html`<footer class="aviso-legal">
+    ${emPeriodoEleitoral() && html`<p class="aviso" role="note">Período eleitoral: este site reorganiza dados oficiais já publicados. Não é propaganda, pesquisa eleitoral nem projeção de resultado.</p>`}
+    <p>Dados oficiais do TSE, do TCE-PB, da CGU e do IBGE, reproduzidos como publicados, com cálculos próprios identificados. Conteúdo informativo, sem juízo sobre candidatos, partidos, eleitores, gestores ou fornecedores. Bairro é o do local de votação no cadastro do TSE, não onde o eleitor mora.</p>
+    <p><a href="metodologia.html">Metodologia</a> · <a href="correcoes.html">Correções e contato</a></p>
+  </footer>`;
+}
+
 const rotuloEleicao = e => `${e.ano} · ${e.turno}º turno${e.final ? '' : ' (parcial)'}`;
 
 // ---------- App ----------
@@ -516,8 +556,8 @@ function App() {
   const mapRef = useRef();
   const [pessoas, setPessoas] = useState({}), [comp, setComp] = useState(null), [dsB, setDsB] = useState(null);
   const [varModo, setVarModo] = useState(ls.get('mvb.varmodo') || 'rel');
-  const [modo, setModo] = useState(PERFIS.ehRotaDePerfil() ? 'perfis' : ls.get('mvb.modo') || 'candidato'), [camada, setCamada] = useState('vencedor');
-  useEffect(() => { if (modo !== 'perfis') ls.set('mvb.modo', modo); }, [modo]);
+  const [modo, setModo] = useState(PERFIS.ehRotaDePerfil() ? 'perfis' : ls.get('mvb.modo') || 'perfis'), [camada, setCamada] = useState('vencedor');
+  useEffect(() => { ls.set('mvb.modo', modo); }, [modo]);
   // os perfis têm endereço próprio (#perfil/…); um link para eles abre a página mesmo vindo do mapa
   useEffect(() => {
     const aoMudar = () => { if (PERFIS.ehRotaDePerfil()) setModo('perfis'); };
@@ -606,7 +646,7 @@ function App() {
   }, [panorama, cands]);
   const viewPanorama = useMemo(() => {
     if (!panorama || !cands.length) return null;
-    const rotulo = `Mapa: ${CAMADAS.find(c => c[0] === camada)[1].toLowerCase()} por bairro de ${CIDADE}`, tot = CFG.totDe(ds, cands[0]);
+    const rotulo = `Mapa: ${CAMADAS.find(c => c[0] === camada)[1].toLowerCase()} por bairro de ${CIDADE}. Os mesmos dados estão na tabela abaixo do mapa.`, tot = CFG.totDe(ds, cands[0]);
     const base = bairrosDe(ds.ano).map(b => ({ key: b.key, name: b.name, c: b.c, eleitores: b.eleitores }));
     if (camada === 'vencedor') return { rotulo, bairros: base.map(b => ({ ...b, v: tot[b.key] || 0, p: 0, cor: vence.cores[vence.porLugar[b.key]] })) };
     const camadaLocal = AN.camadaDoComparecimento(camada, compBairros || {});
@@ -662,16 +702,18 @@ function App() {
   const hasData = !!ds;
   const semBairros = !!(ds && ds.semBairros);
 
-  const seletorDeModo = [['candidato', 'Candidato'], ['panorama', 'Panorama do cargo'], ['perfis', 'Perfis']].map(([m, rotulo]) =>
-    html`<button type="button" role="radio" aria-checked=${modo === m} onClick=${() => trocarModo(m)}>${rotulo}</button>`);
+  const botaoDeModo = ([m, rotulo]) => html`<button type="button" role="radio" aria-checked=${modo === m} onClick=${() => trocarModo(m)}>${rotulo}</button>`;
+  const seletorDeModo = [botaoDeModo(['perfis', 'Perfil do município']), html`<span class="grupo-modo" aria-hidden="true">Eleições</span>`,
+    botaoDeModo(['candidato', 'Candidato']), botaoDeModo(['panorama', 'Panorama do cargo'])];
 
   return html`<div class=${'app' + (hasData || modo === 'perfis' ? '' : ' nodata') + (modo === 'perfis' ? ' com-perfis' : '')}>
     <header class="top">
-      <p class="brand">Mapa do voto <span>${CIDADE}</span></p>
+      <p class="brand">Mapa da política <span>${CIDADE}</span></p>
     </header>
 
     ${modo === 'perfis' ? html`<section class="filters"><div class="seg modo" role="radiogroup" aria-label="O que ver">${seletorDeModo}</div></section>
       <main class="perfis"><${PERFIS.PaginaDePerfis} aoVerNoMapa=${verNoMapa} /></main>` : html`${indice && html`<section class="filters" aria-label="Filtros">
+      <div class="seg modo" role="radiogroup" aria-label="O que ver">${seletorDeModo}</div>
       <label class="field">Eleição
         <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); setCandKey(null); setComp(null); }}>
           ${indice.map(e => html`<option value=${e.id}>${rotuloEleicao(e)}</option>`)}
@@ -679,11 +721,11 @@ function App() {
       ${hasData && html`<div class="chips" role="radiogroup" aria-label="Cargo">
         ${cargos.map(([cd, nm]) => html`<button type="button" role="radio" aria-checked=${cd === cargo} onClick=${() => { setCargo(cd); setSelected(null); setComp(null); }}>${sentence(nm)}</button>`)}
       </div>
-      <div class="seg modo" role="radiogroup" aria-label="O que ver">${seletorDeModo}</div>
       <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setModo('candidato'); setSelected(null); setComp(null); }} />`}
     </section>`}
 
-    <section class="stage" ref=${mapRef}>
+    <a class="pular" href="#conteudo">Pular para o mapa</a>
+    <main class="stage" id="conteudo" ref=${mapRef}>
       ${panorama ? html`<div class="who">
           <h1>${sentence((cargos.find(c => c[0] === cargo) || [cargo, CARGO_NOMES[cargo]])[1])}</h1>
           <p>Panorama · ${ds.ano}${ds.turno !== '1' ? ' (2º turno)' : ''} · ${cands.length} candidatos com voto em ${CIDADE}</p>
@@ -701,10 +743,11 @@ function App() {
       ${!panorama && cmp && avisoComparacao(cmp) && html`<p class="aviso" role="alert">${avisoComparacao(cmp)}</p>`}
       <${MapCanvas} ano=${item ? item.ano : '2024'} view=${panorama ? viewPanorama : viewMapa} metric=${panorama ? 'pct' : metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${panorama ? classesPanorama : classes} modoVar=${!panorama && cmp ? varModo : false} />
       ${panorama && html`<${LegendaPanorama} camada=${camada} setCamada=${setCamada} classes=${classesPanorama} vence=${vence} nomeDe=${nomeDoCand} temComparecimento=${!!compCargo} />`}
+      ${panorama && html`<${TabelaDoPanorama} ano=${ds.ano} camada=${camada} vence=${vence} cands=${cands} comp=${compBairros} />`}
       ${panorama && html`<${CardPanorama} b=${viewPanorama && viewPanorama.bairros.find(b => b.key === shownKey)} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} vence=${vence} cands=${cands} numeros=${compBairros && compBairros[shownKey]} />`}
       ${!panorama && view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} modoVar=${cmp ? varModo : false} varModo=${varModo} setVarModo=${setVarModo} />`}
       ${!panorama && !semBairros && html`<${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} linha=${cmp && shown ? { ...(cmp.rows.find(r => r.key === shown.key) || {}), ant: cmp.ant, rec: cmp.rec } : null} />`}
-    </section>
+    </main>
 
     <aside class="side">
       ${panorama ? html`<${StatsPanorama} comp=${compCargo} />
@@ -722,6 +765,7 @@ function App() {
       <${Fonte} item=${item} />
       <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, API de resultados (ciclo atual) e Portal de Dados Abertos (votação e comparecimento por seção, eleitorado por local de votação, cadastro e bens dos candidatos, prestação de contas); contorno municipal do IBGE.</p>
     </aside>`}
+    <${AvisoLegal} />
   </div>`;
 }
 render(html`<${App} />`, document.getElementById('root'));
