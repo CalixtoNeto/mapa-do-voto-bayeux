@@ -8,21 +8,27 @@ export const IBGE_BAYEUX = '2501807';
 const LOCAL_DO_CONVENIO = /^BAYEUX\s*-\s*PB$/i;
 
 export const novasEmendas = () => ({ autores: {}, anos: {}, funcoes: {}, autorDoCodigo: new Map(), convenios: [],
-  recebido: { autores: {}, favorecidos: {}, anos: {}, arvore: novaArvore() } });
+  recebido: { autores: {}, favorecidos: {}, anos: {}, arvore: novaArvore(), pessoas: new Set() } });
 
 // Muitas emendas (as de saúde, sobretudo) têm a Paraíba como local de aplicação: só o favorecido diz que o dinheiro
 // chegou a Bayeux. Empresas daqui que venderam para outras cidades não contam.
 const EMPRESA = /sociedade|empres|eireli/i;
+// Sem natureza jurídica, o favorecido é pessoa física: entra somado, sem o nome.
+const PESSOAS = 'PESSOAS FISICAS';
+const ehPessoaFisica = natureza => !natureza || /^sem informa/i.test(natureza);
 
 export function somarFavorecido(acc, ler) {
   if (ler('UF FAVORECIDO') !== 'PB' || !/^BAYEUX$/i.test(ler('MUNICÍPIO FAVORECIDO')) || EMPRESA.test(ler('NATUREZA JURÍDICA'))) return;
   const valor = reais(ler('VALOR RECEBIDO')), r = acc.recebido;
   const autor = (r.autores[ler('NOME DO AUTOR DA EMENDA')] ||= { v: 0, emendas: new Set() });
   autor.v += valor; autor.emendas.add(ler('CÓDIGO DA EMENDA'));
-  const favorecido = (r.favorecidos[ler('FAVORECIDO')] ||= { natureza: ler('NATUREZA JURÍDICA'), v: 0 });
+  const pessoa = ehPessoaFisica(ler('NATUREZA JURÍDICA'));
+  if (pessoa) r.pessoas.add(ler('FAVORECIDO'));
+  const nome = pessoa ? PESSOAS : ler('FAVORECIDO');
+  const favorecido = (r.favorecidos[nome] ||= { natureza: pessoa ? 'Pessoa física' : ler('NATUREZA JURÍDICA'), v: 0 });
   favorecido.v += valor;
   somar(r.anos, ler('ANO/MÊS').slice(0, 4), valor);
-  somarNaArvore(r.arvore, [ler('NOME DO AUTOR DA EMENDA'), ler('FAVORECIDO'), ler('ANO/MÊS').slice(0, 4)], valor);
+  somarNaArvore(r.arvore, [ler('NOME DO AUTOR DA EMENDA'), nome, ler('ANO/MÊS').slice(0, 4)], valor);
 }
 
 export function somarEmenda(acc, ler) {
@@ -54,8 +60,10 @@ export function resumoDasEmendas(acc) {
 }
 
 function resumoDoRecebido(r) {
+  const rotulo = nome => nome === PESSOAS ? `Pessoas físicas (${r.pessoas.size})` : nome;
+  const renomear = ramos => ramos.map(([nome, v, filhos]) => filhos ? [rotulo(nome), v, renomear(filhos)] : [rotulo(nome), v]);
   const porAutor = Object.entries(r.autores).sort((a, b) => b[1].v - a[1].v).map(([autor, a]) => [autor, centavos(a.v), a.emendas.size]);
-  const porFavorecido = Object.entries(r.favorecidos).sort((a, b) => b[1].v - a[1].v).map(([nome, f]) => [nome, f.natureza, centavos(f.v)]);
+  const porFavorecido = Object.entries(r.favorecidos).sort((a, b) => b[1].v - a[1].v).map(([nome, f]) => [rotulo(nome), f.natureza, centavos(f.v)]);
   // Árvore autor → quem recebeu → ano, com todos os ramos (sem "Outros").
-  return { porAutor, porFavorecido, porAno: Object.entries(r.anos).sort().map(([ano, v]) => [ano, centavos(v)]), arvore: arvorePodada(r.arvore, Infinity) };
+  return { porAutor, porFavorecido, porAno: Object.entries(r.anos).sort().map(([ano, v]) => [ano, centavos(v)]), arvore: (a => ({ ...a, filhos: renomear(a.filhos) }))(arvorePodada(r.arvore, Infinity)) };
 }

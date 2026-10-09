@@ -26,7 +26,7 @@ const rotuloDoRecebido = (nome, nivel) => nivel < 2 ? nomeProprio(nome) : nome;
 function Recebido({ r }) {
   if (!r?.porAutor.length) return null;
   return html`<${Secao} id="er" titulo="Quem mandou o dinheiro que chegou">
-      ${r.arvore?.v > 0 ? html`<p class="hint">Autor da emenda → quem recebeu → ano. Toque num item para abrir.</p>
+      ${r.arvore?.v > 0 ? html`<p class="hint">Autor da emenda → quem recebeu → ano. Toque num item para abrir. Pagamentos a pessoas físicas aparecem somados, sem os nomes.</p>
         <div class="arvore"><${ArvoreDeBarras} arvore=${r.arvore} rotulo=${rotuloDoRecebido} /></div>`
       : html`<${Lista} itens=${r.porAutor.map(([autor, v, n]) => ({ n: html`${nomeProprio(autor)} <small>${emendas(n)}</small>`, v, rotulo: dinheiro(v) }))} />
         <h3>Quem recebeu</h3><${Lista} itens=${r.porFavorecido.map(([nome, natureza, v]) => ({ n: html`${nomeProprio(nome)} <small>${natureza}</small>`, v, rotulo: dinheiro(v) }))} />`}
