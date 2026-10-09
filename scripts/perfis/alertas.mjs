@@ -6,19 +6,22 @@
 import { ehCompra } from './compras.mjs';
 import { centavos } from './somas.mjs';
 
-// Limites de dispensa por valor da Lei 14.133 (art. 75, I e II), atualizados por decreto a cada ano.
-// Antes de 2024 valia também a Lei 8.666, com outros limites, então não há comparação justa.
-const LIMITES = { 2024: [119812.02, 59906.02], 2025: [125451.15, 62725.59] };
+// Limites de dispensa por valor da Lei 14.133 (art. 75, I: obras, engenharia e manutenção de veículos; II: o resto),
+// atualizados por decreto a cada ano (11.871/2023, 12.343/2024, 12.807/2025). Antes de 2024 valia também a
+// Lei 8.666, com outros limites, então não há comparação justa. Ano novo sem decreto aqui usa o último.
+const LIMITES = { 2024: [119812.02, 59906.02], 2025: [125451.15, 62725.59], 2026: [130984.2, 65492.11] };
 const ULTIMO_ANO = Math.max(...Object.keys(LIMITES).map(Number));
 export function limiteDeDispensa(ano, objeto) {
   if (Number(ano) < 2024) return null;
   const [obras, compras] = LIMITES[Math.min(Number(ano), ULTIMO_ANO)];
-  return /obra|engenharia/i.test(objeto) ? obras : compras;
+  return /obra|engenharia|manuten[cç][aã]o.*ve[ií]culo/i.test(objeto) ? obras : compras;
 }
 
 const SEM_DISPUTA = /^(sem licita|dispensa)/i;
-// Energia, água, telefone e tarifas só têm um fornecedor possível: não há o que licitar.
+// Energia, água, telefone, tarifas e a publicação de atos oficiais só têm um fornecedor possível: não há o que
+// licitar. Quando o tipo de despesa vem genérico ("outros serviços"), o nome do fornecedor é que diz.
 const SERVICO_PUBLICO = /energia|[aá]gua|esgoto|telecomunica|telefon|banc[aá]ri|correio|tarifa|taxa/i;
+const FORNECEDOR_UNICO = /energisa|cagepa|correios|empresa paraibana de comunica|imprensa oficial|banco do brasil|caixa econ[oô]mica/i;
 const PICO = 3, PICO_MINIMO = 300000, MESES_MINIMOS = 6, CONCENTRACAO = 0.7, CONCENTRACAO_MINIMA = 1e6, MOSTRADOS = 15;
 
 export const novosAlertas = () => ({ semDisputa: {}, mensal: {}, porElemento: {} });
@@ -27,7 +30,7 @@ export function somarParaAlertas(acc, ler, pago) {
   const elemento = ler('ELEMENTO_DESPESA');
   if (!pago || !ehCompra(elemento)) return;
   const credor = ler('NOME_CREDOR'), objeto = ler('CODIGO_SUBELEMENTO_EXIBICAO') || elemento;
-  if (SEM_DISPUTA.test(ler('MODALIDADE_LICITACAO')) && !SERVICO_PUBLICO.test(objeto)) {
+  if (SEM_DISPUTA.test(ler('MODALIDADE_LICITACAO')) && !SERVICO_PUBLICO.test(objeto) && !FORNECEDOR_UNICO.test(credor)) {
     const s = (acc.semDisputa[`${credor}|${objeto}`] ||= { credor, objeto, v: 0, n: 0 });
     s.v += pago; s.n++;
   }

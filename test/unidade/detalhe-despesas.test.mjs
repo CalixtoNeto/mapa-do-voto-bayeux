@@ -39,6 +39,8 @@ function alertas(despesas, ano = '2025') {
 test('limite de dispensa por valor da Lei 14.133 no ano (compras e obras); antes de 2024, sem limite comparável', () => {
   assert.deepEqual(limiteDeDispensa('2025', 'MATERIAL DE CONSUMO'), 62725.59);
   assert.deepEqual(limiteDeDispensa('2024', 'OBRAS E INSTALAÇÕES'), 119812.02);
+  assert.equal(limiteDeDispensa('2026', 'MATERIAL DE CONSUMO'), 65492.11);
+  assert.equal(limiteDeDispensa('2026', 'MANUTENÇÃO E CONSERVAÇÃO DE VEÍCULOS'), 130984.2);
   assert.equal(limiteDeDispensa('2022', 'MATERIAL DE CONSUMO'), null);
 });
 
@@ -47,6 +49,12 @@ test('alerta quando um fornecedor recebe, sem licitação ou por dispensa, mais 
     despesa('POSTO X', 'COMBUSTÍVEIS', 40000, '01-Janeiro'), despesa('POSTO X', 'COMBUSTÍVEIS', 30000, '02-Fevereiro', 'Dispensa'),
     despesa('POSTO X', 'COMBUSTÍVEIS', 10000, '03-Março'),
     despesa('ENERGISA', 'SERVIÇOS DE ENERGIA ELÉTRICA', 900000, '01-Janeiro', 'Sem Licitação', 'Outros Serviços de Terceiros - Pessoa Jurídica'),
+    despesa('ENERGISA', 'SERVIÇOS DE ENERGIA ELÉTRICA', 900000, '02-Fevereiro', 'Sem Licitação', 'Outros Serviços de Terceiros - Pessoa Jurídica'),
+    despesa('CAGEPA', 'OUTROS SERVIÇOS DE TERCEIROS, PESSOA JURÍDICA', 210000, '01-Janeiro', 'Sem Licitação', 'Outros Serviços de Terceiros - Pessoa Jurídica'),
+    despesa('CAGEPA', 'OUTROS SERVIÇOS DE TERCEIROS, PESSOA JURÍDICA', 210000, '02-Fevereiro', 'Sem Licitação', 'Outros Serviços de Terceiros - Pessoa Jurídica'),
+    despesa('ENERGISA', 'OUTROS SERVIÇOS DE TERCEIROS, PESSOA JURÍDICA', 140000, '01-Janeiro', 'Sem Licitação', 'Outros Serviços de Terceiros - Pessoa Jurídica'),
+    despesa('EMPRESA PARAIBANA DE COMUNICAÇÃO S.A - EPC', 'OUTROS SERVIÇOS DE TERCEIROS, PESSOA JURÍDICA', 200000, '01-Janeiro', 'Sem Licitação', 'Outros Serviços de Terceiros - Pessoa Jurídica'),
+    despesa('EMPRESA PARAIBANA DE COMUNICAÇÃO S.A - EPC', 'OUTROS SERVIÇOS DE TERCEIROS, PESSOA JURÍDICA', 200000, '02-Fevereiro', 'Sem Licitação', 'Outros Serviços de Terceiros - Pessoa Jurídica'),
     despesa('LOJA Y', 'MATERIAL DE EXPEDIENTE', 61000, '01-Janeiro'),
     despesa('LOJA Z', 'MATERIAL DE EXPEDIENTE', 90000, '01-Janeiro', 'Pregão'),
   ]);

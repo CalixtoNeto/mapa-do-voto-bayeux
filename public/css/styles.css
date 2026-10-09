@@ -312,3 +312,7 @@ button.abre{cursor:pointer}
 .lista-alertas p{margin:4px 0 0; font-size:14px}
 .alertas{display:flex; flex-direction:column; gap:12px}
 .alertas details p{margin:6px 0 0}
+.grupo-alertas{display:flex; flex-direction:column; gap:4px}
+.grupo-alertas .locais{margin-top:6px}
+.grupo-alertas .ln{white-space:normal}
+.grupo-alertas .ln small{display:block; color:var(--muted); font-size:12.5px}
