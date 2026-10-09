@@ -82,3 +82,15 @@ export function crescimentosAnormais(anos, ano) {
   return (atual.despesas.comprasPorElemento || []).map(([elemento, depois]) => [elemento, antes.get(elemento) || 0, depois])
     .filter(([, a, d]) => a > 0 && d >= 2 * a && d - a >= 1e6).sort((x, y) => (y[2] - y[1]) - (x[2] - x[1]));
 }
+
+// A lei eleitoral proíbe contratar nos 3 meses antes da eleição municipal (Lei 9.504, art. 73, V): um aumento
+// de comissionados e temporários entre janeiro e junho desse ano destoa. [tipo, pessoas em janeiro, em junho]
+const CONTRATACAO = /comissionad|excepcional|tempor/i;
+export function contratacoesEmAnoDeEleicao(a) {
+  if (Number(a?.ano) % 4 !== 0 || !a.servidores?.tiposPorMes) return [];
+  return Object.entries(a.servidores.tiposPorMes).filter(([tipo]) => CONTRATACAO.test(tipo)).flatMap(([tipo, meses]) => {
+    const no = mes => meses.find(m => m[0] === `${a.ano}${mes}`)?.[1];
+    const [jan, jun] = [no('01'), no('06')];
+    return jan && jun && jun - jan >= 50 && jun / jan >= 1.2 ? [[tipo, jan, jun]] : [];
+  });
+}

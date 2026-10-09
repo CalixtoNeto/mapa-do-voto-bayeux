@@ -57,6 +57,7 @@ test('folha: pessoas no último mês e total do ano por órgão e tipo de cargo;
   assert.deepEqual(r.orgaos, [['Câmara Municipal de Bayeux', 2, 7822.35], ['Prefeitura Municipal de Bayeux', 1, 3000]]);
   assert.deepEqual(r.tipos, [['Efetivos', 2, 6822.35], ['Cargo Comissionado', 1, 4000]]);
   assert.deepEqual(r.meses, [['202501', 1, 2000], ['202502', 3, 8822.35]]);
+  assert.deepEqual(r.tiposPorMes, { 'Cargo Comissionado': [['202501', 1], ['202502', 1]], Efetivos: [['202502', 2]] });
   assert.deepEqual(remuneracaoDe(folha, 'Ana Paula Borges da Silva'),
     [['202501', 2000, 'ASSESSOR TECNICO PARLAMENTAR', 'Câmara Municipal de Bayeux'], ['202502', 2000, 'ASSESSOR TECNICO PARLAMENTAR', 'Câmara Municipal de Bayeux']]);
   assert.deepEqual(remuneracaoDe(folha, 'Ninguém'), []);

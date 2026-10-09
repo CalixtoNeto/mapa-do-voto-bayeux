@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, ramoDaArvore, crescimentosAnormais, vereadoresEmOrdem, serieAnual, mesAno }
+import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, ramoDaArvore, crescimentosAnormais, contratacoesEmAnoDeEleicao, vereadoresEmOrdem, serieAnual, mesAno }
   from '../../public/js/perfil/calculos-perfil.mjs';
 
 test('endereço do perfil a partir do nome', () => {
@@ -79,4 +79,13 @@ test('crescimento anormal: tipo de compra que dobrou e cresceu R$ 1 milhão entr
   assert.deepEqual(crescimentosAnormais(anos, '2025'), [['Obras', 3e5, 9e6], ['Publicidade', 1e6, 3e6]]);
   assert.deepEqual(crescimentosAnormais(anos, '2026'), [], 'ano incompleto não é comparado');
   assert.deepEqual(crescimentosAnormais(anos, '2024'), [], 'sem o ano anterior');
+});
+
+test('contratações de comissionados e temporários no 1º semestre de ano de eleição municipal', () => {
+  const serie = (jan, jun) => [['202401', jan], ['202403', jan + 10], ['202406', jun], ['202409', 5]];
+  const ano = { ano: '2024', servidores: { tiposPorMes: { 'Cargo Comissionado': serie(300, 420), 'Contratação por excepcional interesse público': serie(1000, 1300), Efetivos: serie(1000, 2000) } } };
+  assert.deepEqual(contratacoesEmAnoDeEleicao(ano), [['Cargo Comissionado', 300, 420], ['Contratação por excepcional interesse público', 1000, 1300]]);
+  assert.deepEqual(contratacoesEmAnoDeEleicao({ ...ano, ano: '2025' }), [], 'só em ano de eleição municipal');
+  const pouco = { ano: '2024', servidores: { tiposPorMes: { 'Cargo Comissionado': serie(300, 330) } } };
+  assert.deepEqual(contratacoesEmAnoDeEleicao(pouco), [], 'menos de 20% e de 50 pessoas a mais');
 });
