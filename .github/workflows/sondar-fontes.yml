@@ -15,20 +15,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Onde o portal do TCE-PB busca os dados
+      - name: Conjuntos do TCE-PB e arquivos de Bayeux
         continue-on-error: true
         run: |
           base=https://dados-abertos.tce.pb.gov.br
           js=$(curl -sSL -m 60 "$base/" | grep -oE 'src="[^"]+\.js"' | sed 's/^src="//;s/"$//' | head -1)
           curl -sSL -m 60 -o app.js "$base$js"
-          echo "::group::endereços no script"
-          grep -oE '"https?://[^"]{4,200}"' app.js | sort -u | head -80
-          grep -oE '`[^`]{0,40}(api|https?:)[^`]{0,160}`' app.js | sort -u | head -80
+          echo "::group::em volta dos downloads"
+          grep -oE '.{0,1500}download\.tce\.pb\.gov\.br/dados-abertos/dados-por-municipio.{0,600}' app.js | head -c 5000; echo
           echo "::endgroup::"
-          echo "::group::trechos com fetch/axios/baseURL"
-          grep -oE '.{0,160}(fetch\(|baseURL|axios\.|\.get\(`).{0,200}' app.js | head -40
+          echo "::group::listas de conjuntos (id:)"
+          grep -oE 'id:"[a-z0-9_-]{3,60}"[^}]{0,200}' app.js | sort -u | head -120
           echo "::endgroup::"
-          echo "::group::arquivos e chunks importados"
-          grep -oE '"(\./|/assets/)[^"]+\.js"' app.js | sort -u | head -40
-          grep -oE '"[^"]{0,80}\.(zip|gz|csv|json)"' app.js | sort -u | head -40
+          echo "::group::bayeux no script"
+          grep -oiE '.{0,200}bayeux.{0,200}' app.js | head -5
+          echo "::endgroup::"
+          echo "::group::JSON de apoio"
+          grep -oE '"[^"]{0,120}\.json"|`[^`]{0,160}\.json`' app.js | sort -u | head -20
           echo "::endgroup::"
