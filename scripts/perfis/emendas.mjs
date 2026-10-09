@@ -2,12 +2,13 @@
 // e quanto foi pago (inclusive restos a pagar de anos anteriores), e os convênios com o objeto de cada uma.
 import { reais } from '../lib/valores.mjs';
 import { somar, ordenado, centavos } from './somas.mjs';
+import { novaArvore, somarNaArvore, arvorePodada } from './arvores.mjs';
 
 export const IBGE_BAYEUX = '2501807';
 const LOCAL_DO_CONVENIO = /^BAYEUX\s*-\s*PB$/i;
 
 export const novasEmendas = () => ({ autores: {}, anos: {}, funcoes: {}, autorDoCodigo: new Map(), convenios: [],
-  recebido: { autores: {}, favorecidos: {}, anos: {} } });
+  recebido: { autores: {}, favorecidos: {}, anos: {}, arvore: novaArvore() } });
 
 // Muitas emendas (as de saúde, sobretudo) têm a Paraíba como local de aplicação: só o favorecido diz que o dinheiro
 // chegou a Bayeux. Empresas daqui que venderam para outras cidades não contam.
@@ -21,6 +22,7 @@ export function somarFavorecido(acc, ler) {
   const favorecido = (r.favorecidos[ler('FAVORECIDO')] ||= { natureza: ler('NATUREZA JURÍDICA'), v: 0 });
   favorecido.v += valor;
   somar(r.anos, ler('ANO/MÊS').slice(0, 4), valor);
+  somarNaArvore(r.arvore, [ler('NOME DO AUTOR DA EMENDA'), ler('FAVORECIDO'), ler('ANO/MÊS').slice(0, 4)], valor);
 }
 
 export function somarEmenda(acc, ler) {
@@ -54,5 +56,6 @@ export function resumoDasEmendas(acc) {
 function resumoDoRecebido(r) {
   const porAutor = Object.entries(r.autores).sort((a, b) => b[1].v - a[1].v).map(([autor, a]) => [autor, centavos(a.v), a.emendas.size]);
   const porFavorecido = Object.entries(r.favorecidos).sort((a, b) => b[1].v - a[1].v).map(([nome, f]) => [nome, f.natureza, centavos(f.v)]);
-  return { porAutor, porFavorecido, porAno: Object.entries(r.anos).sort().map(([ano, v]) => [ano, centavos(v)]) };
+  // Árvore autor → quem recebeu → ano, com todos os ramos (sem "Outros").
+  return { porAutor, porFavorecido, porAno: Object.entries(r.anos).sort().map(([ano, v]) => [ano, centavos(v)]), arvore: arvorePodada(r.arvore, Infinity) };
 }

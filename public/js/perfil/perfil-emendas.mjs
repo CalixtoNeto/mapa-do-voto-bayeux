@@ -2,6 +2,7 @@
 // quem mandou, e as emendas que têm Bayeux como destino, com os convênios assinados.
 import { dinheiro, sentence } from '../formato.mjs';
 import { ListaDeBarras, usarLimite } from '../componentes.mjs';
+import { ArvoreDeBarras } from '../arvore.mjs';
 import { Voltar, Topo, Estatisticas, Secao, nomeProprio } from './pecas.mjs';
 const { html } = window.htmPreact;
 
@@ -19,11 +20,16 @@ function Convenios({ convenios }) {
     <p>${sentence(objeto)}</p></li>`)}</ul>`;
 }
 
+// Autor → quem recebeu → ano, quando o arquivo já traz a árvore; senão, as listas de autores e de quem recebeu.
+const rotuloDoRecebido = (nome, nivel) => nivel < 2 ? nomeProprio(nome) : nome;
+
 function Recebido({ r }) {
   if (!r?.porAutor.length) return null;
   return html`<${Secao} id="er" titulo="Quem mandou o dinheiro que chegou">
-      <${Lista} itens=${r.porAutor.map(([autor, v, n]) => ({ n: html`${nomeProprio(autor)} <small>${emendas(n)}</small>`, v, rotulo: dinheiro(v) }))} />
-      <h3>Quem recebeu</h3><${Lista} itens=${r.porFavorecido.map(([nome, natureza, v]) => ({ n: html`${nomeProprio(nome)} <small>${natureza}</small>`, v, rotulo: dinheiro(v) }))} />
+      ${r.arvore?.v > 0 ? html`<p class="hint">Autor da emenda → quem recebeu → ano. Toque num item para abrir.</p>
+        <div class="arvore"><${ArvoreDeBarras} arvore=${r.arvore} rotulo=${rotuloDoRecebido} /></div>`
+      : html`<${Lista} itens=${r.porAutor.map(([autor, v, n]) => ({ n: html`${nomeProprio(autor)} <small>${emendas(n)}</small>`, v, rotulo: dinheiro(v) }))} />
+        <h3>Quem recebeu</h3><${Lista} itens=${r.porFavorecido.map(([nome, natureza, v]) => ({ n: html`${nomeProprio(nome)} <small>${natureza}</small>`, v, rotulo: dinheiro(v) }))} />`}
       <h3>Por ano</h3><${ListaDeBarras} itens=${r.porAno.map(([a, v]) => ({ n: a, v, rotulo: dinheiro(v) }))} />
     <//>`;
 }

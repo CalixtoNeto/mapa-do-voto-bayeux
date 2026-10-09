@@ -47,5 +47,8 @@ test('dinheiro de emendas pago a quem está em Bayeux: o município, fundos e en
     porAutor: [['COM. DA SAUDE', 2497374, 1], ['MARCELO CRIVELLA', 784000, 1]],
     porFavorecido: [['FUNDO MUNICIPAL DE SAUDE DE BAYEUX', 'Fundo Público da Administração Direta Municipal', 2497374], ['ASSOCIACAO ESPACO SOCIAL', 'Associação Privada', 784000]],
     porAno: [['2026', 3281374]],
+    arvore: { v: 3281374, filhos: [
+      ['COM. DA SAUDE', 2497374, [['FUNDO MUNICIPAL DE SAUDE DE BAYEUX', 2497374, [['2026', 2497374]]]]],
+      ['MARCELO CRIVELLA', 784000, [['ASSOCIACAO ESPACO SOCIAL', 784000, [['2026', 784000]]]]]] },
   });
 });
