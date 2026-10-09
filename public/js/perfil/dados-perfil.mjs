@@ -21,6 +21,18 @@ export function usarPerfis() {
   return dados;
 }
 
+// As árvores de decomposição de um ano são maiores: só são lidas quando o ano é aberto.
+const detalhes = {};
+export function usarDetalhe(ano) {
+  const [detalhe, setDetalhe] = useState(null);
+  useEffect(() => {
+    setDetalhe(null);
+    if (!ano) return;
+    (detalhes[ano] ||= lerJson(`${BASE}/prefeitura-${ano}-detalhe.json`)).then(setDetalhe);
+  }, [ano]);
+  return detalhe;
+}
+
 const rotaAtual = () => decodeURIComponent(location.hash.replace(/^#\/?/, ''));
 export const ehRotaDePerfil = () => /^perf(is|il\/)/.test(rotaAtual());
 

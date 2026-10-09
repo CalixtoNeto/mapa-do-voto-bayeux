@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, vereadoresEmOrdem, serieAnual, mesAno }
+import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, ramoDaArvore, crescimentosAnormais, contratacoesEmAnoDeEleicao, vereadoresEmOrdem, serieAnual, mesAno }
   from '../../public/js/perfil/calculos-perfil.mjs';
 
 test('endereço do perfil a partir do nome', () => {
@@ -62,4 +62,30 @@ test('ligações agrupadas por credor: pago somado entre anos, cada campanha uma
     { credor: 'ZAPIER', pago: 176, anos: ['2024', '2025'], campanhas: [{ papel: 'doou', valor: 100, quem: 'TARCYANNA', eleicao: '2024' }, { papel: 'doou', valor: 100, quem: 'FULANO', eleicao: '2024' }] },
     { credor: 'GILSON', pago: 4, anos: ['2025'], campanhas: [{ papel: 'doou', valor: 100, quem: 'TARCYANNA', eleicao: '2024' }] },
   ]);
+});
+
+test('ramo da árvore no caminho escolhido; caminho que não existe para no último ramo achado', () => {
+  const arvore = { v: 190, filhos: [['Saúde', 160, [['Material', 160, [['FARMACIA', 160]]]]], ['Educação', 30]] };
+  assert.deepEqual(ramoDaArvore(arvore, []), { valor: 190, filhos: arvore.filhos });
+  assert.deepEqual(ramoDaArvore(arvore, ['Saúde', 'Material']), { valor: 160, filhos: [['FARMACIA', 160]] });
+  assert.deepEqual(ramoDaArvore(arvore, ['Educação']), { valor: 30, filhos: [] });
+});
+
+test('crescimento anormal: tipo de compra que dobrou e cresceu R$ 1 milhão entre dois anos completos', () => {
+  const meses = Array.from({ length: 12 }, (_, i) => [String(i + 1).padStart(2, '0'), 1]);
+  const ano = (a, compras, m = meses) => ({ ano: a, despesas: { meses: m, comprasPorElemento: compras } });
+  const anos = [ano('2025', [['Publicidade', 3e6], ['Material', 2e6], ['Obras', 9e6]]), ano('2024', [['Publicidade', 1e6], ['Material', 1.5e6], ['Obras', 3e5]]),
+    ano('2026', [['Publicidade', 9e6]], meses.slice(0, 9))];
+  assert.deepEqual(crescimentosAnormais(anos, '2025'), [['Obras', 3e5, 9e6], ['Publicidade', 1e6, 3e6]]);
+  assert.deepEqual(crescimentosAnormais(anos, '2026'), [], 'ano incompleto não é comparado');
+  assert.deepEqual(crescimentosAnormais(anos, '2024'), [], 'sem o ano anterior');
+});
+
+test('contratações de comissionados e temporários no 1º semestre de ano de eleição municipal', () => {
+  const serie = (jan, jun) => [['202401', jan], ['202403', jan + 10], ['202406', jun], ['202409', 5]];
+  const ano = { ano: '2024', servidores: { tiposPorMes: { 'Cargo Comissionado': serie(300, 420), 'Contratação por excepcional interesse público': serie(1000, 1300), Efetivos: serie(1000, 2000) } } };
+  assert.deepEqual(contratacoesEmAnoDeEleicao(ano), [['Cargo Comissionado', 300, 420], ['Contratação por excepcional interesse público', 1000, 1300]]);
+  assert.deepEqual(contratacoesEmAnoDeEleicao({ ...ano, ano: '2025' }), [], 'só em ano de eleição municipal');
+  const pouco = { ano: '2024', servidores: { tiposPorMes: { 'Cargo Comissionado': serie(300, 330) } } };
+  assert.deepEqual(contratacoesEmAnoDeEleicao(pouco), [], 'menos de 20% e de 50 pessoas a mais');
 });

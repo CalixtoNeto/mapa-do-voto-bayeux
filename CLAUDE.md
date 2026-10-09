@@ -33,6 +33,9 @@ e `scripts/gerar-dados.mjs` (votos), a partir do TSE.
   (`scripts/fontes/sapl.mjs`) e do Portal da Transparência (`scripts/fontes/emendas.mjs`); as regras ficam em `scripts/perfis/`,
   testadas em `test/unidade/{tce-pb,sapl,emendas,cruzamentos}.test.mjs`.
 - O Sagres escreve milhar sem decimais com ponto ("2.100" = 2100): use `reaisDoTce`, não `reais`.
+- As árvores de decomposição (`scripts/perfis/arvores.mjs`) vão para `prefeitura-ANO-detalhe.json`, lido só quando o ano é
+  aberto; os alertas (`scripts/perfis/alertas.mjs`) vão no `prefeitura-ANO.json`. Todo alerta aparece com a ressalva de que
+  não indica irregularidade. Todo ano, inclua em `LIMITES` o limite de dispensa do decreto que atualiza a Lei 14.133.
 - O site lê os perfis em `public/js/perfil/` (cálculos em `calculos-perfil.mjs`, testados em `test/unidade/calculos-perfil.test.mjs`);
   não há perfis no repositório da Paraíba, então essa pasta não precisa ficar igual lá.
 

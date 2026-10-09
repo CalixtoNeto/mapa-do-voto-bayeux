@@ -6,7 +6,7 @@ import { getJson } from './lib/tse.mjs';
 import { dadosDaCamara } from './fontes/sapl.mjs';
 import { emendasViaCsv } from './fontes/emendas.mjs';
 import { resumoDaCamara } from './perfis/camara.mjs';
-import { anoDoMunicipio, resumoDoAno } from './perfis/municipio.mjs';
+import { anoDoMunicipio, resumoDoAno, detalheDoAno } from './perfis/municipio.mjs';
 import { remuneracaoDe } from './perfis/folha.mjs';
 import { chaveNaEleicao } from './perfis/cruzamentos.mjs';
 import { campanhasDaEleicao, eleicaoDoMandato, eleitoNaEleicao, lerDaEleicao, nomesDosCandidatos } from './perfis/campanhas.mjs';
@@ -44,6 +44,8 @@ async function gerarMunicipio(anos) {
     if (!dados) { console.log('  nada publicado pelo TCE-PB'); continue; }
     if (dados.servidores) folhas[ano] = dados.servidores;
     await escreverPerfil(`prefeitura-${ano}`, resumoDoAno(ano, dados, { campanhas, prefeito: await prefeitoDoMandato(ano), atualizadoEm }));
+    const detalhe = detalheDoAno(ano, dados);
+    if (detalhe) await escreverPerfil(`prefeitura-${ano}-detalhe`, detalhe);
   }
   return folhas;
 }

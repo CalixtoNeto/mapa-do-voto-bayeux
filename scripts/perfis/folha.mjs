@@ -33,9 +33,18 @@ function porMes(linhas) {
   return Object.entries(meses).sort().map(([mes, m]) => [mes, m.pessoas.size, centavos(m.total)]);
 }
 
+// Pessoas de cada tipo de cargo mês a mês: mostra contratações concentradas em certos meses.
+function tiposPorMes(linhas) {
+  const tipos = {};
+  for (const l of linhas) ((tipos[l.tipo] ||= {})[l.mes] ||= new Set()).add(l.nome);
+  return Object.fromEntries(Object.entries(tipos).map(([tipo, meses]) =>
+    [tipo, Object.entries(meses).sort().map(([mes, pessoas]) => [mes, pessoas.size])]));
+}
+
 export function resumoDaFolha({ linhas }) {
   const ultimoMes = linhas.reduce((max, l) => l.mes > max ? l.mes : max, '');
-  return { orgaos: porGrupo(linhas, l => l.orgao, ultimoMes), tipos: porGrupo(linhas, l => l.tipo, ultimoMes), meses: porMes(linhas) };
+  return { orgaos: porGrupo(linhas, l => l.orgao, ultimoMes), tipos: porGrupo(linhas, l => l.tipo, ultimoMes),
+    meses: porMes(linhas), tiposPorMes: tiposPorMes(linhas) };
 }
 
 // [[anoMes, valor, cargo, órgão]], somando as linhas do mesmo mês e órgão.

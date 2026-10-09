@@ -294,3 +294,25 @@ figcaption .leg li{display:flex; gap:6px; align-items:center}
 .ligacoes .ln{white-space:normal; overflow:visible}
 .ligacoes .ln small{display:block; font-size:12.5px; color:var(--muted)}
 .ligacoes .lv small{display:block; text-align:right}
+.trilha{display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 6px; font-size:14px}
+.trilha .link{padding:4px 0; text-align:left}
+.trilha [aria-current="true"]{color:var(--ink); text-decoration:none; font-weight:600}
+.trilha span{color:var(--muted)}
+.ramos li{padding:0; display:block}
+.ramos .abre{display:grid; width:100%; grid-template-columns:1fr auto; grid-template-rows:auto 3px; gap:2px 12px; padding:8px 0 7px; border:0; background:none; text-align:left; align-items:baseline; font:inherit; color:inherit}
+button.abre{cursor:pointer}
+.ramos button.abre .ln::after{content:" ›"; color:var(--muted)}
+.ramos button.abre:hover .ln{text-decoration:underline; text-underline-offset:3px}
+.ramos .lv small{font:400 12px var(--sans); color:var(--muted)}
+.ramos .bar{grid-column:1 / 3; height:3px}
+.ressalva{margin:0; padding:10px 12px; border-left:3px solid var(--accent); background:var(--surface); font-size:14px}
+.lista-alertas{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.lista-alertas li{padding:10px 0; border-bottom:1px solid var(--line)}
+.lista-alertas .tipo{font:600 12px var(--sans); text-transform:uppercase; letter-spacing:.04em; color:var(--accent)}
+.lista-alertas p{margin:4px 0 0; font-size:14px}
+.alertas{display:flex; flex-direction:column; gap:12px}
+.alertas details p{margin:6px 0 0}
+.grupo-alertas{display:flex; flex-direction:column; gap:4px}
+.grupo-alertas .locais{margin-top:6px}
+.grupo-alertas .ln{white-space:normal}
+.grupo-alertas .ln small{display:block; color:var(--muted); font-size:12.5px}
