@@ -1,0 +1,64 @@
+name: Atualizar perfis
+
+# Todo dia 10 (e à mão, em Actions > Atualizar perfis > Run workflow). Baixa do TCE-PB as despesas, a folha,
+# as receitas e as licitações da Prefeitura e da Câmara, do SAPL da Câmara os vereadores, a presença, os votos
+# e as matérias, e do Portal da Transparência as emendas destinadas a Bayeux. Grava public/data/perfis/.
+on:
+  schedule:
+    - cron: '17 9 10 * *'
+  workflow_dispatch:
+    inputs:
+      anos:
+        description: 'Anos da Prefeitura separados por espaço (por exemplo, 2025 2026). Em branco: todos.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write   # commitar os dados gerados
+  actions: write    # disparar a publicação do site
+
+concurrency:
+  group: atualizar-dados
+  cancel-in-progress: false
+
+jobs:
+  perfis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ANOS: ${{ inputs.anos }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      # Na fila (concurrency), o job pode começar depois que outro já commitou dados: sem ref, o checkout pegaria
+      # o commit da hora do disparo e o pull --rebase do fim daria conflito nos mesmos arquivos.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Testar o gerador antes de usá-lo
+        run: npm test
+
+      - name: Gerar os perfis
+        run: |
+          [[ "$ANOS" =~ ^([0-9]{4}( +[0-9]{4})*)?$ ]] || { echo "Anos inválidos: $ANOS"; exit 1; }
+          node scripts/gerar-perfis.mjs $ANOS
+
+      - name: Commitar e publicar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/perfis
+          if git diff --cached --quiet; then echo "Nenhuma mudança nos perfis."; exit 0; fi
+          git commit -m "dados: perfis atualizados pelo workflow"
+          git pull --rebase
+          git push
+          # o push feito com o token do workflow não dispara o deploy, então chamamos o workflow de publicação
+          gh workflow run pages.yml

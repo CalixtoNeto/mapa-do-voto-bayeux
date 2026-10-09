@@ -1,7 +1,7 @@
 // Interface: Preact + htm, mapa em Canvas 2D.
 // startApp é chamado por main.js depois que o contorno é carregado; TABELAS é preenchida
 // com a tabela de locais de votação de cada ano, conforme a eleição escolhida. AN são as análises (js/analises.mjs).
-function startApp(GEO, TABELAS, AN) {
+function startApp(GEO, TABELAS, AN, PERFIS) {
 const { html, render, useState, useEffect, useMemo, useRef } = htmPreact;
 const UF = 'PB', CIDADE = 'Bayeux';
 const NORM = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
@@ -516,8 +516,15 @@ function App() {
   const mapRef = useRef();
   const [pessoas, setPessoas] = useState({}), [comp, setComp] = useState(null), [dsB, setDsB] = useState(null);
   const [varModo, setVarModo] = useState(ls.get('mvb.varmodo') || 'rel');
-  const [modo, setModo] = useState(ls.get('mvb.modo') || 'candidato'), [camada, setCamada] = useState('vencedor');
-  useEffect(() => { ls.set('mvb.modo', modo); }, [modo]);
+  const [modo, setModo] = useState(PERFIS.ehRotaDePerfil() ? 'perfis' : ls.get('mvb.modo') || 'candidato'), [camada, setCamada] = useState('vencedor');
+  useEffect(() => { if (modo !== 'perfis') ls.set('mvb.modo', modo); }, [modo]);
+  // os perfis têm endereço próprio (#perfil/…); um link para eles abre a página mesmo vindo do mapa
+  useEffect(() => {
+    const aoMudar = () => { if (PERFIS.ehRotaDePerfil()) setModo('perfis'); };
+    window.addEventListener('hashchange', aoMudar);
+    return () => window.removeEventListener('hashchange', aoMudar);
+  }, []);
+  const [candPendente, setCandPendente] = useState(null);
   const indiceAnalises = AN.usarIndiceDasAnalises('data/eleicoes');
   useEffect(() => { ls.set('mvb.varmodo', varModo); }, [varModo]);
   useEffect(() => { lerJson('data/eleicoes/pessoas.json').then(setPessoas).catch(() => { }); }, []);
@@ -571,7 +578,11 @@ function App() {
   }, [cargos]);
   const cands = useMemo(() => ds && cargo
     ? ds.cands.filter(c => c.cargo === cargo).map(c => ({ ...c, partido: c.partido || partidoDe(ds, c.ano, c.nr) })).sort((a, b) => b.total - a.total) : [], [ds, cargo]);
-  useEffect(() => { setCandKey(k => cands.some(c => c.key === k) ? k : null); }, [cands]);
+  // vindo de um perfil, o candidato só existe depois que a eleição escolhida carrega
+  useEffect(() => {
+    if (candPendente && cands.some(c => c.key === candPendente)) { setCandKey(candPendente); setCandPendente(null); return; }
+    setCandKey(k => cands.some(c => c.key === k) ? k : null);
+  }, [cands, candPendente]);
   const view = useMemo(() => {
     const c = ds && cands.find(x => x.key === candKey);
     return c ? buildView(ds, c) : null;
@@ -603,6 +614,13 @@ function App() {
   }, [panorama, ds, cands, camada, vence, compBairros]);
   const classesPanorama = useMemo(() => viewPanorama ? (camada === 'vencedor' ? { b: [], min: 0, max: 0 } : quantBreaks(viewPanorama.bairros.map(b => b.p))) : null, [viewPanorama]);
   const escolher = c => { setCargo(c.cargo); setCandKey(c.key); setModo('candidato'); setSelected(null); setComp(null); };
+  const sairDosPerfis = () => { if (location.hash) history.replaceState(null, '', location.pathname + location.search); };
+  const trocarModo = m => { if (m === 'perfis') location.hash = 'perfis'; else sairDosPerfis(); setModo(m); setSelected(null); if (m !== 'candidato') setComp(null); };
+  const verNoMapa = (ano, chave) => {
+    const id = ano + '|1', [cd] = chave.split('|');
+    sairDosPerfis(); setEleicao(id); setCargo(cd); setCandPendente(`${id}|${chave}`); setModo('candidato'); setSelected(null); setComp(null);
+    window.scrollTo(0, 0);
+  };
   const nomeDoCand = k => { const c = cands.find(x => x.key === k); return c ? titleCase(c.nome) : ''; };
 
   // ---- comparação com outra eleição do mesmo candidato ----
@@ -644,12 +662,16 @@ function App() {
   const hasData = !!ds;
   const semBairros = !!(ds && ds.semBairros);
 
-  return html`<div class=${'app' + (hasData ? '' : ' nodata')}>
+  const seletorDeModo = [['candidato', 'Candidato'], ['panorama', 'Panorama do cargo'], ['perfis', 'Perfis']].map(([m, rotulo]) =>
+    html`<button type="button" role="radio" aria-checked=${modo === m} onClick=${() => trocarModo(m)}>${rotulo}</button>`);
+
+  return html`<div class=${'app' + (hasData || modo === 'perfis' ? '' : ' nodata') + (modo === 'perfis' ? ' com-perfis' : '')}>
     <header class="top">
       <p class="brand">Mapa do voto <span>${CIDADE}</span></p>
     </header>
 
-    ${indice && html`<section class="filters" aria-label="Filtros">
+    ${modo === 'perfis' ? html`<section class="filters"><div class="seg modo" role="radiogroup" aria-label="O que ver">${seletorDeModo}</div></section>
+      <main class="perfis"><${PERFIS.PaginaDePerfis} aoVerNoMapa=${verNoMapa} /></main>` : html`${indice && html`<section class="filters" aria-label="Filtros">
       <label class="field">Eleição
         <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); setCandKey(null); setComp(null); }}>
           ${indice.map(e => html`<option value=${e.id}>${rotuloEleicao(e)}</option>`)}
@@ -657,10 +679,7 @@ function App() {
       ${hasData && html`<div class="chips" role="radiogroup" aria-label="Cargo">
         ${cargos.map(([cd, nm]) => html`<button type="button" role="radio" aria-checked=${cd === cargo} onClick=${() => { setCargo(cd); setSelected(null); setComp(null); }}>${sentence(nm)}</button>`)}
       </div>
-      <div class="seg modo" role="radiogroup" aria-label="O que ver">
-        <button type="button" role="radio" aria-checked=${modo === 'candidato'} onClick=${() => { setModo('candidato'); setSelected(null); }}>Candidato</button>
-        <button type="button" role="radio" aria-checked=${modo === 'panorama'} onClick=${() => { setModo('panorama'); setSelected(null); setComp(null); }}>Panorama do cargo</button>
-      </div>
+      <div class="seg modo" role="radiogroup" aria-label="O que ver">${seletorDeModo}</div>
       <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setModo('candidato'); setSelected(null); setComp(null); }} />`}
     </section>`}
 
@@ -701,7 +720,7 @@ function App() {
         ${view && !cmp && !semBairros && html`<${PAINEL.Dobradinhas} cand=${candAtual} ds=${ds} onPick=${escolher} />`}`}
       <${Fonte} item=${item} />
       <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, API de resultados (ciclo atual) e Portal de Dados Abertos (votação e comparecimento por seção, eleitorado por local de votação, cadastro e bens dos candidatos, prestação de contas); contorno municipal do IBGE.</p>
-    </aside>
+    </aside>`}
   </div>`;
 }
 render(html`<${App} />`, document.getElementById('root'));

@@ -27,12 +27,22 @@ e `scripts/gerar-dados.mjs` (votos), a partir do TSE.
   `[aptos, comparecimento, brancos, nulos, legenda?]` no comparecimento; `[eleitores, mulheres, jovens, idosos,
   superior, pouco estudo]` no eleitorado. Em `doa` e `fo`, o último número é o índice na lista do arquivo.
 
+## Perfis (só neste repositório)
+
+- `scripts/gerar-perfis.mjs` gera `public/data/perfis/` a partir do TCE-PB (`scripts/fontes/tce-pb.mjs`), do SAPL da Câmara
+  (`scripts/fontes/sapl.mjs`) e do Portal da Transparência (`scripts/fontes/emendas.mjs`); as regras ficam em `scripts/perfis/`,
+  testadas em `test/unidade/{tce-pb,sapl,emendas,cruzamentos}.test.mjs`.
+- O Sagres escreve milhar sem decimais com ponto ("2.100" = 2100): use `reaisDoTce`, não `reais`.
+- O site lê os perfis em `public/js/perfil/` (cálculos em `calculos-perfil.mjs`, testados em `test/unidade/calculos-perfil.test.mjs`);
+  não há perfis no repositório da Paraíba, então essa pasta não precisa ficar igual lá.
+
 ## Como o código está organizado
 
 - Uma responsabilidade por arquivo, arquivos com menos de 100 linhas e funções com menos de 20.
 - Cada fonte em `scripts/fontes/` exporta um `leitorDe…` (trata uma linha, sem I/O) e uma função que lê o .zip.
   A montagem da tabela de seções (`scripts/secoes/tabela.mjs`) também é pura.
 - Dependências que tocam a rede entram por parâmetro (`buscarJson`, `localDaSecao`) para os testes trocarem por falsas.
+  `lerCsvsDoZip` lê Windows-1252 (TSE, Portal da Transparência) ou outra codificação pedida (o TCE-PB é UTF-8).
 - Os nomes curtos dentro dos JSON (`cands`, `tot`, `esp`, `loc`, `nr`) são o formato que `public/js/app.js` lê;
   não renomeie.
 - `scripts/lib/` é igual ao do repositório mapa-do-voto-pb; uma correção lá vale aqui também.

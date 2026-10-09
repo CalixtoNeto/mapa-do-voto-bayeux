@@ -83,6 +83,24 @@ O gerador `scripts/gerar-analises.mjs` grava, ao lado dos arquivos de votação:
 
 Para gerar ou atualizar: **Actions → Gerar análises → Run workflow** (em branco, refaz todos os anos; ou informe, por exemplo, `2020 2024`). O workflow **Atualizar dados de uma eleição** também gera as análises do ano. Localmente: `npm run analises -- 2024`.
 
+## Perfis dos políticos
+
+Em **Perfis** (ou direto em `#perfis`), quem governa Bayeux, com um endereço para cada perfil (`#perfil/prefeitura`, `#perfil/camara`, `#perfil/emendas`, `#perfil/cabo-rubem`…), bom para compartilhar:
+
+- **Prefeitura**: o(a) prefeito(a) eleito(a), votos, remuneração na folha e os **credores do município ligados à campanha** (quem doou ou recebeu da campanha e depois recebeu do município). Para cada ano de 2017 em diante: quanto foi pago e **em que área**, por órgão, **quem mais recebeu**, quanto das **compras e serviços foi sem licitação**, a **folha** por tipo de cargo (efetivos, comissionados, contratados…), as **licitações** por modalidade e quem mais venceu, as **emendas que entraram no caixa** (União e Estado, individuais, de bancada e de comissão) e todos os doadores e fornecedores de campanhas municipais que receberam do município no ano.
+- **Vereadores**: partido e trocas de partido, mandato, **presença nas sessões**, **matérias de autoria** por tipo e as mais recentes (com link para o SAPL), **votos nominais** (sim, não, abstenção, quantas vezes votou com a maioria), **com quem mais e menos vota junto**, remuneração no mandato, votos na eleição (com link para o mapa) e os credores do município ligados à campanha.
+- **Câmara Municipal**: sessões, votações nominais, presença de cada vereador, gasto e folha da Câmara em cada ano, em que gastou e quem mais recebeu.
+- **Emendas para Bayeux**: quanto chegou ao Município, aos fundos municipais e às entidades da cidade, **quem mandou** (deputados, senadores, bancadas e comissões) e **quem recebeu**, por ano; e as emendas com Bayeux como destino, com os convênios assinados.
+
+Leia assim:
+
+- A ligação entre bases é **pelo nome completo** (o SAPL e a folha do TCE não trazem o CPF do vereador; o TCE não diz quem doou a campanhas): pode haver homônimos. Órgãos públicos (o próprio município, fundos, INSS) não entram nas ligações.
+- **Sem licitação** é a parcela das compras, serviços, obras e locações pagas sem processo de licitação; dispensa e inexigibilidade aparecem à parte, nas licitações. Salário e previdência não entram na conta.
+- Votos nominais só existem quando a Câmara registra o voto de cada vereador no SAPL; votações simbólicas só têm o resultado. **Votar junto** não prova acordo político.
+- A presença conta as sessões com presença registrada no SAPL desde o início do mandato de cada um (a legislatura atual começou em 2025). Quem tem afastamento registrado, mas esteve em alguma das cinco últimas sessões, aparece em exercício.
+- O prefeito de cada ano é o eleito na eleição anterior; mudanças no meio do mandato (cassação, renúncia, interinos) não aparecem.
+- Os dados do ano corrente do TCE-PB são parciais (até o último mês enviado pela Prefeitura).
+
 ## De onde vêm os dados
 
 Os resultados ficam no repositório, em `public/data/eleicoes/`: um `ANO-tTURNO.json` por eleição e turno um `index.json` que o site lê para listar as eleições e um `pessoas.json` que liga o mesmo candidato entre eleições (pelo nome completo). A tabela de locais de votação de cada ano fica em `public/data/secoes-ANO.json`. O site é totalmente estático: o navegador do visitante nunca chama o TSE.
@@ -93,6 +111,14 @@ Os bairros precisam de votos por seção eleitoral, e a [API de resultados do TS
 2. **API de resultados**, só se o CSV ainda não tiver sido publicado (comum logo depois de uma eleição). Nesse caso o site mostra só o total de Bayeux, com um aviso, até o CSV sair e os dados serem atualizados.
 
 Eleições já geradas: 2012, 2014, 2016, 2018, 2020, 2022, 2024 e 2026.
+
+Os perfis ficam em `public/data/perfis/` (`camara.json`, `emendas.json`, um `prefeitura-ANO.json` por ano e `index.json`), gerados por `scripts/gerar-perfis.mjs` a partir de três fontes, todas sem chave de acesso:
+
+1. **TCE-PB (Sagres)**, [dados abertos por município](https://dados-abertos.tce.pb.gov.br/): despesas, servidores, receitas e licitações de Bayeux (município `025`), um .zip por ano.
+2. **SAPL da Câmara Municipal** (`sapl.bayeux.pb.leg.br/api`): vereadores, mandatos, partidos, sessões, presença, votos nominais e matérias.
+3. **Portal da Transparência (CGU)**: emendas parlamentares, convênios e favorecidos.
+
+O workflow **Atualizar perfis** roda todo dia 10 e pode ser acionado à mão (Actions > Atualizar perfis > Run workflow).
 
 ## Nas próximas eleições
 
@@ -139,6 +165,8 @@ Rodam offline, em menos de um segundo, sem baixar nada do TSE:
 | `scripts/gerar-dados.mjs` | Linha de comando dos votos: escolhe os anos e encadeia as etapas |
 | `scripts/gerar-secoes.mjs` | Linha de comando da tabela seção → local de votação → bairro |
 | `scripts/gerar-analises.mjs` | Linha de comando das análises: cadastro, bens, prestação de contas e comparecimento |
+| `scripts/gerar-perfis.mjs` | Linha de comando dos perfis: Prefeitura e Câmara (TCE-PB), vereadores (SAPL) e emendas (Portal da Transparência) |
+| `scripts/perfis/` | Regras dos perfis: despesas, folha, receitas, licitações, presença, votos, matérias, emendas e cruzamentos pelo nome |
 | `scripts/eleicao/` | Configuração (município, cargos) e a apuração (soma de votos por local) |
 | `scripts/fontes/` | CSV por seção, API de resultados e leitura da tabela de seções |
 | `scripts/secoes/` | Bairros, coordenadas e montagem da tabela de seções |
@@ -150,9 +178,10 @@ Cada fonte separa o tratamento de uma linha (função pura, testada sem .zip) da
 
 ## Stack
 
-Preact + htm, Canvas 2D, SVG (gráfico gasto × votos) e módulos ES nativos para as análises (`public/js/*.mjs`). fflate só nos scripts. Sem etapa de build: a pasta `public/` é o site.
+Preact + htm, Canvas 2D, SVG (gráfico gasto × votos) e módulos ES nativos para as análises (`public/js/*.mjs`) e os perfis (`public/js/perfil/`). fflate só nos scripts. Sem etapa de build: a pasta `public/` é o site.
 
 ## Fontes
 
 - TSE: Portal de Dados Abertos (votação por seção, detalhe da votação por seção, eleitorado por local de votação, candidatos, bens de candidatos e prestação de contas eleitorais) e API de resultados.
 - Contorno municipal: IBGE, API de malhas.
+- Perfis: TCE-PB (Sagres, dados abertos por município), SAPL da Câmara Municipal de Bayeux e Portal da Transparência (emendas parlamentares).
