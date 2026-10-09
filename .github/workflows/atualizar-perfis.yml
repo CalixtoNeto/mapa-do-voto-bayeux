@@ -1,12 +1,18 @@
-name: Sondar fontes do perfil
+name: Atualizar perfis
 
-# Temporário: roda o gerador de perfis neste branch, antes do workflow definitivo chegar ao main.
 # Todo dia 10 (e à mão, em Actions > Atualizar perfis > Run workflow). Baixa do TCE-PB as despesas, a folha,
 # as receitas e as licitações da Prefeitura e da Câmara, do SAPL da Câmara os vereadores, a presença, os votos
 # e as matérias, e do Portal da Transparência as emendas destinadas a Bayeux. Grava public/data/perfis/.
 on:
-  push:
-    paths: ['.github/workflows/sondar-fontes.yml']
+  schedule:
+    - cron: '17 9 10 * *'
+  workflow_dispatch:
+    inputs:
+      anos:
+        description: 'Anos da Prefeitura separados por espaço (por exemplo, 2025 2026). Em branco: todos.'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write   # commitar os dados gerados
@@ -21,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      ANOS: ''
+      ANOS: ${{ inputs.anos }}
       GH_TOKEN: ${{ github.token }}
     steps:
       # Na fila (concurrency), o job pode começar depois que outro já commitou dados: sem ref, o checkout pegaria
@@ -55,3 +61,4 @@ jobs:
           git pull --rebase
           git push
           # o push feito com o token do workflow não dispara o deploy, então chamamos o workflow de publicação
+          gh workflow run pages.yml

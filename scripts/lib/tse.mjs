@@ -41,10 +41,10 @@ export async function baixar(url, destino) {
   return true;
 }
 
-// Lê, em streaming e numa só passada, os CSVs (Windows-1252) de dentro de um .zip.
+// Lê, em streaming e numa só passada, os CSVs de dentro de um .zip (os do TSE vêm em Windows-1252).
 // alvos: [{ padrao: /_PB\.csv$/, aoLinha(linha, ehCabecalho) }]. Cada arquivo tem o seu próprio cabeçalho.
 // Devolve, para cada alvo, se algum arquivo do .zip correspondeu a ele.
-export async function lerCsvsDoZip(zip, alvos) {
+export async function lerCsvsDoZip(zip, alvos, { codificacao = 'windows-1252' } = {}) {
   const encontrados = new Set();
   const descompactador = new Unzip();
   descompactador.register(UnzipInflate);
@@ -52,7 +52,7 @@ export async function lerCsvsDoZip(zip, alvos) {
     const alvo = alvos.find(a => a.padrao.test(arquivo.name.split('/').pop()));
     if (!alvo) return;
     encontrados.add(alvo);
-    arquivo.ondata = juntarEmLinhas(alvo.aoLinha);
+    arquivo.ondata = juntarEmLinhas(alvo.aoLinha, codificacao);
     arquivo.start();
   };
   for await (const pedaco of createReadStream(zip)) descompactador.push(new Uint8Array(pedaco), false);
@@ -61,8 +61,8 @@ export async function lerCsvsDoZip(zip, alvos) {
 }
 
 // Os pedaços descompactados cortam linhas ao meio; o que sobra depois do último \n espera o próximo pedaço.
-function juntarEmLinhas(aoLinha) {
-  const decodificador = new TextDecoder('windows-1252');
+function juntarEmLinhas(aoLinha, codificacao) {
+  const decodificador = new TextDecoder(codificacao);
   const entregar = entregadorDeLinhas(aoLinha);
   let resto = '';
   return (erro, pedaco, fim) => {
