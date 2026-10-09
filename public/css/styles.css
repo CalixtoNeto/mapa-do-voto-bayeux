@@ -334,3 +334,12 @@ button.abre{cursor:pointer}
 .partidos .abre{display:grid; width:100%; grid-template-columns:1fr auto; gap:3px 10px; padding:8px 0; border:0; background:none; text-align:left; font:inherit; color:inherit; cursor:pointer}
 .partidos .abre:hover .nm{text-decoration:underline; text-underline-offset:3px}
 .partidos .vv small{font:400 12px var(--sans); color:var(--muted)}
+/* O mapa é sticky no desktop e, perto do fim da página, passaria por cima do rodapé: o rodapé fica numa linha
+   própria da grade, acima do mapa e com fundo opaco. */
+.aviso-legal{position:relative; z-index:3; background:var(--paper); padding-bottom:8px}
+@media (min-width:960px){
+  .app{grid-template-areas:"top top" "stage filters" "stage side" "foot foot"}
+  .app.nodata{grid-template-areas:"top top" "stage side" "foot foot"}
+  .aviso-legal{grid-area:foot}
+  .stage{z-index:1}
+}
