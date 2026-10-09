@@ -21,15 +21,17 @@ jobs:
           base=https://dados-abertos.tce.pb.gov.br
           js=$(curl -sSL -m 60 "$base/" | grep -oE 'src="[^"]+\.js"' | sed 's/^src="//;s/"$//' | head -1)
           curl -sSL -m 60 -o app.js "$base$js"
-          echo "::group::em volta dos downloads"
-          grep -oE '.{0,1500}download\.tce\.pb\.gov\.br/dados-abertos/dados-por-municipio.{0,600}' app.js | head -c 5000; echo
-          echo "::endgroup::"
-          echo "::group::listas de conjuntos (id:)"
-          grep -oE 'id:"[a-z0-9_-]{3,60}"[^}]{0,200}' app.js | sort -u | head -120
-          echo "::endgroup::"
-          echo "::group::bayeux no script"
-          grep -oiE '.{0,200}bayeux.{0,200}' app.js | head -5
-          echo "::endgroup::"
-          echo "::group::JSON de apoio"
-          grep -oE '"[^"]{0,120}\.json"|`[^`]{0,160}\.json`' app.js | sort -u | head -20
-          echo "::endgroup::"
+          node -e '
+            const t = require("fs").readFileSync("app.js", "utf8");
+            const trechos = (alvo, antes, depois, max = 3) => {
+              let i = -1, n = 0;
+              while ((i = t.indexOf(alvo, i + 1)) >= 0 && n++ < max)
+                console.log(`\n--- ${alvo} @${i}\n` + t.slice(Math.max(0, i - antes), i + depois));
+            };
+            trechos("dados-por-municipio", 2500, 800, 2);
+            trechos("dados-consolidados/", 1500, 300, 1);
+            trechos("Bayeux", 300, 300, 3);
+            trechos("BAYEUX", 300, 300, 3);
+            const ids = [...new Set([...t.matchAll(/id:"([a-z0-9_-]{3,60})"/gi)].map(m => m[1]))];
+            console.log("\n--- ids", ids.length, ids.join(" "));
+          '
