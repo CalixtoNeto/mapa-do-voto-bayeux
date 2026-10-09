@@ -85,3 +85,12 @@ test('votos nominais: contagem, quantas vezes votou com a maioria e com quem mai
   assert.deepEqual(afinidades(2, porVotacao, 1), [[12, 2, 3], [19, 1, 2]]);
   assert.deepEqual(afinidades(2, porVotacao, 3), [[12, 2, 3]]);
 });
+
+test('afastamento registrado não tira do exercício quem esteve nas últimas sessões', () => {
+  const d = camara();
+  d.mandatos[2].tipo_afastamento = 3;
+  const r = resumoDaCamara(d, '2026-10-09');
+  assert.equal(r.vereadores.find(v => v.id === 12).emExercicio, true);
+  d.presencas = d.presencas.filter(p => p.parlamentar !== 12);
+  assert.equal(resumoDaCamara(d, '2026-10-09').vereadores.find(v => v.id === 12).emExercicio, false);
+});

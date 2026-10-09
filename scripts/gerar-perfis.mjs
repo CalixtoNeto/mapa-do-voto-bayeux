@@ -9,7 +9,7 @@ import { resumoDaCamara } from './perfis/camara.mjs';
 import { anoDoMunicipio, resumoDoAno } from './perfis/municipio.mjs';
 import { remuneracaoDe } from './perfis/folha.mjs';
 import { chaveNaEleicao } from './perfis/cruzamentos.mjs';
-import { campanhasDaEleicao, eleicaoDoMandato, eleitoNaEleicao, lerDaEleicao } from './perfis/campanhas.mjs';
+import { campanhasDaEleicao, eleicaoDoMandato, eleitoNaEleicao, lerDaEleicao, nomesDosCandidatos } from './perfis/campanhas.mjs';
 import { escreverPerfil, indexarPerfis } from './saida/perfis.mjs';
 
 const PRIMEIRO_ANO = 2017, ELEICOES_MUNICIPAIS = ['2016', '2020', '2024'];
@@ -22,7 +22,10 @@ async function tentar(descricao, fazer) {
 
 async function campanhasMunicipais() {
   const campanhas = [];
-  for (const ano of ELEICOES_MUNICIPAIS) campanhas.push(...campanhasDaEleicao(ano, await lerDaEleicao(ano, 'financas'), Object.values(CARGOS)));
+  for (const ano of ELEICOES_MUNICIPAIS) {
+    const nomes = nomesDosCandidatos(await lerDaEleicao(ano, 't1'));
+    campanhas.push(...campanhasDaEleicao(ano, await lerDaEleicao(ano, 'financas'), Object.values(CARGOS), nomes));
+  }
   return campanhas;
 }
 

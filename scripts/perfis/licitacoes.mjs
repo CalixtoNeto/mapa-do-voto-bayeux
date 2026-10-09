@@ -6,7 +6,7 @@ import { somarRecebedor, recebedoresOrdenados, centavos } from './somas.mjs';
 export const novasLicitacoes = () => ({ modalidades: {}, vencedores: {} });
 
 // "Pregão (Lei Nº 14.133/2021)" → "Pregão": a lei só diz sob qual regra foi feita.
-const nomeDaModalidade = texto => texto.replace(/\s*\(.*\)\s*$/, '');
+const nomeDaModalidade = texto => texto.replace(/\s*\(.*\)\s*$/, '') || 'Não informada';
 
 export function somarProposta(l, ler) {
   const m = (l.modalidades[nomeDaModalidade(ler('MODALIDADE'))] ||= { licitacoes: new Set(), v: 0 });

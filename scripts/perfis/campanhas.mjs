@@ -11,12 +11,15 @@ export function eleitoNaEleicao(t1, perfis, cargo) {
   return c ? { nome: c.nome, chave: `${c.cargo}|${c.nr}`, ano: t1.ano, votos: c.total } : null;
 }
 
-export function campanhasDaEleicao(ano, financas, cargos) {
+// nomes: { chave: nome do candidato }, do arquivo de votação da mesma eleição.
+export function campanhasDaEleicao(ano, financas, cargos, nomes = {}) {
   return Object.entries(financas?.c || {}).filter(([chave]) => cargos.includes(chave.split('|')[0]))
-    .map(([chave, f]) => ({ ano, chave,
+    .map(([chave, f]) => ({ ano, chave, nome: nomes[chave] || '',
       doadores: (f.doa || []).map(([nome, , valor]) => [nome, valor]),
       fornecedores: (f.fo || []).map(([nome, valor]) => [nome, valor]) }));
 }
+
+export const nomesDosCandidatos = t1 => Object.fromEntries((t1?.cands || []).map(c => [`${c.cargo}|${c.nr}`, c.nome]));
 
 export async function lerDaEleicao(ano, arquivo) {
   try { return JSON.parse(await readFile(`${PASTA_ELEICOES}/${ano}-${arquivo}.json`, 'utf8')); } catch { return null; }

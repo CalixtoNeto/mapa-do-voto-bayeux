@@ -11,8 +11,10 @@ export function chaveNaEleicao(cands, nomeCompleto, cargos) {
   return c ? `${c.cargo}|${c.nr}` : null;
 }
 
-// Nomes de uma palavra só ("JOSE") ligariam pessoas diferentes.
-const ligavel = nome => nome.split(' ').length >= 2;
+// Nomes de uma palavra só ("JOSE") ligariam pessoas diferentes; e campanhas pagam taxas ao próprio município,
+// que também é credor dele mesmo (repasses), sem que isso diga nada.
+const PODER_PUBLICO = /^(MUNICIPIO|PREFEITURA|CAMARA|FUNDO|INSTITUTO DE PREV|SECRETARIA|ESTADO|GOVERNO|UNIAO|RECEITA FEDERAL|INSS|TRIBUNAL|JUSTICA)\b/;
+const ligavel = nome => nome.split(' ').length >= 2 && !PODER_PUBLICO.test(nome);
 
 function ligacoesPorNome(campanhas) {
   const ligacoes = new Map();
@@ -23,13 +25,13 @@ function ligacoesPorNome(campanhas) {
     ligacoes.get(chave).push(ligacao);
   };
   for (const c of campanhas) {
-    for (const [nome, valor] of c.doadores) ligar(nome, [c.ano, c.chave, valor, 'doou']);
-    for (const [nome, valor] of c.fornecedores) ligar(nome, [c.ano, c.chave, valor, 'recebeu']);
+    for (const [nome, valor] of c.doadores) ligar(nome, [c.ano, c.chave, valor, 'doou', c.nome]);
+    for (const [nome, valor] of c.fornecedores) ligar(nome, [c.ano, c.chave, valor, 'recebeu', c.nome]);
   }
   return ligacoes;
 }
 
-// credores: [[nome, doc, pago, vezes]] → [[nome, pago pela prefeitura, [[ano, candidato, valor, doou|recebeu]]]]
+// credores: [[nome, doc, pago, vezes]] → [[nome, pago pela prefeitura, [[ano, candidato, valor, doou|recebeu, nome do candidato]]]]
 export function credoresDasCampanhas(credores, campanhas) {
   const ligacoes = ligacoesPorNome(campanhas);
   return credores.map(([nome, , pago]) => [nome, pago, ligacoes.get(nomeDoCredor(nome))])

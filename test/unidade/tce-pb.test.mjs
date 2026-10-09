@@ -26,21 +26,24 @@ test('valores do TCE-PB: ponto é sempre milhar, vírgula é decimal', () => {
   assert.equal(reaisDoTce(''), 0);
 });
 
-test('despesas: por órgão, área, mês, credor e o que a Câmara pagou sem licitação', () => {
+test('despesas: por órgão, área, mês, credor e quanto das compras foi sem licitação', () => {
   const despesas = ler(DESPESAS, [
     'Bayeux;Câmara Municipal de Bayeux;01-Janeiro;50320908000150;NATHALI ROLIM SOCIEDADE INDIVIDUAL DE ADVOCACIA;8.000;8.000;Legislativa;Serviços de Consultoria;Sem Licitação',
     'Bayeux;Prefeitura Municipal de Bayeux;02-Fevereiro;07553129000176;PUBLIC SOFTWARE INFORMATICA LTDA - ME;10.000;6.000,5;Administração;Locação;Pregão',
     'Bayeux;Prefeitura Municipal de Bayeux;02-Fevereiro;07553129000176;PUBLIC SOFTWARE INFORMATICA LTDA - ME;1.000;1.000;Administração;Locação;Pregão',
+    'Bayeux;Câmara Municipal de Bayeux;02-Fevereiro;00000000000191;INSS;500;500;Legislativa;Obrigações Patronais;Sem Licitação',
   ], novasDespesas(), somarDespesa);
   const r = resumoDasDespesas(despesas);
-  assert.deepEqual(r.orgaos, [['Câmara Municipal de Bayeux', 8000, 8000], ['Prefeitura Municipal de Bayeux', 11000, 7000.5]]);
-  assert.deepEqual(r.funcoes, [['Legislativa', 8000], ['Administração', 7000.5]]);
-  assert.deepEqual(r.meses, [['01', 8000], ['02', 7000.5]]);
+  assert.deepEqual(r.orgaos, [['Câmara Municipal de Bayeux', 8500, 8500], ['Prefeitura Municipal de Bayeux', 11000, 7000.5]]);
+  assert.deepEqual(r.funcoes, [['Legislativa', 8500], ['Administração', 7000.5]]);
+  assert.deepEqual(r.meses, [['01', 8000], ['02', 7500.5]]);
   assert.deepEqual(r.credores[0], ['NATHALI ROLIM SOCIEDADE INDIVIDUAL DE ADVOCACIA', '50320908000150', 8000, 1]);
   assert.deepEqual(r.credores[1], ['PUBLIC SOFTWARE INFORMATICA LTDA - ME', '07553129000176', 7000.5, 2]);
-  assert.equal(r.semLicitacao, 8000);
-  assert.deepEqual(r.camara, { pago: 8000, semLicitacao: 8000,
-    credores: [['NATHALI ROLIM SOCIEDADE INDIVIDUAL DE ADVOCACIA', '50320908000150', 8000, 1]], elementos: [['Serviços de Consultoria', 8000]] });
+  assert.equal(r.compras, 15000.5);
+  assert.equal(r.semLicitacao, 8000, 'a contribuição patronal não é compra e não entra no sem licitação');
+  assert.deepEqual(r.camara, { pago: 8500, compras: 8000, semLicitacao: 8000,
+    credores: [['NATHALI ROLIM SOCIEDADE INDIVIDUAL DE ADVOCACIA', '50320908000150', 8000, 1], ['INSS', '00000000000191', 500, 1]],
+    elementos: [['Serviços de Consultoria', 8000], ['Obrigações Patronais', 500]] });
 });
 
 test('folha: pessoas no último mês e total do ano por órgão e tipo de cargo; remuneração de uma pessoa pelo nome', () => {

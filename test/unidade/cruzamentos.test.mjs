@@ -30,18 +30,19 @@ test('quem foi eleito prefeito e em que eleição começa cada mandato', () => {
 
 test('credores da prefeitura que doaram ou prestaram serviço a campanhas municipais', () => {
   const financas = { c: {
-    '11|40': { doa: [['ERIKA ACIOLI GOMES PIMENTA', 'pf', 20000, 3]], fo: [['GEANCELIO DO NASCIMENTO ANDRADE', 1500]] },
+    '11|40': { doa: [['ERIKA ACIOLI GOMES PIMENTA', 'pf', 20000, 3]], fo: [['GEANCELIO DO NASCIMENTO ANDRADE', 1500], ['MUNICIPIO DE BAYEUX', 300]] },
     '13|40123': { doa: [['ERIKA ACIOLI GOMES PIMENTA', 'pf', 500]] },
     '6|4000': { doa: [['ERIKA ACIOLI GOMES PIMENTA', 'pf', 1]] },
   } };
-  const campanhas = campanhasDaEleicao('2024', financas, ['11', '13']);
+  const campanhas = campanhasDaEleicao('2024', financas, ['11', '13'], { '11|40': 'TARCYANNA', '13|40123': 'ADRIANO' });
   const credores = [
     ['58.909.863 GEANCELIO DO NASCIMENTO ANDRADE', '58909863000166', 5200, 1],
     ['ERIKA ACIOLI GOMES PIMENTA', '12345678901', 9000, 2],
     ['BANCO DO BRASIL', '00000000000191', 100, 3],
+    ['MUNICIPIO DE BAYEUX', '08928517000157', 1e8, 9],
   ];
   assert.deepEqual(credoresDasCampanhas(credores, campanhas), [
-    ['ERIKA ACIOLI GOMES PIMENTA', 9000, [['2024', '11|40', 20000, 'doou'], ['2024', '13|40123', 500, 'doou']]],
-    ['58.909.863 GEANCELIO DO NASCIMENTO ANDRADE', 5200, [['2024', '11|40', 1500, 'recebeu']]],
+    ['ERIKA ACIOLI GOMES PIMENTA', 9000, [['2024', '11|40', 20000, 'doou', 'TARCYANNA'], ['2024', '13|40123', 500, 'doou', 'ADRIANO']]],
+    ['58.909.863 GEANCELIO DO NASCIMENTO ANDRADE', 5200, [['2024', '11|40', 1500, 'recebeu', 'TARCYANNA']]],
   ]);
 });

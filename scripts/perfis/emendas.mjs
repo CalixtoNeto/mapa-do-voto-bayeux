@@ -6,7 +6,22 @@ import { somar, ordenado, centavos } from './somas.mjs';
 export const IBGE_BAYEUX = '2501807';
 const LOCAL_DO_CONVENIO = /^BAYEUX\s*-\s*PB$/i;
 
-export const novasEmendas = () => ({ autores: {}, anos: {}, funcoes: {}, autorDoCodigo: new Map(), convenios: [] });
+export const novasEmendas = () => ({ autores: {}, anos: {}, funcoes: {}, autorDoCodigo: new Map(), convenios: [],
+  recebido: { autores: {}, favorecidos: {}, anos: {} } });
+
+// Muitas emendas (as de saúde, sobretudo) têm a Paraíba como local de aplicação: só o favorecido diz que o dinheiro
+// chegou a Bayeux. Empresas daqui que venderam para outras cidades não contam.
+const EMPRESA = /sociedade|empres|eireli/i;
+
+export function somarFavorecido(acc, ler) {
+  if (ler('UF FAVORECIDO') !== 'PB' || !/^BAYEUX$/i.test(ler('MUNICÍPIO FAVORECIDO')) || EMPRESA.test(ler('NATUREZA JURÍDICA'))) return;
+  const valor = reais(ler('VALOR RECEBIDO')), r = acc.recebido;
+  const autor = (r.autores[ler('NOME DO AUTOR DA EMENDA')] ||= { v: 0, emendas: new Set() });
+  autor.v += valor; autor.emendas.add(ler('CÓDIGO DA EMENDA'));
+  const favorecido = (r.favorecidos[ler('FAVORECIDO')] ||= { natureza: ler('NATUREZA JURÍDICA'), v: 0 });
+  favorecido.v += valor;
+  somar(r.anos, ler('ANO/MÊS').slice(0, 4), valor);
+}
 
 export function somarEmenda(acc, ler) {
   if (ler('CÓDIGO MUNICÍPIO IBGE') !== IBGE_BAYEUX) return;
@@ -33,5 +48,11 @@ export function resumoDasEmendas(acc) {
     .map(([autor, a]) => [autor, centavos(a.empenhado), centavos(a.pago), a.n, a.anos.sort()[0], a.anos[a.anos.length - 1]]);
   const porAno = Object.entries(acc.anos).sort().map(([ano, [e, p]]) => [ano, centavos(e), centavos(p)]);
   const convenios = acc.convenios.sort((a, b) => b[0].localeCompare(a[0])).slice(0, 30);
-  return { porAutor, porAno, porFuncao: ordenado(acc.funcoes), convenios };
+  return { porAutor, porAno, porFuncao: ordenado(acc.funcoes), convenios, recebido: resumoDoRecebido(acc.recebido) };
+}
+
+function resumoDoRecebido(r) {
+  const porAutor = Object.entries(r.autores).sort((a, b) => b[1].v - a[1].v).map(([autor, a]) => [autor, centavos(a.v), a.emendas.size]);
+  const porFavorecido = Object.entries(r.favorecidos).sort((a, b) => b[1].v - a[1].v).map(([nome, f]) => [nome, f.natureza, centavos(f.v)]);
+  return { porAutor, porFavorecido, porAno: Object.entries(r.anos).sort().map(([ano, v]) => [ano, centavos(v)]) };
 }

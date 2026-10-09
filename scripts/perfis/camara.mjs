@@ -15,6 +15,16 @@ function presencasPorSessao(sessoes, presencas) {
   return sessoes.filter(s => presentes.has(s.id)).map(s => ({ data: s.data_inicio, presentes: presentes.get(s.id) }));
 }
 
+// No SAPL o afastamento (licença, secretaria) continua registrado no mandato depois que o vereador volta;
+// quem esteve em alguma das últimas sessões está em exercício.
+const ULTIMAS_SESSOES = 5;
+function emExercicio(mandato, realizadas, hoje) {
+  if (mandato.data_fim_mandato < hoje) return false;
+  if (!mandato.tipo_afastamento) return true;
+  const ultimas = realizadas.filter(s => s.data <= hoje).sort((a, b) => a.data.localeCompare(b.data)).slice(-ULTIMAS_SESSOES);
+  return ultimas.some(s => s.presentes.has(mandato.parlamentar));
+}
+
 function presenca(mandato, realizadas, hoje) {
   const fim = mandato.data_fim_mandato < hoje ? mandato.data_fim_mandato : hoje;
   const doMandato = realizadas.filter(s => s.data >= mandato.data_inicio_mandato && s.data <= fim);
@@ -45,7 +55,7 @@ function vereador(m, p, { d, realizadas, porVotacao, materias, hoje }) {
   return {
     id: p.id, nome: p.nome_parlamentar, completo: p.nome_completo, foto: p.fotografia || null,
     partido: atual ? atual[0] : null, partidos, eleicao: m.votos_recebidos ?? null, titular: !!m.titular,
-    inicio: m.data_inicio_mandato, fim: m.data_fim_mandato, emExercicio: m.data_fim_mandato >= hoje && !m.tipo_afastamento,
+    inicio: m.data_inicio_mandato, fim: m.data_fim_mandato, emExercicio: emExercicio(m, realizadas, hoje),
     presenca: presenca(m, realizadas, hoje), votacoes: resumoDosVotos(p.id, porVotacao),
     afinidade: afinidades(p.id, porVotacao), materias: materiasDoVereador(materias.get(p.id)),
   };
