@@ -11,9 +11,10 @@ export function eleitoNaEleicao(t1, perfis, cargo) {
   return c ? { nome: c.nome, chave: `${c.cargo}|${c.nr}`, ano: t1.ano, votos: c.total } : null;
 }
 
-// nomes: { chave: nome do candidato }, do arquivo de votação da mesma eleição.
-export function campanhasDaEleicao(ano, financas, cargos, nomes = {}) {
-  return Object.entries(financas?.c || {}).filter(([chave]) => cargos.includes(chave.split('|')[0]))
+// nomes: { chave: nome do candidato }, do arquivo de votação da mesma eleição. cargoDe(chave) diz o cargo: em Bayeux
+// a chave é "cargo|número"; na Paraíba é o sequencial do TSE, e o cargo vem do arquivo de votação.
+export function campanhasDaEleicao(ano, financas, cargos, nomes = {}, cargoDe = chave => chave.split('|')[0]) {
+  return Object.entries(financas?.c || {}).filter(([chave]) => cargos.includes(cargoDe(chave)))
     .map(([chave, f]) => ({ ano, chave, nome: nomes[chave] || '',
       doadores: (f.doa || []).map(([nome, , valor], i) => [nome, valor, f.doaK?.[i] || null]),
       fornecedores: (f.fo || []).map(([nome, valor], i) => [nome, valor, f.foK?.[i] || null]) }));

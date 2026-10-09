@@ -17,3 +17,11 @@ export function chaveDeCruzamento(documento, nome) {
   if (!documento) return null;
   return documento.startsWith('cpf:') ? `${documento}|${normalizarNome(nome)}` : documento;
 }
+
+// Documento que pode ir para o site: CNPJ inteiro (só dígitos) e CPF mascarado como o TCE-PB publica ("***.406.724-**").
+export function documentoPublico(doc) {
+  const digitos = informado(doc).replace(/\D/g, '');
+  if (digitos.length === 14) return digitos;
+  if (digitos.length === 11) return `***.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-**`;
+  return /^\*{3}/.test(informado(doc)) ? informado(doc) : '';
+}

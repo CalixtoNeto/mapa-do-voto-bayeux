@@ -8,8 +8,9 @@ export const sentence = s => { s = String(s || '').toLowerCase(); return s.charA
 export const NORM = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 
 const casas = (v, n) => v.toLocaleString('pt-BR', { maximumFractionDigits: n });
-// R$ 2,3 mi · R$ 450 mil · R$ 980
+// R$ 23,9 bi · R$ 2,3 mi · R$ 450 mil · R$ 980
 export function dinheiro(v) {
+  if (v >= 1e9) return `R$ ${casas(v / 1e9, 1)} bi`;
   if (v >= 1e6) return `R$ ${casas(v / 1e6, 1)} mi`;
   if (v >= 1e4) return `R$ ${casas(v / 1e3, 0)} mil`;
   return `R$ ${nf.format(Math.round(v))}`;

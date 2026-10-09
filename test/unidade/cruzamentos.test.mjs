@@ -54,3 +54,12 @@ test('sem documento de um dos lados não há ligação, mesmo com o nome igual',
   const comDoc = [{ ...campanhas[0], doadores: [['JOSE DA SILVA SANTOS', 300, 'cpf:406724']] }];
   assert.deepEqual(credoresDasCampanhas([['JOSE DA SILVA SANTOS', '', 800, 1]], comDoc), []);
 });
+
+test('bancos, Correios e concessionárias de serviço público e ligações de valor zero não entram', () => {
+  const campanhas = [{ ano: '2022', chave: '7', nome: 'FULANA', doadores: [], fornecedores: [
+    ['BANCO DO BRASIL SA DIRECAO GERAL', 38, 'cnpj:00000000000191'], ['ENERGISA PARAIBA', 10, 'cnpj:09095183000140'],
+    ['GRAFICA BOA LTDA', 0, 'cnpj:58909863000166'], ['GRAFICA OUTRA LTDA', 900, 'cnpj:11111111000111']] }];
+  const credores = [['BANCO DO BRASIL SA DIRECAO GERAL', '00000000000191', 7e7, 9], ['ENERGISA PARAIBA', '09095183000140', 5e6, 9],
+    ['GRAFICA BOA LTDA', '58909863000166', 100, 1], ['GRAFICA OUTRA LTDA', '11111111000111', 200, 1]];
+  assert.deepEqual(credoresDasCampanhas(credores, campanhas).map(c => c[0]), ['GRAFICA OUTRA LTDA']);
+});
