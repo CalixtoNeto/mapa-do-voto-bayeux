@@ -1,6 +1,7 @@
 // Um ano da Prefeitura e da Câmara pelos quatro conjuntos do TCE-PB, e o resumo que vai para o site.
 import { lerConjuntoDoTce } from '../fontes/tce-pb.mjs';
-import { novasDespesas, somarDespesa, resumoDasDespesas, todosOsCredores } from './despesas.mjs';
+import { novasDespesas, somarDespesa, resumoDasDespesas, todosOsCredores, arvoresDasDespesas } from './despesas.mjs';
+import { alertasDoAno } from './alertas.mjs';
 import { novaFolha, somarServidor, resumoDaFolha, remuneracaoDe } from './folha.mjs';
 import { novasReceitas, somarReceita, resumoDasReceitas } from './receitas.mjs';
 import { novasLicitacoes, somarProposta, resumoDasLicitacoes } from './licitacoes.mjs';
@@ -25,6 +26,10 @@ export function resumoDoAno(ano, dados, { campanhas, prefeito, atualizadoEm }) {
   const resumo = { ano: String(ano), atualizadoEm };
   for (const [conjunto, [, , resumir]] of Object.entries(CONJUNTOS)) resumo[conjunto] = dados[conjunto] ? resumir(dados[conjunto]) : null;
   resumo.campanhas = dados.despesas ? credoresDasCampanhas(todosOsCredores(dados.despesas), campanhas) : [];
+  resumo.alertas = dados.despesas ? alertasDoAno(dados.despesas.alertas, String(ano)) : [];
   resumo.prefeito = prefeito && { ...prefeito, remuneracao: dados.servidores ? remuneracaoDe(dados.servidores, prefeito.nome) : [] };
   return resumo;
 }
+
+// As árvores de decomposição ficam num arquivo à parte, lido só quando o ano é aberto no site.
+export const detalheDoAno = (ano, dados) => dados.despesas ? { ano: String(ano), arvores: arvoresDasDespesas(dados.despesas) } : null;
