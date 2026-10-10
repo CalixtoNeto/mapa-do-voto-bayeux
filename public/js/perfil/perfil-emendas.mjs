@@ -1,8 +1,9 @@
 // Emendas parlamentares para Bayeux: o dinheiro que chegou a quem está na cidade (município, fundos, entidades),
 // quem mandou, e as emendas que têm Bayeux como destino, com os convênios assinados.
-import { dinheiro, sentence } from '../formato.mjs';
+import { dinheiro } from '../formato.mjs';
 import { ListaDeBarras, usarLimite } from '../componentes.mjs';
 import { ArvoreDeBarras } from '../arvore.mjs';
+import { ListaDeExecucao, ListaDeConvenios } from './execucao.mjs';
 import { Voltar, Topo, Estatisticas, Secao, nomeProprio } from './pecas.mjs';
 const { html } = window.htmPreact;
 
@@ -12,13 +13,6 @@ function Lista({ itens }) {
 }
 
 const emendas = n => `${n} emenda${n > 1 ? 's' : ''}`;
-
-function Convenios({ convenios }) {
-  if (!convenios.length) return null;
-  return html`<h3>Convênios mais recentes</h3><ul class="materias">${convenios.map(([data, autor, objeto, valor, funcao]) => html`<li>
-    <strong>${dinheiro(valor)}</strong> <small>${data.split('-').reverse().join('/')} · ${funcao}${autor ? ` · ${nomeProprio(autor)}` : ''}</small>
-    <p>${sentence(objeto)}</p></li>`)}</ul>`;
-}
 
 // Autor → quem recebeu → ano, quando o arquivo já traz a árvore; senão, as listas de autores e de quem recebeu.
 const rotuloDoRecebido = (nome, nivel) => nivel < 2 ? nomeProprio(nome) : nome;
@@ -36,9 +30,9 @@ function Recebido({ r }) {
 
 function Destinadas({ e }) {
   return html`<${Secao} id="ed" titulo="Emendas com Bayeux como destino">
-    <${Lista} itens=${e.porAutor.map(([autor, empenhado, pago, n, de, ate]) =>
-      ({ n: html`${nomeProprio(autor)} <small>${emendas(n)} · ${de === ate ? de : `${de}–${ate}`}</small>`, v: empenhado, rotulo: `${dinheiro(empenhado)} · pago ${dinheiro(pago)}` }))} />
-    <${Convenios} convenios=${e.convenios} />
+    <${ListaDeExecucao} itens=${e.porAutor.map(([autor, empenhado, pago, n, de, ate]) =>
+      ({ nome: nomeProprio(autor), detalhe: `${emendas(n)} · ${de === ate ? de : `${de}–${ate}`}`, empenhado, pago }))} />
+    ${e.convenios.length > 0 && html`<h3>Convênios mais recentes</h3><${ListaDeConvenios} convenios=${e.convenios} />`}
     <p class="hint">Emendas em que o Portal registra Bayeux como local de aplicação: valor empenhado e pago (com restos a pagar).</p><//>`;
 }
 
