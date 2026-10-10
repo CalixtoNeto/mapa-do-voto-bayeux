@@ -16,3 +16,11 @@ test('chave: empresa pelo CNPJ; pessoa física pelos dígitos centrais do CPF e 
   assert.equal(chaveDeCruzamento('cpf:406724', 'Ana Paula Borges da Silva'), 'cpf:406724|ANA PAULA BORGES DA SILVA');
   assert.equal(chaveDeCruzamento(null, 'Ana Paula'), null);
 });
+
+test('nome de credor sem o CPF que o TCE-PB cola no fim (e sem o CNPJ do MEI na frente)', async () => {
+  const { nomeSemDocumento } = await import('../../scripts/lib/documento.mjs');
+  assert.equal(nomeSemDocumento('DAVID DA COSTA SILVA 03481481438'), 'DAVID DA COSTA SILVA');
+  assert.equal(nomeSemDocumento('59.690.138 MICHELI AMORIM FIGUEIREDO'), 'MICHELI AMORIM FIGUEIREDO');
+  assert.equal(nomeSemDocumento('83TELECOM SERVICOS LTDA'), '83TELECOM SERVICOS LTDA');
+  assert.equal(nomeSemDocumento('FULANO 034.814.814-38'), 'FULANO');
+});

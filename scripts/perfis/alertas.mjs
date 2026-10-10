@@ -6,6 +6,7 @@
 //   concentracao:  um fornecedor ficou com 70% ou mais de um tipo de despesa de R$ 1 milhão ou mais.
 import { ehCompra } from './compras.mjs';
 import { centavos } from './somas.mjs';
+import { nomeSemDocumento } from '../lib/documento.mjs';
 
 // Limites de dispensa por valor da Lei 14.133 (art. 75, I: obras, engenharia e manutenção de veículos; II: o resto),
 // atualizados por decreto a cada ano (11.871/2023, 12.343/2024, 12.807/2025). Antes de 2024 valia também a
@@ -30,7 +31,7 @@ export const novosAlertas = () => ({ semDisputa: {}, mensal: {}, porElemento: {}
 export function somarParaAlertas(acc, ler, pago) {
   const elemento = ler('ELEMENTO_DESPESA');
   if (!pago || !ehCompra(elemento)) return;
-  const credor = ler('NOME_CREDOR'), objeto = ler('CODIGO_SUBELEMENTO_EXIBICAO') || elemento;
+  const credor = nomeSemDocumento(ler('NOME_CREDOR')), objeto = ler('CODIGO_SUBELEMENTO_EXIBICAO') || elemento;
   if (SEM_DISPUTA.test(ler('MODALIDADE_LICITACAO')) && !SERVICO_PUBLICO.test(objeto) && !FORNECEDOR_UNICO.test(credor)) {
     const s = (acc.semDisputa[`${credor}|${objeto}`] ||= { credor, objeto, v: 0, n: 0 });
     s.v += pago; s.n++;

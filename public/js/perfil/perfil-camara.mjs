@@ -1,5 +1,6 @@
 // A Câmara Municipal em números: sessões, votações, gasto e folha em cada ano, quem mais recebeu e em quê.
-import { nf, pct, dinheiro } from '../formato.mjs';
+import { nf, pct, dinheiro, sentence } from '../formato.mjs';
+import { ArvoreDeBarras } from '../arvore.mjs';
 import { ListaDeBarras } from '../componentes.mjs';
 import { serieAnual, taxa, slug } from './calculos-perfil.mjs';
 import { Voltar, Topo, Estatisticas, Secao, nomeProprio, ano } from './pecas.mjs';
@@ -28,8 +29,11 @@ export function PerfilCamara({ camara, anos }) {
       <h3>Pago</h3><${ListaDeBarras} itens=${serie(serieAnual(anos, a => a.despesas?.camara?.pago || null))} />
       <h3>Folha de pessoal</h3><${ListaDeBarras} itens=${serie(serieAnual(anos, a => folhaDaCamara(a)?.[2] ?? null))} /><//>
     ${recente && html`<${Secao} id="cr" titulo=${`Em que a Câmara gastou em ${recente.ano}`}>
-      <${ListaDeBarras} itens=${serie(recente.despesas.camara.elementos)} />
-      <h3>Quem mais recebeu</h3><${ListaDeBarras} itens=${recente.despesas.camara.credores.map(([n, , v]) => ({ n: nomeProprio(n), v, rotulo: dinheiro(v) }))} />
+      ${recente.despesas.camara.arvore?.v > 0
+        ? html`<p class="hint">Tipo de despesa → quem recebeu. Toque num item para abrir.</p>
+          <div class="arvore"><${ArvoreDeBarras} arvore=${recente.despesas.camara.arvore} rotulo=${(nome, nivel) => nivel === 1 && !/^Outros \(/.test(nome) ? nomeProprio(nome) : sentence(nome)} /></div>`
+        : html`<${ListaDeBarras} itens=${serie(recente.despesas.camara.elementos)} />
+          <h3>Quem mais recebeu</h3><${ListaDeBarras} itens=${recente.despesas.camara.credores.map(([n, , v]) => ({ n: nomeProprio(n), v, rotulo: dinheiro(v) }))} />`}
       ${recente.despesas.camara.compras > 0 && html`<p class="hint">Compras e serviços sem licitação: ${dinheiro(recente.despesas.camara.semLicitacao)} de ${dinheiro(recente.despesas.camara.compras)}.</p>`}<//>`}
     <p class="hint">Fontes: SAPL da Câmara Municipal (sessões, presença e votos) e TCE-PB (despesas e folha).</p>
   </article>`;

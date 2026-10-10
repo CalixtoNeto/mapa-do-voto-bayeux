@@ -25,3 +25,8 @@ export function documentoPublico(doc) {
   if (digitos.length === 11) return `***.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-**`;
   return /^\*{3}/.test(informado(doc)) ? informado(doc) : '';
 }
+
+// O TCE-PB escreve o nome de credor pessoa física com o CPF no fim ("FULANO 03481481438") e o do MEI com a raiz do
+// CNPJ na frente ("59.690.138 FULANO"): o site mostra só o nome.
+export const nomeSemDocumento = nome => String(nome || '')
+  .replace(/\s+\d{3}\.?\d{3}\.?\d{3}-?\d{2}\s*$/, '').replace(/^\d{2}\.\d{3}\.\d{3}\s+/, '').trim();

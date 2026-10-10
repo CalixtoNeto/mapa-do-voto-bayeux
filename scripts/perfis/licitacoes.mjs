@@ -3,6 +3,7 @@
 import { reaisDoTce } from '../fontes/tce-pb.mjs';
 import { somarRecebedor, recebedoresOrdenados, centavos } from './somas.mjs';
 import { novaArvore, somarNaArvore, arvorePodada } from './arvores.mjs';
+import { nomeSemDocumento } from '../lib/documento.mjs';
 
 export const novasLicitacoes = () => ({ modalidades: {}, vencedores: {}, arvore: novaArvore() });
 
@@ -15,8 +16,8 @@ export function somarProposta(l, ler) {
   if (!/^vencedora/i.test(ler('SITUACAO_PROPOSTA'))) return;
   const valor = reaisDoTce(ler('VALOR_OFERTADO'));
   m.v += valor;
-  somarNaArvore(l.arvore, [nomeDaModalidade(ler('MODALIDADE')), ler('NOME_PROPONENTE')], valor);
-  somarRecebedor(l.vencedores, ler('NOME_PROPONENTE'), ler('CPF_CNPJ_PROPONENTE'), valor);
+  somarNaArvore(l.arvore, [nomeDaModalidade(ler('MODALIDADE')), nomeSemDocumento(ler('NOME_PROPONENTE'))], valor);
+  somarRecebedor(l.vencedores, nomeSemDocumento(ler('NOME_PROPONENTE')), ler('CPF_CNPJ_PROPONENTE'), valor);
 }
 
 export function resumoDasLicitacoes(l) {

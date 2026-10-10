@@ -1,6 +1,6 @@
 // Detalhe do dinheiro de um candidato: posição entre os do cargo, para onde foi o gasto (categoria → todos os
 // fornecedores) e quem doou (os dez maiores no arquivo de finanças).
-import { pct, sentence, titleCase, dinheiro } from './formato.mjs';
+import { pct, sentence, titleCase, dinheiro, nomeDeQuem } from './formato.mjs';
 import { ArvoreDeBarras } from './arvore.mjs';
 import { arvoreDoGasto } from './calculos-arvore.mjs';
 import { ListaDeBarras } from './componentes.mjs';
@@ -21,7 +21,7 @@ export function PosicaoNoCargo({ posicoes, nomeDoCargo }) {
 }
 
 // Categoria de gasto → quem recebeu, na mesma árvore do perfil da Prefeitura.
-const quemRecebeu = (nome, nivel) => nivel === 1 && !/^(Outros \(|Sem fornecedor)/.test(nome) ? titleCase(nome) : sentence(nome);
+const quemRecebeu = (nome, nivel) => nivel === 1 && !/^(Outros \(|Sem fornecedor)/.test(nome) ? nomeDeQuem(nome) : sentence(nome);
 
 export function DespesasDoCandidato({ categorias }) {
   if (!categorias.length) return null;

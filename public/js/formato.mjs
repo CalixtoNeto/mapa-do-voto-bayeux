@@ -4,6 +4,8 @@ export const pct = (v, casas = 1) => (v * 100).toLocaleString('pt-BR', { minimum
 const LOWER = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'di', 'du']);
 export const titleCase = s => String(s || '').toLowerCase().split(/\s+/)
   .map((w, i) => (i && LOWER.has(w)) ? w : w.replace(/^(\p{L})/u, c => c.toUpperCase())).join(' ');
+// Nome de pessoa ou empresa sem o CPF que a fonte às vezes cola no fim nem a raiz de CNPJ do MEI na frente.
+export const nomeDeQuem = nome => titleCase(String(nome || '').replace(/\s+\d{3}\.?\d{3}\.?\d{3}-?\d{2}\s*$/, '').replace(/^\d{2}\.\d{3}\.\d{3}\s+/, ''));
 export const sentence = s => { s = String(s || '').toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
 export const NORM = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
 

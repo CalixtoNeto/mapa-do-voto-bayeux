@@ -43,7 +43,8 @@ test('despesas: por órgão, área, mês, credor e quanto das compras foi sem li
   assert.equal(r.semLicitacao, 8000, 'a contribuição patronal não é compra e não entra no sem licitação');
   assert.deepEqual(r.camara, { pago: 8500, compras: 8000, semLicitacao: 8000,
     credores: [['NATHALI ROLIM SOCIEDADE INDIVIDUAL DE ADVOCACIA', '50320908000150', 8000, 1], ['INSS', '00000000000191', 500, 1]],
-    elementos: [['Serviços de Consultoria', 8000], ['Obrigações Patronais', 500]] });
+    elementos: [['Serviços de Consultoria', 8000], ['Obrigações Patronais', 500]],
+    arvore: { v: 8500, filhos: [['Serviços de Consultoria', 8000, [['NATHALI ROLIM SOCIEDADE INDIVIDUAL DE ADVOCACIA', 8000]]], ['Obrigações Patronais', 500, [['INSS', 500]]]] } });
 });
 
 test('folha: pessoas no último mês e total do ano por órgão e tipo de cargo; remuneração de uma pessoa pelo nome', () => {

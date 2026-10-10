@@ -1,11 +1,11 @@
 // Peças comuns às páginas de perfil.
-import { dinheiro, titleCase } from '../formato.mjs';
+import { dinheiro, nomeDeQuem } from '../formato.mjs';
 import { usarLimite } from '../componentes.mjs';
 import { agruparLigacoes } from './calculos-perfil.mjs';
 const { html } = window.htmPreact;
 
 export const ano = data => String(data || '').slice(0, 4);
-export const nomeProprio = nome => titleCase(nome);
+export const nomeProprio = nome => nomeDeQuem(nome);
 
 export function Voltar({ para = '#perfis', texto = 'Todos os perfis' }) {
   return html`<a class="voltar" href=${para}>← ${texto}</a>`;
