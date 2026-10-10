@@ -20,7 +20,7 @@ export function PerfilCamara({ camara, anos }) {
   return html`<article class="perfil">
     <${Voltar} />
     <${Topo} titulo="Câmara Municipal de Bayeux" linhas=${camara && [`${camara.legislatura.numero}ª legislatura · ${ano(camara.legislatura.inicio)}–${ano(camara.legislatura.fim)}`]} />
-    <${Estatisticas} itens=${[camara && { rotulo: 'Sessões com presença registrada', valor: nf.format(camara.sessoes) },
+    <${Estatisticas} itens=${[camara && { rotulo: 'Sessões realizadas (com presença ou voto registrado)', valor: nf.format(camara.sessoes) },
       camara && { rotulo: 'Votações nominais', valor: nf.format(camara.votacoesNominais) },
       recente && { rotulo: `Pago em ${recente.ano}`, valor: dinheiro(recente.despesas.camara.pago) },
       folha && { rotulo: `Folha em ${recente.ano}`, valor: dinheiro(folha[2]), nota: `${nf.format(folha[1])} pessoas no último mês` }]} />
