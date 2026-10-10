@@ -28,7 +28,7 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 
 **Na ficha do candidato** (botão *Candidato*):
 
-![Análises da ficha de Tarcyanna Macedo (prefeita, 2024): força do voto, dinheiro da campanha, doadores e fornecedores, perfil e dobradinhas com os vereadores](docs/candidato.gif)
+![Análises da ficha de Tarcyanna Macedo (prefeita, 2024): força do voto, dinheiro da campanha em árvore até cada fornecedor, quem é e votação com distribuição parecida](docs/candidato.gif)
 
 - **Valores distantes da mediana do cargo**: o que destoa na campanha em relação aos outros candidatos ao mesmo cargo na mesma eleição: uma categoria de gasto (combustível, impressos, veículos…) ou o custo por voto 3 vezes ou mais a mediana dos outros, recursos próprios acima dos bens declarados, um só doador ou fornecedor com metade ou mais do dinheiro, quem doou e também recebeu da campanha e despesas que ficaram sem pagar. É uma comparação estatística, sem juízo sobre as contas, e o painel diz isso antes da lista (com as causas legítimas mais comuns).
 - **Dinheiro da campanha**: quanto recebeu, quanto declarou ter gasto, **custo por voto**, quanto veio do **fundo eleitoral** e a origem do dinheiro (fundo eleitoral, fundo partidário e partido, doações, recursos próprios e de outros candidatos); a **posição entre os candidatos do cargo** no recebido, no gasto e no fundo eleitoral, com a mediana do cargo; **para onde foi o dinheiro** (todas as categorias de despesa, numa árvore que abre cada categoria até todos os fornecedores); **quem doou** (os dez maiores doadores, com a parcela de cada um no recebido); quanto **ficou sem pagar**, quanto veio do **maior doador** e de **recursos próprios**; **doadores e fornecedores em comum** com outras campanhas; **quando o dinheiro chegou** (por semana); e o dinheiro da mesma pessoa **em cada eleição** (recebido, gasto, votos e custo por voto).
@@ -40,7 +40,7 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 
 **No panorama do cargo** (botão *Panorama do cargo*):
 
-![Panorama de vereador em 2024: quem venceu, abstenção, gasto × votos, o dinheiro elege?, partidos, fundo eleitoral, perfil, concentração e análises por lugar](docs/panorama.gif)
+![Panorama de vereador em 2024: quem venceu, abstenção, a tabela do mapa, gasto × votos, partidos em hierarquia (partido → candidatos) e análises por bairro](docs/panorama.gif)
 
 - Mapa de **quem venceu** em cada bairro e de **abstenção, brancos e nulos**, com os totais da cidade.
 - **Gasto × votos** de todos os candidatos, com diagonais de custo por voto, e rankings de menor e maior custo por voto, mais fundo eleitoral, mais dinheiro recebido e maior gasto.
@@ -85,6 +85,8 @@ O gerador `scripts/gerar-analises.mjs` grava, ao lado dos arquivos de votação:
 Para gerar ou atualizar: **Actions → Gerar análises → Run workflow** (em branco, refaz todos os anos; ou informe, por exemplo, `2020 2024`). O workflow **Atualizar dados de uma eleição** também gera as análises do ano. Localmente: `npm run analises -- 2024`.
 
 ## Perfis dos políticos
+
+![Perfil do município: Prefeitura (para onde foi o dinheiro em árvore, valores atípicos e folha), emendas em árvore, Câmara Municipal e a página de um vereador](docs/perfil.gif)
 
 Em **Perfis** (ou direto em `#perfis`), quem governa Bayeux, com um endereço para cada perfil (`#perfil/prefeitura`, `#perfil/camara`, `#perfil/emendas`, `#perfil/cabo-rubem`…), bom para compartilhar:
 
