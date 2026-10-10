@@ -83,3 +83,9 @@ export function contratacoesEmAnoDeEleicao(a) {
     return jan && jun && jun - jan >= 50 && jun / jan >= 1.2 ? [[tipo, jan, jun]] : [];
   });
 }
+
+// Quanto do valor empenhado já foi pago (restos a pagar podem passar de 100%) e a faixa que colore a barra.
+export function execucaoDoEmpenho(empenhado, pago) {
+  const fracao = empenhado > 0 ? Math.min(1, pago / empenhado) : 0;
+  return { fracao, faixa: fracao >= 1 ? 'completa' : fracao >= 0.25 ? 'parcial' : 'baixa' };
+}

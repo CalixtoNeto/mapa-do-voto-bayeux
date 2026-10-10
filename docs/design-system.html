@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System · Mapa da política</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Faustina:ital,wght@0,400..800;1,400..800&family=Geist:wght@300..700&display=swap" rel="stylesheet">
+<style>
+/* Tokens: os mesmos de public/css/styles.css (Bayeux e Paraíba). */
+:root{
+  --paper:#E8ECEE; --surface:#F6F8F9; --ink:#15212C; --muted:#56636F; --line:#C6CFD5; --accent:#B3132B;
+  --r0:#D2E1EE; --r1:#A6C5E0; --r2:#74A2CB; --r3:#477FB3; --r4:#245D93; --r5:#0C3A69;
+  --d0:#B3132B; --d1:#E8949E; --d2:#CBD2D7; --d3:#86B3DC; --d4:#1F5E9E; --up:#1F7A4D;
+  --s0:#B9C2C9; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --serif:'Faustina',Georgia,'Times New Roman',serif; --sans:'Geist',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121B24; --surface:#18232F; --ink:#E4EBF0; --muted:#93A2AF; --line:#2A3947; --accent:#FF5D73;
+  --r0:#1C3854; --r1:#22517E; --r2:#2C6CA6; --r3:#4B8DCA; --r4:#83B6E3; --r5:#C9E2F7;
+  --d0:#FF5D73; --d1:#B3566B; --d2:#3A4856; --d3:#4B8DCA; --d4:#9CCBF2; --up:#5BD18B;
+  --s0:#46525E; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#121B24; --surface:#18232F; --ink:#E4EBF0; --muted:#93A2AF; --line:#2A3947; --accent:#FF5D73;
+  --r0:#1C3854; --r1:#22517E; --r2:#2C6CA6; --r3:#4B8DCA; --r4:#83B6E3; --r5:#C9E2F7;
+  --d0:#FF5D73; --d1:#B3566B; --d2:#3A4856; --d3:#4B8DCA; --d4:#9CCBF2; --up:#5BD18B;
+  --s0:#46525E; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink); font:400 15px/1.5 var(--sans); font-feature-settings:"tnum" 1}
+.pg{max-width:1040px; margin:0 auto; padding:24px 16px 80px}
+a{color:inherit}
+button{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* Estrutura da página de documentação */
+.masthead{display:flex; justify-content:space-between; align-items:baseline; gap:12px; border-bottom:2px solid var(--ink); padding-bottom:10px}
+.masthead h1{margin:0; font:650 clamp(32px,7vw,52px)/1.02 var(--serif); letter-spacing:-.012em}
+.masthead button{border:1px solid var(--line); background:transparent; border-radius:999px; padding:6px 14px; cursor:pointer; font-size:13px}
+.lede{max-width:62ch; color:var(--muted); margin:12px 0 0}
+section{margin-top:44px}
+section>h2{margin:0 0 4px; font:600 24px/1.2 var(--serif); border-top:1px solid var(--line); padding-top:12px}
+section>h2 small{font:500 12px var(--sans); color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-right:10px}
+.nota{color:var(--muted); font-size:13.5px; max-width:64ch; margin:0 0 16px}
+.rot{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:18px 0 8px}
+.grid2{display:grid; gap:28px 40px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--surface); border:1px solid var(--line); border-radius:4px; padding:0 4px}
+
+/* Cores */
+.sw{display:flex; flex-wrap:wrap; gap:14px 10px}
+.sw div{width:92px; font-size:12px; color:var(--muted); line-height:1.35}
+.sw i{display:block; height:44px; border-radius:4px; box-shadow:inset 0 0 0 1px rgba(127,127,127,.3); margin-bottom:5px}
+.sw b{display:block; color:var(--ink); font-weight:500}
+.ramp{display:flex; height:22px; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(127,127,127,.3)}
+.ramp i{flex:1}
+
+/* Componentes (espelham as classes do site) */
+.btn{display:inline-flex; align-items:center; min-height:46px; padding:0 18px; border-radius:12px; border:1px solid var(--ink); background:var(--ink); color:var(--paper); font-weight:500; cursor:pointer}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--line); min-height:42px}
+.link{border:0; background:none; padding:6px 0; color:var(--muted); text-decoration:underline; text-underline-offset:3px; cursor:pointer; font-size:14px}
+.chips{display:flex; gap:6px; flex-wrap:wrap}
+.chips button{border:1px solid var(--line); background:transparent; border-radius:999px; padding:9px 14px; min-height:40px; cursor:pointer; font-size:14px}
+.chips button[aria-checked="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+.field{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); margin-bottom:12px}
+.field input,.field select{width:100%; border:1px solid var(--line); background:var(--surface); border-radius:12px; padding:12px 14px; min-height:48px; font-size:16px}
+.aviso{margin:0; padding:10px 12px; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px; background:var(--surface); font-size:14px}
+.tag{font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:2px 9px}
+.up{color:var(--up)} .down{color:var(--accent)}
+
+/* Tipografia de dado */
+.h-dado{margin:0; font:650 clamp(30px,6vw,46px)/1.02 var(--serif); letter-spacing:-.012em}
+.kicker{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.stats{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 14px; margin:0}
+.stats div{border-top:1px solid var(--line); padding-top:8px}
+.stats dt{font-size:12.5px; color:var(--muted); line-height:1.3}
+.stats dd{margin:2px 0 0; font:600 22px/1.15 var(--serif)}
+.stats small{display:block; font-size:12px; color:var(--muted)}
+.destaque{border-top:2px solid var(--ink); padding-top:10px}
+.destaque.fixo{border-top-color:var(--accent)}
+.destaque h3{margin:0; font:600 22px/1.2 var(--serif)}
+
+/* Ranking com barra fina */
+.rank{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.rank li{display:grid; grid-template-columns:30px 1fr auto 64px; grid-template-rows:auto 3px; align-items:baseline; gap:2px 10px; padding:9px 2px 8px; border-bottom:1px solid var(--line)}
+.rank li.on{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.rank .pos{color:var(--muted); font-size:13px; text-align:right}
+.rank .vv{font:600 16px var(--serif); text-align:right}
+.rank .pp{font-size:13px; color:var(--muted); text-align:right}
+.rank .bar{grid-column:2/5}
+.rank .bar i{display:block; height:3px; background:var(--r3); border-radius:2px}
+
+/* Gráficos */
+.fig{margin:0; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:14px}
+.fig figcaption{font-size:12.5px; color:var(--muted); margin-top:8px}
+.pilha{display:flex; gap:2px; height:14px}
+.pilha i{display:block; min-width:2px}
+.pilha i:first-child{border-radius:4px 0 0 4px} .pilha i:last-child{border-radius:0 4px 4px 0}
+.leg{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:4px 16px; font-size:13px; color:var(--muted)}
+.leg li{display:flex; align-items:center; gap:6px}
+.leg i{width:12px; height:12px; border-radius:3px; display:inline-block}
+.waffle{display:flex; flex-wrap:wrap; gap:4px}
+.waffle i{width:20px; height:20px; border-radius:3px}
+.hal{position:relative; height:3px; background:var(--line); margin:26px 0 22px}
+.hal u{position:absolute; top:0; height:3px; background:var(--s0)}
+.hal b{position:absolute; top:-5px; width:13px; height:13px; border-radius:50%; margin-left:-6px; border:2px solid var(--surface)}
+.hal span{position:absolute; top:-24px; font-size:12px; color:var(--muted); white-space:nowrap}
+.col{display:flex; align-items:flex-end; justify-content:space-between; height:120px; border-bottom:1px solid var(--line)}
+.col div{width:14%; background:var(--r2); border-radius:2px 2px 0 0}
+.eixo{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:4px}
+.bolhas circle{stroke-width:1.5}
+
+.ex{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.ex li{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:6px 18px; align-items:end; padding:12px 2px; border-bottom:1px solid var(--line)}
+.ex-v{display:flex; justify-content:space-between; font-size:13.5px; color:var(--muted)} .ex-v b{color:var(--ink)}
+.ex-b{grid-column:2; height:6px; border-radius:3px; background:var(--line); overflow:hidden} .ex-b i{display:block; height:100%; border-radius:3px}
+.cvs{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.cvs li{display:grid; grid-template-columns:96px 1fr; gap:4px 16px; padding:12px 2px; border-bottom:1px solid var(--line)}
+ul.nao{margin:0; padding-left:18px; color:var(--muted); font-size:14px}
+</style>
+</head>
+<body>
+<div class="pg">
+
+<header>
+  <div class="masthead">
+    <h1>Design System</h1>
+    <button id="tema" type="button">Alternar tema</button>
+  </div>
+  <p class="lede">Mapa da política · Bayeux e Paraíba. Uma página de jornal feita para ler números: papel, tinta, fio fino e uma única cor de alerta. O dado é o ornamento; a interface fica fora do caminho.</p>
+</header>
+
+<section>
+  <h2><small>0</small>Princípios</h2>
+  <div class="grid2" style="margin-top:12px">
+    <ul class="nao">
+      <li><b>Tinta sobre papel.</b> Fundo neutro frio, texto quase preto. Cartões não flutuam: nada de sombra.</li>
+      <li><b>Fio em vez de caixa.</b> Listas e grupos se separam por linha de 1px; o título de bloco leva um fio de 2px em tinta.</li>
+      <li><b>Serifa para o número e o título, sans para a interface.</b> Número sempre tabular.</li>
+    </ul>
+    <ul class="nao">
+      <li><b>Uma cor de ênfase.</b> O vermelho marca seleção, alerta e queda. Todo o resto é tinta, cinza ou a escala azul do dado.</li>
+      <li><b>Cor só quando codifica.</b> Se não é um dado, não é azul, verde nem laranja.</li>
+      <li><b>Claro e escuro nascem juntos.</b> Todo componente usa token; nenhum hex solto.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><small>1</small>Tipografia</h2>
+  <p class="nota">Faustina (serifa) para título e número; Geist para texto e controles. Troca em relação ao rascunho: Inter → Geist, que é a fonte que os sites já carregam.</p>
+  <div class="grid2">
+    <div>
+      <div class="rot">Faustina · título e número</div>
+      <p class="h-dado">Bayeux, 2024</p>
+      <p style="margin:10px 0 0; font:600 24px/1.2 var(--serif)">Título de seção · 24/600</p>
+      <p style="margin:6px 0 0; font:600 21px/1.25 var(--serif)">Subtítulo de painel · 21/600</p>
+      <p style="margin:6px 0 0; font:600 15px var(--serif)">Cabeçalho de lista · 15/600</p>
+      <p style="margin:10px 0 0; font:600 22px var(--serif)">28.090 <span style="font:400 13px var(--sans); color:var(--muted)">votos</span></p>
+    </div>
+    <div>
+      <div class="rot">Geist · interface</div>
+      <p style="margin:0; font-size:15px">Texto base · 15/400, entrelinha 1,5</p>
+      <p style="margin:6px 0 0; font-size:14px">Texto de lista e botão · 14</p>
+      <p style="margin:6px 0 0; font-size:13px; color:var(--muted)">Legenda e metadado · 13, cor muted</p>
+      <p style="margin:6px 0 0; font-size:12px; color:var(--muted)">Nota de rodapé e eixo · 12</p>
+      <p class="kicker" style="margin:10px 0 0">Rótulo em caixa-alta · 12 · +0,06em</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><small>2</small>Cor</h2>
+  <p class="nota">Nomes são os tokens do CSS. Os valores trocam sozinhos no tema escuro (use o botão no topo).</p>
+  <div class="rot">Papel e tinta</div>
+  <div class="sw">
+    <div><i style="background:var(--paper)"></i><b>--paper</b>fundo da página</div>
+    <div><i style="background:var(--surface)"></i><b>--surface</b>campos, gráficos</div>
+    <div><i style="background:var(--ink)"></i><b>--ink</b>texto, ação</div>
+    <div><i style="background:var(--muted)"></i><b>--muted</b>texto de apoio</div>
+    <div><i style="background:var(--line)"></i><b>--line</b>fios, bordas</div>
+    <div><i style="background:var(--accent)"></i><b>--accent</b>seleção, alerta</div>
+  </div>
+  <div class="rot">Sequencial · quantidade (mapa, barras)</div>
+  <div class="ramp"><i style="background:var(--r0)"></i><i style="background:var(--r1)"></i><i style="background:var(--r2)"></i><i style="background:var(--r3)"></i><i style="background:var(--r4)"></i><i style="background:var(--r5)"></i></div>
+  <p class="nota" style="margin-top:6px"><code>--r0</code> a <code>--r5</code>. Barras de ranking usam <code>--r3</code>.</p>
+  <div class="rot">Divergente · variação entre eleições</div>
+  <div class="ramp"><i style="background:var(--d0)"></i><i style="background:var(--d1)"></i><i style="background:var(--d2)"></i><i style="background:var(--d3)"></i><i style="background:var(--d4)"></i></div>
+  <p class="nota" style="margin-top:6px">Perdeu <code>--d0</code> · estável <code>--d2</code> · ganhou <code>--d4</code>. Texto de alta: <code>--up</code>; de queda: <code>--accent</code>.</p>
+  <div class="rot">Categórica · origem do dinheiro, partidos (validada para daltonismo)</div>
+  <div class="sw">
+    <div><i style="background:var(--s1)"></i><b>--s1</b>azul</div>
+    <div><i style="background:var(--s2)"></i><b>--s2</b>laranja</div>
+    <div><i style="background:var(--s3)"></i><b>--s3</b>verde</div>
+    <div><i style="background:var(--s4)"></i><b>--s4</b>âmbar</div>
+    <div><i style="background:var(--s0)"></i><b>--s0</b>demais / neutro</div>
+  </div>
+</section>
+
+<section>
+  <h2><small>3</small>Fio, raio e espaço</h2>
+  <div class="grid2" style="margin-top:12px">
+    <div>
+      <div class="destaque" style="margin-bottom:14px"><span class="kicker">Fio de 2px · tinta</span><br>abre um bloco de destaque</div>
+      <div class="destaque fixo"><span class="kicker">Fio de 2px · accent</span><br>o mesmo bloco, quando fixado pelo usuário</div>
+      <div style="border-top:1px solid var(--line); margin-top:14px; padding-top:8px" class="kicker">Fio de 1px · line · separa itens de lista</div>
+    </div>
+    <ul class="nao">
+      <li>Raios: 4px (mapa, gráfico), 8px (aviso, dica), 12px (campo, botão), 999px (chip, tag). Nada acima de 14px.</li>
+      <li>Sem <code>box-shadow</code>. Profundidade vem de fio e de <code>--surface</code> sobre <code>--paper</code>.</li>
+      <li>Espaço em múltiplos de 2: 6, 8, 10, 12, 18, 26. Grupos grandes separados por 26px; itens de lista por padding de 8–10px.</li>
+      <li>Alvo de toque: mínimo 40px (chip) e 46px (botão, campo).</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><small>4</small>Controles</h2>
+  <div class="grid2" style="margin-top:12px">
+    <div>
+      <div class="rot">Botões</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+        <button class="btn" type="button">Primário</button>
+        <button class="btn ghost" type="button">Secundário</button>
+        <button class="link" type="button">Ação discreta</button>
+      </div>
+      <div class="rot">Chips de visão (um ativo)</div>
+      <div class="chips" role="radiogroup">
+        <button role="radio" aria-checked="true">Votos</button>
+        <button role="radio" aria-checked="false">Dinheiro</button>
+        <button role="radio" aria-checked="false">Comparecimento</button>
+      </div>
+    </div>
+    <div>
+      <div class="rot">Campos</div>
+      <label class="field">Eleição
+        <select><option>2024 · 1º turno</option><option>2020 · 1º turno</option></select>
+      </label>
+      <label class="field">Buscar candidato
+        <input type="text" placeholder="Nome ou número">
+      </label>
+    </div>
+  </div>
+  <div class="rot">Aviso</div>
+  <p class="aviso">Esta eleição não tem votos por bairro. O mapa mostra o município inteiro.</p>
+</section>
+
+<section>
+  <h2><small>5</small>Números e listas</h2>
+  <p class="nota">O número grande vem acima do rótulo pequeno, separado por fio. Em lista, a barra de 3px embaixo da linha mostra a proporção sem competir com o número.</p>
+  <div class="grid2">
+    <div>
+      <div class="destaque">
+        <h3>Centro</h3>
+        <dl class="stats" style="grid-template-columns:repeat(3,1fr); margin-top:8px">
+          <div><dt>Votos</dt><dd>3.412</dd></div>
+          <div><dt>Do candidato</dt><dd>22,6%</dd></div>
+          <div><dt>Variação</dt><dd class="up">+4,1 pp</dd></div>
+        </dl>
+      </div>
+      <div class="rot">Estatísticas</div>
+      <dl class="stats">
+        <div><dt>Eleitores aptos</dt><dd>75.831</dd><small>2024</small></div>
+        <div><dt>Abstenção</dt><dd>15%</dd><small>era 17% em 2020</small></div>
+      </dl>
+    </div>
+    <div>
+      <ol class="rank">
+        <li><span class="pos">1</span><span>Rio do Meio</span><span class="vv">8.120</span><span class="pp">43,1%</span><span class="bar"><i style="width:43%"></i></span></li>
+        <li class="on"><span class="pos">2</span><span>Centro</span><span class="vv">4.260</span><span class="pp">22,6%</span><span class="bar"><i style="width:22.6%"></i></span></li>
+        <li><span class="pos">3</span><span>Mutirão</span><span class="vv">2.180</span><span class="pp">11,6%</span><span class="bar"><i style="width:11.6%"></i></span></li>
+      </ol>
+      <p class="nota" style="margin-top:6px">Linha selecionada: fundo de 9% de <code>--accent</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><small>6</small>Gráficos</h2>
+  <p class="nota">Quatro gráficos de CSS puro, sem biblioteca (<code>public/js/graficos.mjs</code>, contas em <code>calculos-graficos.mjs</code>). Todo gráfico leva legenda de texto e <code>aria-label</code> com os números. A rosca só serve para uma parte contra o todo, com no máximo três fatias; acima disso, use barra.</p>
+  <div class="grid2">
+    <figure class="fig">
+      <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap">
+        <div style="width:132px; height:132px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--s1) 0% 72%, var(--s0) 72% 87%, var(--line) 87% 100%)"><div style="width:84px; height:84px; border-radius:50%; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center"><span class="kicker" style="font-size:11px">Aptos</span><b style="font:600 19px/1.1 var(--serif)">74.369</b></div></div>
+        <ul class="leg" style="flex-direction:column; margin:0"><li><i style="background:var(--s1)"></i>Votos válidos 72%</li><li><i style="background:var(--s0)"></i>Abstenção 15%</li><li><i style="background:var(--line)"></i>Brancos e nulos 13%</li></ul>
+      </div>
+      <figcaption>Rosca · <code>conic-gradient</code> · usada no panorama do cargo (comparecimento)</figcaption>
+    </figure>
+    <figure class="fig">
+      <div class="pilha"><i style="width:75%; background:var(--s1)"></i><i style="width:15%; background:var(--s0)"></i><i style="width:10%; background:var(--line)"></i></div>
+      <ul class="leg"><li><i style="background:var(--s1)"></i>Votos válidos 75%</li><li><i style="background:var(--s0)"></i>Abstenção 15%</li><li><i style="background:var(--line)"></i>Brancos e nulos 10%</li></ul>
+      <figcaption>Barra empilhada · alternativa à rosca quando há mais de três partes (origem do dinheiro)</figcaption>
+    </figure>
+    <figure class="fig">
+      <div class="waffle">
+        <i style="background:var(--s1)"></i><i style="background:var(--s1)"></i><i style="background:var(--s1)"></i><i style="background:var(--s1)"></i><i style="background:var(--s1)"></i><i style="background:var(--s1)"></i><i style="background:var(--s1)"></i><i style="background:var(--s1)"></i>
+        <i style="background:var(--s3)"></i><i style="background:var(--s3)"></i><i style="background:var(--s3)"></i><i style="background:var(--s3)"></i><i style="background:var(--s3)"></i>
+        <i style="background:var(--s0)"></i><i style="background:var(--s0)"></i><i style="background:var(--s0)"></i><i style="background:var(--s0)"></i><i style="background:var(--s0)"></i>
+      </div>
+      <ul class="leg"><li><i style="background:var(--s1)"></i>Base 8</li><li><i style="background:var(--s3)"></i>Oposição 5</li><li><i style="background:var(--s0)"></i>Outros 5</li></ul>
+      <figcaption>Waffle · um quadrado por eleito · usado em Partidos (quatro maiores com cor, o resto em "Outros")</figcaption>
+    </figure>
+    <figure class="fig">
+      <div class="hal"><u style="left:30%; width:28%"></u><b style="left:30%; background:var(--s0)"></b><b style="left:58%; background:var(--s1)"></b><span style="left:30%; transform:translateX(-50%)">2020</span><span style="left:58%; transform:translateX(-50%)">2024</span></div>
+      <figcaption>Haltere · cinza é o antes; o depois fica verde se subiu e vermelho se caiu · usado na comparação entre eleições, uma linha por bairro</figcaption>
+    </figure>
+    <figure class="fig">
+      <div class="col"><div style="height:20%"></div><div style="height:45%"></div><div style="height:70%"></div><div style="height:100%; background:var(--r5)"></div></div>
+      <div class="eixo"><span>2012</span><span>2016</span><span>2020</span><b style="color:var(--ink)">2024</b></div>
+      <figcaption>Colunas · o último ano no tom mais escuro · usado em "Evolução do candidato"</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <h2><small>6b</small>Execução e convênios</h2>
+  <p class="nota">Para dinheiro público em duas etapas (empenhado e pago): a barra mostra a parte paga e a cor diz a faixa. Verde: 100% pago. Azul: de 25% a 99%. Laranja: menos de 25%. A cor nunca julga; o número ao lado explica. Usado no perfil de Emendas.</p>
+  <div class="grid2">
+    <ul class="ex">
+      <li><div><b>Mersinho Lucena</b><br><small style="color:var(--muted)">3 emendas · 2024–2025</small></div><div class="ex-v"><span>Pago: <b>R$ 6 mi</b></span><b>Total: R$ 6 mi</b></div><span class="ex-b"><i style="width:100%; background:var(--s3)"></i></span></li>
+      <li><div><b>Ruy Carneiro</b><br><small style="color:var(--muted)">2 emendas · 2021–2026</small></div><div class="ex-v"><span>Pago: <b>R$ 400 mil</b></span><b>Total: R$ 650 mil</b></div><span class="ex-b"><i style="width:61.5%; background:var(--r3)"></i></span></li>
+      <li><div><b>Sem informação</b><br><small style="color:var(--muted)">1 emenda · 2014</small></div><div class="ex-v"><span>Pago: <b>R$ 50 mil</b></span><b>Total: R$ 2 mi</b></div><span class="ex-b"><i style="width:2.5%; background:var(--s2)"></i></span></li>
+    </ul>
+    <ul class="cvs">
+      <li><div><b style="font:600 17px var(--serif)">R$ 675 mil</b><br><small class="kicker">19/10/2020</small></div><div><span class="tag">Urbanismo</span><p style="margin:6px 0 2px; font-size:14px">Recapeamento asfáltico no perímetro urbano.</p></div></li>
+      <li><div><b style="font:600 17px var(--serif)">R$ 287 mil</b><br><small class="kicker">19/10/2020</small></div><div><span class="tag">Desporto e lazer</span><p style="margin:6px 0 2px; font-size:14px">Reforma de quadra.</p><small style="color:var(--muted)">Autor: Andre Amaral</small></div></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><small>7</small>Elementos do mapa</h2>
+  <div class="grid2" style="margin-top:12px">
+    <div>
+      <div class="rot">Legenda</div>
+      <ul class="leg" style="margin-top:0"><li><i style="background:var(--r0)"></i>menos</li><li><i style="background:var(--r2)"></i></li><li><i style="background:var(--r4)"></i></li><li><i style="background:var(--r5)"></i>mais votos</li></ul>
+    </div>
+    <div>
+      <div class="rot">Bolhas</div>
+      <svg class="bolhas" width="150" height="80" viewBox="0 0 150 80" role="img" aria-label="Bolhas de tamanhos diferentes">
+        <circle cx="26" cy="40" r="16" fill="var(--s1)" fill-opacity=".6" stroke="var(--s1)"/>
+        <circle cx="76" cy="40" r="26" fill="var(--s2)" fill-opacity=".6" stroke="var(--s2)"/>
+        <circle cx="125" cy="40" r="9" fill="var(--s3)" fill-opacity=".6" stroke="var(--s3)"/>
+      </svg>
+      <p class="nota">Preenchimento a 60% com borda sólida da mesma cor, para ler a sobreposição. A área, não o raio, é proporcional ao valor.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><small>8</small>Tom do texto</h2>
+  <ul class="nao" style="margin-top:12px">
+    <li>Descreva, não julgue: "valores atípicos", nunca "irregular", "fora do padrão" ou "fracionamento". Todo alerta mostra a ressalva de que é uma conta do site.</li>
+    <li>Fonte e ano sempre perto do dado (<code>figcaption</code> ou nota de 12px).</li>
+    <li>Número com separador de milhar e vírgula decimal (28.090 · 22,6%); variação em pontos percentuais ("+4,1 pp").</li>
+  </ul>
+</section>
+
+<section>
+  <h2><small>9</small>Qual gráfico para qual dado</h2>
+  <p class="nota">Regra de escolha, e onde cada um já está nos sites (Bayeux e Paraíba, salvo indicação).</p>
+  <ul class="nao">
+    <li><b>Parte de um todo, até 3 fatias → rosca.</b> Comparecimento no panorama do cargo.</li>
+    <li><b>Parte de um todo, 4 ou mais → barra empilhada</b> (quatro cores e "Outros"). Origem do dinheiro; composição dos bens; votos nominais do vereador e do deputado.</li>
+    <li><b>Contagem de assentos → waffle.</b> Eleitos por partido; cadeiras da Câmara (Bayeux) e da Assembleia (Paraíba).</li>
+    <li><b>Antes e depois → haltere.</b> Comparação entre eleições por bairro; variação da abstenção por lugar.</li>
+    <li><b>Série curta no tempo → colunas.</b> Evolução do candidato, bens por candidatura, gasto por eleição, ritmo semanal da arrecadação, chance de eleger por faixa de gasto, gasto e folha da Câmara, emendas por ano, pago pelo estado por ano.</li>
+    <li><b>Ranking → lista com barra fina.</b> Candidatos, bairros, partidos, doadores, presença.</li>
+    <li><b>Empenhado × pago → barra de execução.</b> Emendas.</li>
+    <li><b>Total que se abre em partes → árvore.</b> Gastos, folha e licitações.</li>
+  </ul>
+</section>
+
+</div>
+<script>
+document.getElementById('tema').addEventListener('click',function(){
+  var r=document.documentElement, escuro=matchMedia('(prefers-color-scheme: dark)').matches;
+  var atual=r.getAttribute('data-theme')||(escuro?'dark':'light');
+  r.setAttribute('data-theme',atual==='dark'?'light':'dark');
+});
+</script>
+</body>
+</html>

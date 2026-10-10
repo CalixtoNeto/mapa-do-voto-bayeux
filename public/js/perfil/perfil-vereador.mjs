@@ -2,6 +2,7 @@
 // remuneração e credores do município ligados à campanha dele.
 import { pct, nf, dinheiro, sentence } from '../formato.mjs';
 import { ListaDeBarras } from '../componentes.mjs';
+import { Pilha } from '../graficos.mjs';
 import { taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, mesAno } from './calculos-perfil.mjs';
 import { Voltar, Topo, Estatisticas, Secao, Ligacoes, ano, nomeProprio } from './pecas.mjs';
 const { html } = window.htmPreact;
@@ -25,7 +26,10 @@ function Votacoes({ v, nomes }) {
   const t = v.votacoes, total = t.sim + t.nao + t.abstencao + t.outros;
   if (!total) return html`<p class="hint">Nenhum voto nominal registrado no SAPL para este vereador. Votações simbólicas só registram o resultado.</p>`;
   const { mais, menos } = extremosDaAfinidade(v.afinidade);
-  return html`<${Estatisticas} itens=${[{ rotulo: 'Sim', valor: nf.format(t.sim) }, { rotulo: 'Não', valor: nf.format(t.nao) },
+  const partes = [['Sim', t.sim, 'var(--s1)'], ['Não', t.nao, 'var(--s2)'], ['Abstenção', t.abstencao, 'var(--s0)'], ['Outros', t.outros, 'var(--line)']]
+    .filter(p => p[1] > 0).map(([nome, v, cor]) => ({ nome, v, cor, rotulo: `${nf.format(v)} · ${pct(v / total, 0)}` }));
+  return html`<${Pilha} partes=${partes} descricao=${'Votos nominais: ' + partes.map(p => `${p.nome} ${p.rotulo}`).join('; ')} />
+    <${Estatisticas} itens=${[{ rotulo: 'Sim', valor: nf.format(t.sim) }, { rotulo: 'Não', valor: nf.format(t.nao) },
       { rotulo: 'Abstenção', valor: nf.format(t.abstencao) },
       { rotulo: 'Votou com a maioria', valor: t.comMaioriaDe ? pct(t.comMaioria / t.comMaioriaDe, 0) : null, nota: `de ${t.comMaioriaDe} votações` }]} />
     <${Afinidade} titulo="Vota mais junto com" itens=${mais} nomes=${nomes} />
