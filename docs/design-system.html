@@ -112,6 +112,12 @@ code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--s
 .eixo{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:4px}
 .bolhas circle{stroke-width:1.5}
 
+.ex{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.ex li{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:6px 18px; align-items:end; padding:12px 2px; border-bottom:1px solid var(--line)}
+.ex-v{display:flex; justify-content:space-between; font-size:13.5px; color:var(--muted)} .ex-v b{color:var(--ink)}
+.ex-b{grid-column:2; height:6px; border-radius:3px; background:var(--line); overflow:hidden} .ex-b i{display:block; height:100%; border-radius:3px}
+.cvs{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.cvs li{display:grid; grid-template-columns:96px 1fr; gap:4px 16px; padding:12px 2px; border-bottom:1px solid var(--line)}
 ul.nao{margin:0; padding-left:18px; color:var(--muted); font-size:14px}
 </style>
 </head>
@@ -305,6 +311,22 @@ ul.nao{margin:0; padding-left:18px; color:var(--muted); font-size:14px}
       <div class="eixo"><span>2012</span><span>2016</span><span>2020</span><b style="color:var(--ink)">2024</b></div>
       <figcaption>Colunas · o último ano no tom mais escuro · usado em "Evolução do candidato"</figcaption>
     </figure>
+  </div>
+</section>
+
+<section>
+  <h2><small>6b</small>Execução e convênios</h2>
+  <p class="nota">Para dinheiro público em duas etapas (empenhado e pago): a barra mostra a parte paga e a cor diz a faixa. Verde: 100% pago. Azul: de 25% a 99%. Laranja: menos de 25%. A cor nunca julga; o número ao lado explica. Usado no perfil de Emendas.</p>
+  <div class="grid2">
+    <ul class="ex">
+      <li><div><b>Mersinho Lucena</b><br><small style="color:var(--muted)">3 emendas · 2024–2025</small></div><div class="ex-v"><span>Pago: <b>R$ 6 mi</b></span><b>Total: R$ 6 mi</b></div><span class="ex-b"><i style="width:100%; background:var(--s3)"></i></span></li>
+      <li><div><b>Ruy Carneiro</b><br><small style="color:var(--muted)">2 emendas · 2021–2026</small></div><div class="ex-v"><span>Pago: <b>R$ 400 mil</b></span><b>Total: R$ 650 mil</b></div><span class="ex-b"><i style="width:61.5%; background:var(--r3)"></i></span></li>
+      <li><div><b>Sem informação</b><br><small style="color:var(--muted)">1 emenda · 2014</small></div><div class="ex-v"><span>Pago: <b>R$ 50 mil</b></span><b>Total: R$ 2 mi</b></div><span class="ex-b"><i style="width:2.5%; background:var(--s2)"></i></span></li>
+    </ul>
+    <ul class="cvs">
+      <li><div><b style="font:600 17px var(--serif)">R$ 675 mil</b><br><small class="kicker">19/10/2020</small></div><div><span class="tag">Urbanismo</span><p style="margin:6px 0 2px; font-size:14px">Recapeamento asfáltico no perímetro urbano.</p></div></li>
+      <li><div><b style="font:600 17px var(--serif)">R$ 287 mil</b><br><small class="kicker">19/10/2020</small></div><div><span class="tag">Desporto e lazer</span><p style="margin:6px 0 2px; font-size:14px">Reforma de quadra.</p><small style="color:var(--muted)">Autor: Andre Amaral</small></div></li>
+    </ul>
   </div>
 </section>
 
