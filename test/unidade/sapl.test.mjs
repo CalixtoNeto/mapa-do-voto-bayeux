@@ -110,3 +110,11 @@ test('quem votou numa sessão conta como presente nela, mesmo sem presença regi
   assert.deepEqual(r.vereadores.find(v => v.id === 12).presenca, [2, 2], 'sessão 1 registrada e sessão 2 pelo voto');
   assert.deepEqual(r.vereadores.find(v => v.id === 2).presenca, [1, 1]);
 });
+
+test('voto sem data é ligado à sessão pelo nome dela, que vem no texto do voto (como no SAPL da Assembleia)', () => {
+  const d = camara();
+  d.sessoes = [...d.sessoes.slice(0, 2).map((s, i) => ({ ...s, __str__: `${i + 1}ª Sessão Ordinária da 1ª Sessão Legislativa da 16ª Legislatura` })), d.sessoes[2]];
+  d.votos = [{ votacao: 60, parlamentar: 12, voto: 'Não', data_hora: null,
+    __str__: 'Votação: Ordem: Ordem do Dia/Expediente: 1 - Veto nº 2 de 2025 em 2ª Sessão Ordinária  da 1ª Sessão Legislativa da 16ª Legislatura - Votação: Rejeitada - Parlamentar: Berg' }];
+  assert.deepEqual(resumoDaCamara(d, '2026-10-09').vereadores.find(v => v.id === 12).presenca, [2, 2]);
+});

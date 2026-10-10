@@ -5,10 +5,23 @@ import { tipoDeAutorParlamentar, indiceDeMaterias, materiasDoVereador } from './
 const legislaturaAtual = (legislaturas, hoje) =>
   legislaturas.find(l => l.data_inicio <= hoje && hoje <= l.data_fim) || [...legislaturas].sort((a, b) => b.numero - a.numero)[0];
 
-// Sessões que de fato aconteceram: as que têm alguém presente (as futuras já ficam cadastradas). O registro de
-// presença do SAPL às vezes falha (na Assembleia, o presidente quase nunca aparece): quem votou Sim, Não ou
-// Abstenção numa sessão do mesmo dia também conta como presente.
+// O registro de presença do SAPL às vezes falha (na Assembleia, o presidente quase nunca aparece): quem votou Sim,
+// Não ou Abstenção numa sessão também conta como presente. A sessão do voto vem do texto dele ("… em 25ª Sessão
+// Ordinária da … - Votação: …"), que repete o nome da sessão; sem isso, da data do voto (que às vezes vem vazia).
 const VOTOU = /^(sim|n[aã]o|absten[cç][aã]o)$/i;
+const limpo = texto => String(texto || '').replace(/\s+/g, ' ').trim();
+
+function localizadorDeSessoes(sessoes) {
+  const porNome = new Map(sessoes.map(s => [limpo(s.__str__), s.id])), porDia = new Map();
+  for (const s of sessoes) porDia.set(s.data_inicio, [...(porDia.get(s.data_inicio) || []), s.id]);
+  return voto => {
+    const nome = limpo(voto.__str__).match(/ em (.+?) - Votação:/)?.[1];
+    if (nome && porNome.has(nome)) return [porNome.get(nome)];
+    return porDia.get(String(voto.data_hora || '').slice(0, 10)) || [];
+  };
+}
+
+// Sessões que de fato aconteceram: as que têm alguém presente (as futuras já ficam cadastradas).
 function presencasPorSessao(sessoes, presencas, votos = []) {
   const presentes = new Map();
   const marcar = (sessao, parlamentar) => {
@@ -16,12 +29,8 @@ function presencasPorSessao(sessoes, presencas, votos = []) {
     presentes.get(sessao).add(parlamentar);
   };
   for (const p of presencas) marcar(p.sessao_plenaria, p.parlamentar);
-  const sessoesDoDia = new Map();
-  for (const s of sessoes) sessoesDoDia.set(s.data_inicio, [...(sessoesDoDia.get(s.data_inicio) || []), s.id]);
-  for (const v of votos) {
-    if (!VOTOU.test(String(v.voto || '').trim())) continue;
-    for (const sessao of sessoesDoDia.get(String(v.data_hora || '').slice(0, 10)) || []) marcar(sessao, v.parlamentar);
-  }
+  const sessoesDoVoto = localizadorDeSessoes(sessoes);
+  for (const v of votos) if (VOTOU.test(limpo(v.voto))) sessoesDoVoto(v).forEach(sessao => marcar(sessao, v.parlamentar));
   return sessoes.filter(s => presentes.has(s.id)).map(s => ({ data: s.data_inicio, presentes: presentes.get(s.id) }));
 }
 
