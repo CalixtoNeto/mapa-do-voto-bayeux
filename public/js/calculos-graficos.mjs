@@ -37,3 +37,17 @@ export function gruposDeAssentos(partidos, cores, corOutros) {
   if (resto.length) grupos.push({ id: 'outros', nome: `Outros (${resto.length} ${resto.length === 1 ? 'partido' : 'partidos'})`, n: resto.reduce((s, p) => s + p.eleitos, 0), cor: corOutros });
   return grupos;
 }
+
+// As maiores partes { nome, v } levam uma cor cada; o que sobra soma em "Outros".
+export function partesComResto(itens, cores, corOutros) {
+  const ordenados = itens.filter(i => i.v > 0).sort((a, b) => b.v - a.v);
+  const partes = ordenados.slice(0, cores.length).map((i, k) => ({ nome: i.nome, v: i.v, cor: cores[k] }));
+  const resto = ordenados.slice(cores.length).reduce((s, i) => s + i.v, 0);
+  return resto > 0 ? [...partes, { nome: 'Outros', v: resto, cor: corOutros }] : partes;
+}
+
+// Com muitas colunas só alguns nomes cabem no eixo: o primeiro, o último e um a cada passo.
+export function rotulosDoEixo(nomes, cabem = 8) {
+  const passo = Math.ceil(nomes.length / 4);
+  return nomes.map((n, k) => nomes.length <= cabem || k % passo === 0 || k === nomes.length - 1 ? n : '');
+}

@@ -3,13 +3,14 @@
 import { pct, sentence, pontos } from './formato.mjs';
 import { fragmentacao, margens, variacaoDaAbstencao, eleitoradoDosVotos } from './calculos.mjs';
 import { nomeDe } from './componentes.mjs';
+import { Haltere } from './graficos.mjs';
 const { html, useMemo } = window.htmPreact;
 
 const casas = v => v.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
 const MOSTRAR = 6;
 
 function Lista({ titulo, itens }) {
-  return html`<h3>${titulo}</h3><ul class="posicoes">${itens.map(([nm, vv, sm]) => html`<li><span class="nm">${nm}</span><span class="vv">${vv}</span><small>${sm}</small></li>`)}</ul>`;
+  return html`<h3>${titulo}</h3><ul class="posicoes">${itens.map(([nm, vv, sm, extra]) => html`<li><span class="nm">${nm}</span><span class="vv">${vv}</span><small>${sm}</small>${extra}</li>`)}</ul>`;
 }
 
 function Disputa({ cfg, ctx, lugares }) {
@@ -26,7 +27,9 @@ function Disputa({ cfg, ctx, lugares }) {
 function Abstencao({ cfg, ctx }) {
   const lista = useMemo(() => variacaoDaAbstencao(ctx.comparecimento, ctx.comparecimentoAnterior).sort((a, b) => b.diferenca - a.diferenca), [ctx]);
   if (lista.length < 4) return null;
-  const item = v => [cfg.nomeDoLugar(v.lugar, ctx.ds), pontos(v.diferenca), `${pct(v.antes)} → ${pct(v.agora)}`];
+  const teto = Math.max(...lista.flatMap(v => [v.antes, v.agora]));
+  const item = v => [cfg.nomeDoLugar(v.lugar, ctx.ds), pontos(v.diferenca), `${pct(v.antes)} → ${pct(v.agora)}`,
+    html`<${Haltere} antes=${v.antes} depois=${v.agora} max=${teto} descricao=${`Abstenção de ${pct(v.antes)} para ${pct(v.agora)}`} />`];
   const altas = lista.filter(v => v.diferenca > 0).slice(0, MOSTRAR), quedas = lista.filter(v => v.diferenca < 0).slice(-MOSTRAR).reverse();
   return html`${altas.length > 0 && html`<${Lista} titulo=${`Abstenção: maiores altas desde ${ctx.ds.ano - 4}`} itens=${altas.map(item)} />`}
     ${quedas.length > 0 && html`<${Lista} titulo=${`Abstenção: maiores quedas desde ${ctx.ds.ano - 4}`} itens=${quedas.map(item)} />`}`;

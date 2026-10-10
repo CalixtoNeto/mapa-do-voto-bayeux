@@ -1,5 +1,5 @@
 // Gráficos de CSS puro, sem biblioteca: rosca, waffle, haltere e colunas. As contas estão em calculos-graficos.mjs.
-import { gradienteDaRosca, celulasDoWaffle, trechoDoHaltere, alturasDasColunas } from './calculos-graficos.mjs';
+import { gradienteDaRosca, celulasDoWaffle, trechoDoHaltere, alturasDasColunas, rotulosDoEixo } from './calculos-graficos.mjs';
 const { html } = window.htmPreact;
 
 // partes: [{ nome, v, cor, rotulo }]; o centro mostra o total. A legenda em texto repete o que a rosca desenha.
@@ -30,7 +30,14 @@ export function Haltere({ antes, depois, max, descricao }) {
 
 // itens: [{ n, v, rotulo }]; o último fica em destaque. Passe o valor já formatado em rotulo.
 export function Colunas({ itens, descricao }) {
-  const alturas = alturasDasColunas(itens.map(i => i.v));
-  return html`<div class="colunas" role="img" aria-label=${descricao}>${itens.map((i, k) => html`<div class=${k === itens.length - 1 ? 'ultima' : ''}>
-    <span class="cv">${i.rotulo}</span><i style=${`height:${alturas[k]}%`}></i><span class="cn">${i.n}</span></div>`)}</div>`;
+  const alturas = alturasDasColunas(itens.map(i => i.v)), eixo = rotulosDoEixo(itens.map(i => String(i.n))), densa = itens.length > 8;
+  return html`<div class=${'colunas' + (densa ? ' densa' : '')} role="img" aria-label=${descricao}>${itens.map((i, k) => html`<div class=${k === itens.length - 1 ? 'ultima' : ''}>
+    <span class="cv">${i.rotulo}</span><i style=${`height:${alturas[k]}%`}></i><span class="cn">${eixo[k]}</span></div>`)}</div>`;
+}
+
+// partes: [{ nome, v, cor, rotulo }]: uma barra só, dividida em proporção, com legenda em texto.
+export function Pilha({ partes, descricao }) {
+  return html`<figure class="pilha-fig"><div class="pilha" role="img" aria-label=${descricao}>
+    ${partes.map(p => html`<i style=${`flex-grow:${p.v};background:${p.cor}`} title=${`${p.nome}: ${p.rotulo}`}></i>`)}</div>
+    <ul class="leg">${partes.map(p => html`<li><i style=${`background:${p.cor}`}></i><span>${p.nome}</span><b>${p.rotulo}</b></li>`)}</ul></figure>`;
 }

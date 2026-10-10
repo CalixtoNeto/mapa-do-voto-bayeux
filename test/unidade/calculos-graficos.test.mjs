@@ -1,7 +1,7 @@
 // Contas dos gráficos de CSS puro (public/js/calculos-graficos.mjs): rosca, waffle, haltere e colunas.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { gruposDeAssentos, gradienteDaRosca, celulasDoWaffle, trechoDoHaltere, alturasDasColunas } from '../../public/js/calculos-graficos.mjs';
+import { partesComResto, rotulosDoEixo, gruposDeAssentos, gradienteDaRosca, celulasDoWaffle, trechoDoHaltere, alturasDasColunas } from '../../public/js/calculos-graficos.mjs';
 
 test('rosca: cada parte ocupa a sua fatia, em porcentagem acumulada', () => {
   assert.equal(gradienteDaRosca([{ v: 75, cor: 'a' }, { v: 15, cor: 'b' }, { v: 10, cor: 'c' }]),
@@ -34,4 +34,17 @@ test('assentos: os maiores partidos ganham uma cor cada e o resto vira "Outros"'
   assert.deepEqual(gruposDeAssentos(partidos, ['x', 'y'], 'o'), [
     { id: 'B', nome: 'B', n: 5, cor: 'x' }, { id: 'C', nome: 'C', n: 3, cor: 'y' }, { id: 'outros', nome: 'Outros (2 partidos)', n: 3, cor: 'o' }]);
   assert.deepEqual(gruposDeAssentos([{ partido: 'A', eleitos: 2 }], ['x'], 'o'), [{ id: 'A', nome: 'A', n: 2, cor: 'x' }]);
+});
+
+test('partes com resto: as maiores levam uma cor e o que sobra soma em "Outros"', () => {
+  const itens = [{ nome: 'a', v: 1 }, { nome: 'b', v: 6 }, { nome: 'c', v: 3 }, { nome: 'd', v: 0 }, { nome: 'e', v: 2 }];
+  assert.deepEqual(partesComResto(itens, ['x', 'y'], 'o'), [
+    { nome: 'b', v: 6, cor: 'x' }, { nome: 'c', v: 3, cor: 'y' }, { nome: 'Outros', v: 3, cor: 'o' }]);
+  assert.deepEqual(partesComResto([{ nome: 'a', v: 2 }], ['x'], 'o'), [{ nome: 'a', v: 2, cor: 'x' }]);
+});
+
+test('rótulos do eixo: poucas colunas mostram todos; muitas mostram só alguns', () => {
+  assert.deepEqual(rotulosDoEixo(['a', 'b', 'c']), ['a', 'b', 'c']);
+  const muitos = rotulosDoEixo(Array.from({ length: 12 }, (_, i) => String(i)));
+  assert.deepEqual(muitos.map((r, i) => r ? i : null).filter(i => i != null), [0, 3, 6, 9, 11]);
 });

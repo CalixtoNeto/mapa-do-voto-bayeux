@@ -9,7 +9,17 @@ import { PerfilPrefeitura } from './perfil-prefeitura.mjs';
 import { PerfilCamara } from './perfil-camara.mjs';
 import { PerfilEmendas } from './perfil-emendas.mjs';
 export { ehRotaDePerfil } from './dados-perfil.mjs';
+import { Waffle } from '../graficos.mjs';
+import { gruposDeAssentos } from '../calculos-graficos.mjs';
 const { html } = window.htmPreact;
+
+function Cadeiras({ vereadores }) {
+  const contagem = new Map();
+  vereadores.filter(v => v.emExercicio).forEach(v => contagem.set(v.partido || 'Sem partido', (contagem.get(v.partido || 'Sem partido') || 0) + 1));
+  const grupos = gruposDeAssentos([...contagem].map(([partido, eleitos]) => ({ partido, eleitos })), ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'], 'var(--s0)');
+  const total = grupos.reduce((s, g) => s + g.n, 0);
+  return total ? html`<${Waffle} grupos=${grupos} descricao=${`${total} vereadores em exercício: ${grupos.map(g => `${g.nome} ${g.n}`).join(', ')}`} />` : null;
+}
 
 function ListaDeVereadores({ vereadores }) {
   return html`<ul class="lista-perfis">${vereadoresEmOrdem(vereadores).map(v => html`<li><a href=${'#perfil/' + slug(v.nome)} class=${v.emExercicio ? '' : 'fora'}>
@@ -27,7 +37,7 @@ function Inicio({ dados }) {
       ${camara && html`<li><a href="#perfil/camara"><span class="n">Câmara Municipal<small>${camara.vereadores.filter(v => v.emExercicio).length} vereadores em exercício</small></span><span class="m">${nf.format(camara.sessoes)} sessões<small>${nf.format(camara.votacoesNominais)} votações nominais</small></span></a></li>`}
       ${emendas && html`<li><a href="#perfil/emendas"><span class="n">Emendas para Bayeux<small>quem mandou e quem recebeu</small></span><span class="m">${dinheiro(recebido)}<small>${emendas.recebido ? 'recebidos' : 'empenhados'}</small></span></a></li>`}
     </ul>
-    ${camara && html`<${Secao} id="iv" titulo="Vereadores"><${ListaDeVereadores} vereadores=${camara.vereadores} /><//>`}
+    ${camara && html`<${Secao} id="iv" titulo="Vereadores"><${Cadeiras} vereadores=${camara.vereadores} /><${ListaDeVereadores} vereadores=${camara.vereadores} /><//>`}
   </article>`;
 }
 

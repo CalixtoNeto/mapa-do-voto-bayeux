@@ -3,6 +3,7 @@
 import { dinheiro } from '../formato.mjs';
 import { ListaDeBarras, usarLimite } from '../componentes.mjs';
 import { ArvoreDeBarras } from '../arvore.mjs';
+import { Colunas } from '../graficos.mjs';
 import { ListaDeExecucao, ListaDeConvenios } from './execucao.mjs';
 import { Voltar, Topo, Estatisticas, Secao, nomeProprio } from './pecas.mjs';
 const { html } = window.htmPreact;
@@ -24,7 +25,7 @@ function Recebido({ r }) {
         <div class="arvore"><${ArvoreDeBarras} arvore=${r.arvore} rotulo=${rotuloDoRecebido} /></div>`
       : html`<${Lista} itens=${r.porAutor.map(([autor, v, n]) => ({ n: html`${nomeProprio(autor)} <small>${emendas(n)}</small>`, v, rotulo: dinheiro(v) }))} />
         <h3>Quem recebeu</h3><${Lista} itens=${r.porFavorecido.map(([nome, natureza, v]) => ({ n: html`${nomeProprio(nome)} <small>${natureza}</small>`, v, rotulo: dinheiro(v) }))} />`}
-      <h3>Por ano</h3><${ListaDeBarras} itens=${r.porAno.map(([a, v]) => ({ n: a, v, rotulo: dinheiro(v) }))} />
+      <h3>Por ano</h3><${Colunas} itens=${r.porAno.map(([a, v]) => ({ n: a, v, rotulo: dinheiro(v) }))} descricao=${'Emendas recebidas por ano: ' + r.porAno.map(([a, v]) => `${a}, ${dinheiro(v)}`).join('; ')} />
     <//>`;
 }
 

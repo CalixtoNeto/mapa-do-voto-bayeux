@@ -2,7 +2,7 @@
 import { nf, pct, titleCase, dinheiro, centavos } from './formato.mjs';
 import { eleitosENaoEleitos, porPartido, concentracaoDoFundo, reeleicao } from './calculos.mjs';
 import { nomeDe, usarLimite } from './componentes.mjs';
-import { Waffle } from './graficos.mjs';
+import { Waffle, Colunas } from './graficos.mjs';
 import { gruposDeAssentos } from './calculos-graficos.mjs';
 const { html, useMemo, useState } = window.htmPreact;
 
@@ -13,8 +13,8 @@ export function DinheiroElege({ linhas, ctx }) {
     <dl class="stats"><div><dt>Gasto mediano de quem se elegeu</dt><dd>${dinheiro(r.eleitos.gasto)}</dd><small>${r.eleitos.n} eleitos</small></div>
       <div><dt>De quem não se elegeu</dt><dd>${dinheiro(r.naoEleitos.gasto)}</dd><small>${r.naoEleitos.n} candidatos</small></div></dl>
     <h3>Chance de se eleger por faixa de gasto</h3>
-    <ul class="posicoes">${r.faixas.map(f => html`<li><span class="nm">${dinheiro(f.de)} a ${dinheiro(f.ate)}</span>
-      <span class="vv">${pct(f.eleitos / f.candidatos, 0)}</span><small>${f.eleitos} eleitos entre ${f.candidatos} candidatos</small></li>`)}</ul>
+    <${Colunas} itens=${r.faixas.map(f => ({ n: `até ${dinheiro(f.ate)}`, v: f.eleitos / f.candidatos, rotulo: pct(f.eleitos / f.candidatos, 0) }))}
+      descricao=${'Chance de se eleger por faixa de gasto: ' + r.faixas.map(f => `${dinheiro(f.de)} a ${dinheiro(f.ate)}, ${f.eleitos} eleitos entre ${f.candidatos}`).join('; ')} />
     <p class="hint">Faixas com o mesmo número de candidatos (quartis), só entre os que declararam gasto. Mostra associação, não causa: quem já tem mais chance também atrai mais dinheiro.</p></section>`;
 }
 
