@@ -322,30 +322,18 @@ function BairroCard({ view, b, pinned, onClear, linha }) {
   </div>`;
 }
 
-// Minigráfico dos votos em cada eleição (Evolução do candidato): só a forma da série, os números vêm na lista.
-function Sparkline({ valores }) {
-  if (valores.length < 2) return null;
-  const max = Math.max(...valores), min = Math.min(...valores), L = 120, A = 32;
-  const ponto = (v, i) => [4 + i * (L - 8) / (valores.length - 1), A - 4 - (max === min ? 0.5 : (v - min) / (max - min)) * (A - 8)];
-  const pontos = valores.map(ponto);
-  return html`<svg class="sparkline" viewBox=${`0 0 ${L} ${A}`} width=${L} height=${A} aria-hidden="true">
-    <polyline points=${pontos.map(p => p.join(',')).join(' ')} fill="none" />
-    ${pontos.map(([x, y]) => html`<circle cx=${x} cy=${y} r="3" />`)}</svg>`;
-}
-
 // Votos do mesmo candidato em todas as eleições em que ele aparece
 function Trajetoria({ entradas, view, comp, onComparar, onSair, pode }) {
   const lista = [...entradas].sort((a, b) => a.ano - b.ano || a.turno - b.turno);
-  const max = Math.max(1, ...lista.map(e => e.total));
   const igual = (e, o) => o && e.ano === o.ano && e.turno === o.turno && e.cargo === o.cargo && e.nr === o.nr;
   return html`<section class="traj" aria-labelledby="tj">
-    <div class="rk-head"><h2 id="tj">Evolução do candidato</h2><${Sparkline} valores=${lista.map(e => e.total)} />${comp && html`<button type="button" class="link" onClick=${onSair}>Sair da comparação</button>`}</div>
+    <div class="rk-head"><h2 id="tj">Evolução do candidato</h2>${comp && html`<button type="button" class="link" onClick=${onSair}>Sair da comparação</button>`}</div>
+    ${lista.length > 1 && html`<${AN.Colunas} itens=${lista.map(e => ({ n: e.ano, v: e.total, rotulo: nf.format(e.total) }))} descricao=${'Votos em cada eleição: ' + lista.map(e => `${e.ano}, ${nf.format(e.total)}`).join('; ')} />`}
     <ul>${lista.map(e => { const atual = igual(e, view), em = igual(e, comp);
       return html`<li key=${e.ano + e.turno + e.cargo} class=${em ? 'em' : ''}>
         <div class="tl"><span class="ty">${e.ano}${e.turno !== '1' ? ' · 2º turno' : ''}</span><span class="tc">${CARGO_NOMES[e.cargo] || e.cargo}</span>
           <span class="tv">${nf.format(e.total)}</span><span class="tp">${pct(e.pct, 1)} · ${e.pos}º</span>
-          ${atual ? html`<span class="tag">no mapa</span>` : pode(e) ? html`<button type="button" class="btn ghost" aria-pressed=${em} onClick=${() => onComparar(e)}>${em ? 'Comparando' : e.cargo !== view.cargo ? 'Comparar (outro cargo)' : e.turno !== view.turno ? 'Comparar (outro turno)' : 'Comparar'}</button>` : null}</div>
-        <span class="bar" aria-hidden="true"><i style=${`width:${(e.total / max * 100).toFixed(1)}%`}></i></span></li>`; })}
+          ${atual ? html`<span class="tag">no mapa</span>` : pode(e) ? html`<button type="button" class="btn ghost" aria-pressed=${em} onClick=${() => onComparar(e)}>${em ? 'Comparando' : e.cargo !== view.cargo ? 'Comparar (outro cargo)' : e.turno !== view.turno ? 'Comparar (outro turno)' : 'Comparar'}</button>` : null}</div></li>`; })}
     </ul>
     <p class="hint">Votos em ${CIDADE}, parcela dos votos nominais do cargo e posição entre os candidatos da cidade.</p>
   </section>`;
@@ -370,6 +358,7 @@ function ComparaRanking({ cmp, selected, onSelect }) {
     else if (sort === 'pp') r.sort((a, b) => b.dp - a.dp); else r.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
     return r;
   }, [cmp, sort]);
+  const maxVotos = Math.max(1, ...cmp.rows.flatMap(x => [x.vAnt, x.vRec]));
   return html`<section class="ranking cmp" aria-labelledby="rk">
     <div class="rk-head">
       <h2 id="rk">Bairros: ${cmp.ant.ano} → ${cmp.rec.ano}</h2>
@@ -384,6 +373,7 @@ function ComparaRanking({ cmp, selected, onSelect }) {
           <span class="vv">${nf.format(x.vAnt)} → ${nf.format(x.vRec)}</span>
           <span class=${'dd ' + (x.d > 0 ? 'up' : x.d < 0 ? 'down' : '')}>${x.d ? dv(x.d) : '0'}</span>
           <span class=${'pv ' + (x.dp > 0.00005 ? 'up' : x.dp < -0.00005 ? 'down' : '')}>${pp(x.dp)}</span>
+          <${AN.Haltere} antes=${x.vAnt} depois=${x.vRec} max=${maxVotos} descricao=${`${cmp.ant.ano}: ${nf.format(x.vAnt)} votos; ${cmp.rec.ano}: ${nf.format(x.vRec)} votos`} />
         </button></li>`)}
     </ol>
   </section>`;
@@ -503,7 +493,12 @@ function CardPanorama({ b, pinned, onClear, vence, cands, numeros }) {
 function StatsPanorama({ comp }) {
   if (!comp) return null;
   const s = AN.somaDoComparecimento(comp);
-  return html`<dl class="stats">
+  const validos = s.comparecimento - s.brancos - s.nulos;
+  const partes = [{ nome: 'Votos válidos', v: validos, cor: 'var(--s1)', rotulo: pct(validos / s.aptos, 0) },
+    { nome: 'Abstenção', v: s.abstencao, cor: 'var(--s0)', rotulo: pct(s.abstencao / s.aptos, 0) },
+    { nome: 'Brancos e nulos', v: s.brancos + s.nulos, cor: 'var(--line)', rotulo: pct((s.brancos + s.nulos) / s.aptos, 0) }];
+  return html`<${AN.Rosca} partes=${partes} centro=${{ rotulo: 'Aptos', valor: nf.format(s.aptos) }} descricao=${`Dos ${nf.format(s.aptos)} eleitores aptos: ${partes.map(p => `${p.nome} ${p.rotulo}`).join(', ')}`} />
+  <dl class="stats">
     <div><dt>Eleitores aptos</dt><dd>${nf.format(s.aptos)}</dd></div>
     <div><dt>Abstenção</dt><dd>${pct(s.abstencao / s.aptos)}</dd></div>
     <div><dt>Brancos</dt><dd>${pct(s.brancos / s.comparecimento)}</dd></div>

@@ -273,12 +273,19 @@ ul.nao{margin:0; padding-left:18px; color:var(--muted); font-size:14px}
 
 <section>
   <h2><small>6</small>Gráficos</h2>
-  <p class="nota">Preferência: barra, ponto e fio. Rosca fica de fora (comparar ângulos é pior que comparar comprimentos): use a barra empilhada. Todo gráfico leva legenda de texto e uma frase de leitura na <code>figcaption</code>.</p>
+  <p class="nota">Quatro gráficos de CSS puro, sem biblioteca (<code>public/js/graficos.mjs</code>, contas em <code>calculos-graficos.mjs</code>). Todo gráfico leva legenda de texto e <code>aria-label</code> com os números. A rosca só serve para uma parte contra o todo, com no máximo três fatias; acima disso, use barra.</p>
   <div class="grid2">
+    <figure class="fig">
+      <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap">
+        <div style="width:132px; height:132px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--s1) 0% 72%, var(--s0) 72% 87%, var(--line) 87% 100%)"><div style="width:84px; height:84px; border-radius:50%; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center"><span class="kicker" style="font-size:11px">Aptos</span><b style="font:600 19px/1.1 var(--serif)">74.369</b></div></div>
+        <ul class="leg" style="flex-direction:column; margin:0"><li><i style="background:var(--s1)"></i>Votos válidos 72%</li><li><i style="background:var(--s0)"></i>Abstenção 15%</li><li><i style="background:var(--line)"></i>Brancos e nulos 13%</li></ul>
+      </div>
+      <figcaption>Rosca · <code>conic-gradient</code> · usada no panorama do cargo (comparecimento)</figcaption>
+    </figure>
     <figure class="fig">
       <div class="pilha"><i style="width:75%; background:var(--s1)"></i><i style="width:15%; background:var(--s0)"></i><i style="width:10%; background:var(--line)"></i></div>
       <ul class="leg"><li><i style="background:var(--s1)"></i>Votos válidos 75%</li><li><i style="background:var(--s0)"></i>Abstenção 15%</li><li><i style="background:var(--line)"></i>Brancos e nulos 10%</li></ul>
-      <figcaption>Composição do eleitorado · barra empilhada no lugar da rosca</figcaption>
+      <figcaption>Barra empilhada · alternativa à rosca quando há mais de três partes (origem do dinheiro)</figcaption>
     </figure>
     <figure class="fig">
       <div class="waffle">
@@ -287,16 +294,16 @@ ul.nao{margin:0; padding-left:18px; color:var(--muted); font-size:14px}
         <i style="background:var(--s0)"></i><i style="background:var(--s0)"></i><i style="background:var(--s0)"></i><i style="background:var(--s0)"></i><i style="background:var(--s0)"></i>
       </div>
       <ul class="leg"><li><i style="background:var(--s1)"></i>Base 8</li><li><i style="background:var(--s3)"></i>Oposição 5</li><li><i style="background:var(--s0)"></i>Outros 5</li></ul>
-      <figcaption>Câmara de Bayeux · 18 cadeiras</figcaption>
+      <figcaption>Waffle · um quadrado por eleito · usado em Partidos (quatro maiores com cor, o resto em "Outros")</figcaption>
     </figure>
     <figure class="fig">
       <div class="hal"><u style="left:30%; width:28%"></u><b style="left:30%; background:var(--s0)"></b><b style="left:58%; background:var(--s1)"></b><span style="left:30%; transform:translateX(-50%)">2020</span><span style="left:58%; transform:translateX(-50%)">2024</span></div>
-      <figcaption>Mudança entre duas eleições · haltere: cinza é o antes, azul é o depois</figcaption>
+      <figcaption>Haltere · cinza é o antes; o depois fica verde se subiu e vermelho se caiu · usado na comparação entre eleições, uma linha por bairro</figcaption>
     </figure>
     <figure class="fig">
       <div class="col"><div style="height:20%"></div><div style="height:45%"></div><div style="height:70%"></div><div style="height:100%; background:var(--r5)"></div></div>
       <div class="eixo"><span>2012</span><span>2016</span><span>2020</span><b style="color:var(--ink)">2024</b></div>
-      <figcaption>Evolução · o ano em foco no tom mais escuro da escala</figcaption>
+      <figcaption>Colunas · o último ano no tom mais escuro · usado em "Evolução do candidato"</figcaption>
     </figure>
   </div>
 </section>

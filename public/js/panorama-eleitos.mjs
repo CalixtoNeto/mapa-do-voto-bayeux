@@ -2,6 +2,8 @@
 import { nf, pct, titleCase, dinheiro, centavos } from './formato.mjs';
 import { eleitosENaoEleitos, porPartido, concentracaoDoFundo, reeleicao } from './calculos.mjs';
 import { nomeDe, usarLimite } from './componentes.mjs';
+import { Waffle } from './graficos.mjs';
+import { gruposDeAssentos } from './calculos-graficos.mjs';
 const { html, useMemo, useState } = window.htmPreact;
 
 export function DinheiroElege({ linhas, ctx }) {
@@ -22,6 +24,13 @@ const resumoDoCandidato = (l, eleito) => `${eleito ? 'eleito · ' : ''}${l.gasto
 
 function Barra({ v, max }) {
   return html`<span class="bar" aria-hidden="true"><i style=${`width:${(v / max * 100).toFixed(1)}%`}></i></span>`;
+}
+
+function AssentosPorPartido({ lista }) {
+  const grupos = gruposDeAssentos(lista, ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'], 'var(--s0)');
+  const total = grupos.reduce((s, g) => s + g.n, 0);
+  if (!total || total > 120) return null;
+  return html`<${Waffle} grupos=${grupos} descricao=${`${total} eleitos: ${grupos.map(g => `${g.nome} ${g.n}`).join(', ')}`} />`;
 }
 
 export function Partidos({ linhas, ctx, onPick }) {
@@ -45,6 +54,7 @@ export function Partidos({ linhas, ctx, onPick }) {
   }
   const max = Math.max(1, ...lista.map(x => x.votos));
   return html`<section class="analise" aria-labelledby="pt"><h2 id="pt">Partidos</h2>${trilha}
+    <${AssentosPorPartido} lista=${lista} />
     <p class="hint">Partido → candidatos. Toque num partido para abrir.</p>
     <ul class="partidos">${lista.slice(0, limite).map(x => html`<li><button type="button" class="abre" onClick=${() => setAberto(x.partido)}>
       <span class="nm">${x.partido} ›</span><span class="vv">${nf.format(x.votos)} votos <small>${pct(x.votos / total, 0)}</small></span>

@@ -5,3 +5,4 @@ export { criarPanorama } from './panorama.mjs';
 export { vencedores, coresDosVencedores, camadaDoComparecimento, somaDoComparecimento, ehEleito } from './calculos.mjs';
 export { linhasFinanceiras } from './calculos.mjs';
 export { contextoDasAnalises } from './contexto.mjs';
+export { Rosca, Waffle, Haltere, Colunas } from './graficos.mjs';
