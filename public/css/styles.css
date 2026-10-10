@@ -343,3 +343,28 @@ button.abre{cursor:pointer}
   .aviso-legal{grid-area:foot}
   .stage{z-index:1}
 }
+
+/* ---------- revisão visual: grupos rotulados, cards, contraste e barras ---------- */
+:root{ --muted:#4A5661; --card:#FFFFFF; --sombra:0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04); --trilho:#E6EAED }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --muted:#A3B1BD; --card:#18232F; --sombra:none; --trilho:#223040 } }
+:root[data-theme="dark"]{ --muted:#A3B1BD; --card:#18232F; --sombra:none; --trilho:#223040 }
+.field{font-size:11.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase}
+.field select{text-transform:none; letter-spacing:normal; font-weight:400; font-size:15px; color:var(--ink)}
+.picker label{font-size:11.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase}
+.seg.modo{flex-wrap:wrap}
+.seg.modo .grupo-modo.primeiro,.rotulo-filtro{flex-basis:100%; margin:0; font-size:11.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.grupo-filtro{display:flex; flex-direction:column; gap:6px}
+/* cards: estatísticas e blocos de análise em fundo branco, para os números se destacarem do fundo cinza */
+.stats{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; box-shadow:var(--sombra)}
+.stats div{border-top:0; padding-top:0}
+.side > .analise,.side > .traj,.side > .ranking,.perfil > .analise{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; box-shadow:var(--sombra)}
+.analise .stats{box-shadow:none; background:transparent; border:0; padding:0}
+/* trilho nas barras de proporção, para comparar as linhas de relance */
+.ranking .bar,.locais .bar,.traj .bar,.partidos .bar{background:var(--trilho); border-radius:2px}
+.ranking li button:hover,.lista-cands li button:hover,.locais .abre:hover{background:color-mix(in srgb, var(--ink) 4%, transparent)}
+.results button{cursor:pointer}
+.picker{position:relative}
+.picker .limpar{position:absolute; right:8px; top:27px; min-width:36px; min-height:36px; border:0; border-radius:8px; background:none; color:var(--muted); font-size:16px; cursor:pointer}
+.picker .limpar:hover{color:var(--accent); background:var(--paper)}
+.picker input{padding-right:48px}
+.sparkline{flex:none} .sparkline polyline{stroke:var(--r3); stroke-width:2; stroke-linecap:round; stroke-linejoin:round} .sparkline circle{fill:var(--r4)}

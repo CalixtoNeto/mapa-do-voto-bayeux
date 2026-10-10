@@ -40,9 +40,9 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 
 **No panorama do cargo** (botão *Panorama do cargo*):
 
-![Panorama de vereador em 2024: quem venceu, abstenção, a tabela do mapa, gasto × votos, partidos em hierarquia (partido → candidatos) e análises por bairro](docs/panorama.gif)
+![Panorama de vereador em 2024: mais votado, abstenção, a tabela do mapa, gasto × votos, partidos em hierarquia (partido → candidatos) e análises por bairro](docs/panorama.gif)
 
-- Mapa de **quem venceu** em cada bairro e de **abstenção, brancos e nulos**, com os totais da cidade.
+- Mapa do **mais votado** em cada bairro e de **abstenção, brancos e nulos**, com os totais da cidade.
 - **Gasto × votos** de todos os candidatos, com diagonais de custo por voto, e rankings de menor e maior custo por voto, mais fundo eleitoral, mais dinheiro recebido e maior gasto.
 - **Fundo eleitoral por partido**, com a parcela para mulheres e para pessoas negras (pretas e pardas) e um aviso quando a parcela das mulheres fica abaixo de 30%.
 - **Quem disputou e quem se elegeu**: gênero e cor ou raça de candidatos e eleitos.
@@ -66,7 +66,7 @@ Cuidados que o site mostra junto dos números:
 - O **quociente eleitoral** soma os votos de legenda quando o arquivo do TSE traz; senão, o site avisa que a conta é sem legenda. As vagas são os eleitos do cargo no cadastro do TSE.
 - **Doadores e fornecedores em comum** mostram quem se liga a mais de uma campanha, não irregularidade nem acordo.
 - **Bens** são valores nominais, sem correção pela inflação; a ligação entre eleições é pelo nome completo, como na evolução do candidato.
-- No mapa de quem venceu, só os três candidatos que mais venceram têm cor própria; com mais cores elas deixam de ser distinguíveis, inclusive para daltônicos.
+- No mapa do mais votado, só os três candidatos mais votados em mais lugares têm cor própria; com mais cores elas deixam de ser distinguíveis, inclusive para daltônicos.
 
 ### De onde vêm as análises
 
