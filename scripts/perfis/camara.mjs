@@ -5,12 +5,22 @@ import { tipoDeAutorParlamentar, indiceDeMaterias, materiasDoVereador } from './
 const legislaturaAtual = (legislaturas, hoje) =>
   legislaturas.find(l => l.data_inicio <= hoje && hoje <= l.data_fim) || [...legislaturas].sort((a, b) => b.numero - a.numero)[0];
 
-// Sessões que de fato aconteceram: as que têm alguém presente (as futuras já ficam cadastradas).
-function presencasPorSessao(sessoes, presencas) {
+// Sessões que de fato aconteceram: as que têm alguém presente (as futuras já ficam cadastradas). O registro de
+// presença do SAPL às vezes falha (na Assembleia, o presidente quase nunca aparece): quem votou Sim, Não ou
+// Abstenção numa sessão do mesmo dia também conta como presente.
+const VOTOU = /^(sim|n[aã]o|absten[cç][aã]o)$/i;
+function presencasPorSessao(sessoes, presencas, votos = []) {
   const presentes = new Map();
-  for (const p of presencas) {
-    if (!presentes.has(p.sessao_plenaria)) presentes.set(p.sessao_plenaria, new Set());
-    presentes.get(p.sessao_plenaria).add(p.parlamentar);
+  const marcar = (sessao, parlamentar) => {
+    if (!presentes.has(sessao)) presentes.set(sessao, new Set());
+    presentes.get(sessao).add(parlamentar);
+  };
+  for (const p of presencas) marcar(p.sessao_plenaria, p.parlamentar);
+  const sessoesDoDia = new Map();
+  for (const s of sessoes) sessoesDoDia.set(s.data_inicio, [...(sessoesDoDia.get(s.data_inicio) || []), s.id]);
+  for (const v of votos) {
+    if (!VOTOU.test(String(v.voto || '').trim())) continue;
+    for (const sessao of sessoesDoDia.get(String(v.data_hora || '').slice(0, 10)) || []) marcar(sessao, v.parlamentar);
   }
   return sessoes.filter(s => presentes.has(s.id)).map(s => ({ data: s.data_inicio, presentes: presentes.get(s.id) }));
 }
@@ -39,7 +49,7 @@ function partidosDe(id, { filiacoes, partidos }) {
 
 export function resumoDaCamara(d, hoje) {
   const leg = legislaturaAtual(d.legislaturas, hoje);
-  const realizadas = presencasPorSessao(d.sessoes, d.presencas);
+  const realizadas = presencasPorSessao(d.sessoes, d.presencas, d.votos);
   const porVotacao = votosPorVotacao(d.votos);
   const materias = indiceDeMaterias(d, tipoDeAutorParlamentar(d.autores, d.parlamentares));
   const parlamentar = new Map(d.parlamentares.map(p => [p.id, p]));
