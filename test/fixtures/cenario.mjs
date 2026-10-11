@@ -69,7 +69,7 @@ export async function montarCenario(raizDoRepo) {
   const pasta = await mkdtemp(join(tmpdir(), 'mapa-bayeux-'));
   await mkdir(join(pasta, 'tmp'));
   await mkdir(join(pasta, 'public/data'), { recursive: true });
-  await symlink(join(raizDoRepo, 'scripts'), join(pasta, 'scripts'));
+  await symlink(join(raizDoRepo, 'scripts'), join(pasta, 'scripts'), 'junction');   // junction: no Windows não exige permissão de administrador
   await copyFile(join(raizDoRepo, 'public/data/bayeux.geo.json'), join(pasta, 'public/data/bayeux.geo.json'));
   await writeFile(join(pasta, 'tmp/local-votacao-2024.zip'), zipComCsv('eleitorado_local_votacao_2024.csv', LOCAIS_VOTACAO_2024));
   await writeFile(join(pasta, 'tmp/secao-2024-PB.zip'), zipComCsv('votacao_secao_2024_PB.csv', SECAO_2024));

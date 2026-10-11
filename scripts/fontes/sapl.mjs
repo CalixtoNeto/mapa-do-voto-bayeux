@@ -9,10 +9,12 @@ const COLECOES = {
   autorias: 'materia/autoria', materias: 'materia/materialegislativa', tipos: 'materia/tipomaterialegislativa',
 };
 
-export async function lerColecao(buscarJson, caminho) {
+// base e filtros servem a outros SAPL (a Assembleia Legislativa da Paraíba usa o mesmo sistema). O SAPL devolve no
+// máximo 100 itens por página.
+export async function lerColecao(buscarJson, caminho, { base = SAPL, filtros = {} } = {}) {
   const itens = [];
   for (let pagina = 1; ; pagina++) {
-    const resposta = await buscarJson(`${SAPL}/${caminho}/?page=${pagina}&page_size=100`);
+    const resposta = await buscarJson(`${base}/${caminho}/?${new URLSearchParams({ ...filtros, page: pagina, page_size: 100 })}`);
     if (!resposta) return itens;
     itens.push(...resposta.results);
     if (!resposta.pagination?.next_page) return itens;

@@ -1,10 +1,12 @@
-// Gastos fora do padrão nas despesas do ano. Não apontam irregularidade: dizem onde vale olhar com mais cuidado.
-//   fracionamento: um fornecedor recebeu, sem licitação ou por dispensa, mais que o limite de dispensa por valor
-//                  no mesmo objeto (subelemento de despesa) ao longo do ano;
+// Valores atípicos nas despesas do ano, calculados pelo site. Descrevem o dado; não avaliam a legalidade da despesa.
+//   semDisputaAcimaDaReferencia: um fornecedor recebeu, sem licitação ou por dispensa, mais que o valor de referência
+//                  da dispensa por valor no mesmo objeto (subelemento de despesa) ao longo do ano. A lei mede o limite
+//                  por órgão e objeto; esta soma por fornecedor é só uma referência;
 //   pico:          um mês com mais de 3 vezes a mediana mensal do mesmo tipo de despesa;
 //   concentracao:  um fornecedor ficou com 70% ou mais de um tipo de despesa de R$ 1 milhão ou mais.
 import { ehCompra } from './compras.mjs';
 import { centavos } from './somas.mjs';
+import { nomeSemDocumento } from '../lib/documento.mjs';
 
 // Limites de dispensa por valor da Lei 14.133 (art. 75, I: obras, engenharia e manutenção de veículos; II: o resto),
 // atualizados por decreto a cada ano (11.871/2023, 12.343/2024, 12.807/2025). Antes de 2024 valia também a
@@ -29,7 +31,7 @@ export const novosAlertas = () => ({ semDisputa: {}, mensal: {}, porElemento: {}
 export function somarParaAlertas(acc, ler, pago) {
   const elemento = ler('ELEMENTO_DESPESA');
   if (!pago || !ehCompra(elemento)) return;
-  const credor = ler('NOME_CREDOR'), objeto = ler('CODIGO_SUBELEMENTO_EXIBICAO') || elemento;
+  const credor = nomeSemDocumento(ler('NOME_CREDOR')), objeto = ler('CODIGO_SUBELEMENTO_EXIBICAO') || elemento;
   if (SEM_DISPUTA.test(ler('MODALIDADE_LICITACAO')) && !SERVICO_PUBLICO.test(objeto) && !FORNECEDOR_UNICO.test(credor)) {
     const s = (acc.semDisputa[`${credor}|${objeto}`] ||= { credor, objeto, v: 0, n: 0 });
     s.v += pago; s.n++;
@@ -43,9 +45,9 @@ export function somarParaAlertas(acc, ler, pago) {
 const mediana = valores => { const v = [...valores].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 const maiores = (lista, i) => lista.sort((a, b) => b[i] - a[i]).slice(0, MOSTRADOS);
 
-function fracionamentos(acc, ano) {
+function semDisputaAcimaDaReferencia(acc, ano) {
   return maiores(Object.values(acc.semDisputa).filter(s => s.n > 1 && limiteDeDispensa(ano, s.objeto) && s.v > limiteDeDispensa(ano, s.objeto))
-    .map(s => ['fracionamento', s.credor, s.objeto, centavos(s.v), s.n, limiteDeDispensa(ano, s.objeto)]), 3);
+    .map(s => ['semDisputaAcimaDaReferencia', s.credor, s.objeto, centavos(s.v), s.n, limiteDeDispensa(ano, s.objeto)]), 3);
 }
 
 function picos(acc) {
@@ -64,4 +66,4 @@ function concentracoes(acc) {
   }), 4);
 }
 
-export const alertasDoAno = (acc, ano) => [...fracionamentos(acc, ano), ...picos(acc), ...concentracoes(acc)];
+export const alertasDoAno = (acc, ano) => [...semDisputaAcimaDaReferencia(acc, ano), ...picos(acc), ...concentracoes(acc)];

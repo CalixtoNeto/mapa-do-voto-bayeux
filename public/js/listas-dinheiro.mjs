@@ -1,6 +1,6 @@
-// Detalhe do dinheiro de um candidato: posição entre os do cargo, para onde foi o gasto, quem doou e quem
-// recebeu (na árvore de gastos). Os doadores vêm limitados aos dez maiores no arquivo de finanças.
-import { pct, sentence, titleCase, dinheiro } from './formato.mjs';
+// Detalhe do dinheiro de um candidato: posição entre os do cargo, para onde foi o gasto (categoria → todos os
+// fornecedores) e quem doou (os dez maiores no arquivo de finanças).
+import { pct, sentence, titleCase, dinheiro, nomeDeQuem } from './formato.mjs';
 import { ArvoreDeBarras } from './arvore.mjs';
 import { arvoreDoGasto } from './calculos-arvore.mjs';
 import { ListaDeBarras } from './componentes.mjs';
@@ -21,13 +21,13 @@ export function PosicaoNoCargo({ posicoes, nomeDoCargo }) {
 }
 
 // Categoria de gasto → quem recebeu, na mesma árvore do perfil da Prefeitura.
-const quemRecebeu = (nome, nivel) => nivel === 1 && !/^(Outros \(|Sem fornecedor)/.test(nome) ? titleCase(nome) : sentence(nome);
+const quemRecebeu = (nome, nivel) => nivel === 1 && !/^(Outros \(|Sem fornecedor)/.test(nome) ? nomeDeQuem(nome) : sentence(nome);
 
 export function DespesasDoCandidato({ categorias }) {
   if (!categorias.length) return null;
   const comQuem = categorias.some(c => c[2]);
   return html`<h3>Para onde foi o dinheiro</h3>
-    ${comQuem && html`<p class="hint">Categoria de gasto → quem recebeu. Toque numa categoria para ver os fornecedores (os 5 maiores; o resto vai somado em “Outros”). Despesas contratadas, pelo nome registrado na Receita Federal; a porcentagem é sobre o nível aberto.</p>`}
+    ${comQuem && html`<p class="hint">Categoria de gasto → quem recebeu. Toque numa categoria para ver todos os fornecedores; a porcentagem é sobre o nível aberto.</p>`}
     <div class="arvore"><${ArvoreDeBarras} arvore=${arvoreDoGasto(categorias)} rotulo=${quemRecebeu} /></div>`;
 }
 

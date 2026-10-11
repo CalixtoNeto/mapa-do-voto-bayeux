@@ -64,7 +64,7 @@ export function agruparLigacoes(ligacoes) {
 
 const comAnoCompleto = a => a?.despesas?.meses?.length === 12;
 // Tipos de compra que pelo menos dobraram de um ano completo para o seguinte e cresceram R$ 1 milhão ou mais.
-export function crescimentosAnormais(anos, ano) {
+export function comprasQueDobraram(anos, ano) {
   const atual = anos.find(a => a.ano === ano), anterior = anos.find(a => Number(a.ano) === Number(ano) - 1);
   if (!comAnoCompleto(atual) || !comAnoCompleto(anterior)) return [];
   const antes = new Map(anterior.despesas.comprasPorElemento || []);
@@ -72,8 +72,8 @@ export function crescimentosAnormais(anos, ano) {
     .filter(([, a, d]) => a > 0 && d >= 2 * a && d - a >= 1e6).sort((x, y) => (y[2] - y[1]) - (x[2] - x[1]));
 }
 
-// A lei eleitoral proíbe contratar nos 3 meses antes da eleição municipal (Lei 9.504, art. 73, V): um aumento
-// de comissionados e temporários entre janeiro e junho desse ano destoa. [tipo, pessoas em janeiro, em junho]
+// Variação de comissionados e temporários entre janeiro e junho de ano de eleição municipal, só como dado
+// descritivo: o site não verifica as regras eleitorais de contratação. [tipo, pessoas em janeiro, em junho]
 const CONTRATACAO = /comissionad|excepcional|tempor/i;
 export function contratacoesEmAnoDeEleicao(a) {
   if (Number(a?.ano) % 4 !== 0 || !a.servidores?.tiposPorMes) return [];
@@ -82,4 +82,10 @@ export function contratacoesEmAnoDeEleicao(a) {
     const [jan, jun] = [no('01'), no('06')];
     return jan && jun && jun - jan >= 50 && jun / jan >= 1.2 ? [[tipo, jan, jun]] : [];
   });
+}
+
+// Quanto do valor empenhado já foi pago (restos a pagar podem passar de 100%) e a faixa que colore a barra.
+export function execucaoDoEmpenho(empenhado, pago) {
+  const fracao = empenhado > 0 ? Math.min(1, pago / empenhado) : 0;
+  return { fracao, faixa: fracao >= 1 ? 'completa' : fracao >= 0.25 ? 'parcial' : 'baixa' };
 }

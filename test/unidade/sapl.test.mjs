@@ -49,6 +49,13 @@ test('lerColecao percorre as páginas da API até a última', async () => {
   assert.equal(pedidos[0], `${SAPL}/sessao/sessaoplenaria/?page=1&page_size=100`);
 });
 
+test('lerColecao aceita outro SAPL e filtros (a Assembleia Legislativa filtra por legislatura, ano e autor)', async () => {
+  const pedidos = [];
+  const buscarJson = async url => { pedidos.push(url); return { pagination: { next_page: null }, results: [] }; };
+  await lerColecao(buscarJson, 'parlamentares/mandato', { base: 'https://sapl.al.pb.leg.br/api', filtros: { legislatura: 20 } });
+  assert.equal(pedidos[0], 'https://sapl.al.pb.leg.br/api/parlamentares/mandato/?legislatura=20&page=1&page_size=100');
+});
+
 test('vereador: partido atual e anteriores, votos na eleição, presença nas sessões do mandato e matérias de autoria', () => {
   const r = resumoDaCamara(camara(), '2026-10-09');
   assert.deepEqual(r.legislatura, { numero: 16, inicio: '2025-01-01', fim: '2028-12-31' });
@@ -93,4 +100,21 @@ test('afastamento registrado não tira do exercício quem esteve nas últimas se
   assert.equal(r.vereadores.find(v => v.id === 12).emExercicio, true);
   d.presencas = d.presencas.filter(p => p.parlamentar !== 12);
   assert.equal(resumoDaCamara(d, '2026-10-09').vereadores.find(v => v.id === 12).emExercicio, false);
+});
+
+test('quem votou numa sessão conta como presente nela, mesmo sem presença registrada ("Não votou" não conta)', () => {
+  const d = camara();
+  d.votos = [{ votacao: 50, parlamentar: 12, voto: 'Sim', data_hora: '2025-04-06T10:15:54-03:00' },
+    { votacao: 50, parlamentar: 2, voto: 'Não Votou', data_hora: '2025-04-06T10:15:54-03:00' }];
+  const r = resumoDaCamara(d, '2026-10-09');
+  assert.deepEqual(r.vereadores.find(v => v.id === 12).presenca, [2, 2], 'sessão 1 registrada e sessão 2 pelo voto');
+  assert.deepEqual(r.vereadores.find(v => v.id === 2).presenca, [1, 1]);
+});
+
+test('voto sem data é ligado à sessão pelo nome dela, que vem no texto do voto (como no SAPL da Assembleia)', () => {
+  const d = camara();
+  d.sessoes = [...d.sessoes.slice(0, 2).map((s, i) => ({ ...s, __str__: `${i + 1}ª Sessão Ordinária da 1ª Sessão Legislativa da 16ª Legislatura` })), d.sessoes[2]];
+  d.votos = [{ votacao: 60, parlamentar: 12, voto: 'Não', data_hora: null,
+    __str__: 'Votação: Ordem: Ordem do Dia/Expediente: 1 - Veto nº 2 de 2025 em 2ª Sessão Ordinária  da 1ª Sessão Legislativa da 16ª Legislatura - Votação: Rejeitada - Parlamentar: Berg' }];
+  assert.deepEqual(resumoDaCamara(d, '2026-10-09').vereadores.find(v => v.id === 12).presenca, [2, 2]);
 });

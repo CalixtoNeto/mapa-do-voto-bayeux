@@ -47,5 +47,19 @@ test('dinheiro de emendas pago a quem está em Bayeux: o município, fundos e en
     porAutor: [['COM. DA SAUDE', 2497374, 1], ['MARCELO CRIVELLA', 784000, 1]],
     porFavorecido: [['FUNDO MUNICIPAL DE SAUDE DE BAYEUX', 'Fundo Público da Administração Direta Municipal', 2497374], ['ASSOCIACAO ESPACO SOCIAL', 'Associação Privada', 784000]],
     porAno: [['2026', 3281374]],
+    arvore: { v: 3281374, filhos: [
+      ['COM. DA SAUDE', 2497374, [['FUNDO MUNICIPAL DE SAUDE DE BAYEUX', 2497374, [['2026', 2497374]]]]],
+      ['MARCELO CRIVELLA', 784000, [['ASSOCIACAO ESPACO SOCIAL', 784000, [['2026', 784000]]]]]] },
   });
+});
+
+test('favorecido sem natureza jurídica (pessoa física) entra somado, sem o nome', () => {
+  const acc = novasEmendas();
+  ler(acc, FAVORECIDOS, [
+    ['202471000001', 'RELATOR GERAL', '202003', 'JOSE DA SILVA', 'Sem informação', 'PB', 'BAYEUX', '100,00'],
+    ['202471000001', 'RELATOR GERAL', '202104', 'MARIA SOUZA', 'Sem informação', 'PB', 'BAYEUX', '50,00'],
+  ], somarFavorecido);
+  const r = resumoDasEmendas(acc).recebido;
+  assert.deepEqual(r.porFavorecido, [['Pessoas físicas (2)', 'Pessoa física', 150]]);
+  assert.deepEqual(r.arvore.filhos, [['RELATOR GERAL', 150, [['Pessoas físicas (2)', 150, [['2020', 100], ['2021', 50]]]]]]);
 });

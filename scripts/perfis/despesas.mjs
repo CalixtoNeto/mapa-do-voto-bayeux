@@ -6,13 +6,14 @@ import { ehCompra } from './compras.mjs';
 import { novaArvore, somarNaArvore, arvorePodada } from './arvores.mjs';
 import { novosAlertas, somarParaAlertas } from './alertas.mjs';
 import { origemDaEmenda } from './receitas.mjs';
+import { nomeSemDocumento } from '../lib/documento.mjs';
 
 const ehCamara = orgao => /c[aâ]mara/i.test(orgao);
 const SEM_LICITACAO = /^sem licita/i;
 
 export const novasDespesas = () => ({
   empenhado: {}, pago: {}, funcoes: {}, meses: {}, credores: {}, compras: 0, semLicitacao: 0, comprasPorElemento: {},
-  camara: { pago: 0, compras: 0, semLicitacao: 0, credores: {}, elementos: {} },
+  camara: { pago: 0, compras: 0, semLicitacao: 0, credores: {}, elementos: {}, arvore: novaArvore() },
   arvores: { area: novaArvore(), secretaria: novaArvore(), fonte: novaArvore(), emendas: novaArvore() }, alertas: novosAlertas(),
 });
 
@@ -24,7 +25,7 @@ export function somarDespesa(d, ler) {
   somar(d.pago, orgao, pago);
   somar(d.funcoes, ler('FUNCAO'), pago);
   somar(d.meses, ler('MES').slice(0, 2), pago);
-  somarRecebedor(d.credores, ler('NOME_CREDOR'), ler('CPF_CNPJ'), pago);
+  somarRecebedor(d.credores, nomeSemDocumento(ler('NOME_CREDOR')), ler('CPF_CNPJ'), pago);
   d.compras += compra; d.semLicitacao += semLicitacao;
   if (compra) somar(d.comprasPorElemento, ler('ELEMENTO_DESPESA'), compra);
   somarNasArvores(d.arvores, ler, pago);
@@ -34,14 +35,15 @@ export function somarDespesa(d, ler) {
 
 function somarDaCamara(camara, ler, { pago, compra, semLicitacao }) {
   camara.pago += pago; camara.compras += compra; camara.semLicitacao += semLicitacao;
-  somarRecebedor(camara.credores, ler('NOME_CREDOR'), ler('CPF_CNPJ'), pago);
+  somarRecebedor(camara.credores, nomeSemDocumento(ler('NOME_CREDOR')), ler('CPF_CNPJ'), pago);
+  somarNaArvore(camara.arvore, [ler('ELEMENTO_DESPESA'), nomeSemDocumento(ler('NOME_CREDOR'))], pago);
   somar(camara.elementos, ler('ELEMENTO_DESPESA'), pago);
 }
 
 // Área → tipo de despesa → fornecedor; secretaria ou fundo → tipo → fornecedor; fonte do dinheiro → área → fornecedor;
 // e o dinheiro de emendas, pelo código de controle: origem → área → tipo → fornecedor.
 function somarNasArvores(arvores, ler, pago) {
-  const credor = ler('NOME_CREDOR'), elemento = ler('ELEMENTO_DESPESA'), funcao = ler('FUNCAO'), fonte = ler('DESCRICAO_FONTE_RECURSO');
+  const credor = nomeSemDocumento(ler('NOME_CREDOR')), elemento = ler('ELEMENTO_DESPESA'), funcao = ler('FUNCAO'), fonte = ler('DESCRICAO_FONTE_RECURSO');
   somarNaArvore(arvores.area, [funcao, elemento, credor], pago);
   somarNaArvore(arvores.secretaria, [ler('DESCRICAO_UNIDADE_ORCAMENTARIA'), elemento, credor], pago);
   somarNaArvore(arvores.fonte, [fonte, funcao, credor], pago);
@@ -59,7 +61,7 @@ export function resumoDasDespesas(d) {
     orgaos, funcoes: ordenado(d.funcoes), meses, credores: recebedoresOrdenados(d.credores, 40), comprasPorElemento: ordenado(d.comprasPorElemento),
     compras: centavos(d.compras), semLicitacao: centavos(d.semLicitacao),
     camara: { pago: centavos(camara.pago), compras: centavos(camara.compras), semLicitacao: centavos(camara.semLicitacao),
-      credores: recebedoresOrdenados(camara.credores, 20), elementos: ordenado(camara.elementos, 12) },
+      credores: recebedoresOrdenados(camara.credores, 20), elementos: ordenado(camara.elementos, 12), arvore: arvorePodada(camara.arvore, 30) },
   };
 }
 

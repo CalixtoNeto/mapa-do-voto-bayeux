@@ -1,7 +1,8 @@
 // Mais sobre o dinheiro de um candidato: pago e dívida, de quem ele depende, ritmo da arrecadação,
 // com quem divide doadores e fornecedores e o dinheiro dele em outras eleições.
 import { nf, pct, titleCase, dinheiro, centavos, diaEMes, NORM } from './formato.mjs';
-import { ListaDeBarras, nomeDe } from './componentes.mjs';
+import { nomeDe } from './componentes.mjs';
+import { Colunas } from './graficos.mjs';
 import { ritmoDaArrecadacao, dividaDeCampanha, dependencia, redeDoCandidato } from './calculos.mjs';
 const { html, useMemo } = window.htmPreact;
 
@@ -21,7 +22,7 @@ export function RitmoDaArrecadacao({ semanas }) {
   const r = useMemo(() => ritmoDaArrecadacao(semanas), [semanas]);
   if (r.semanas.length < 2) return null;
   return html`<h3>Quando o dinheiro chegou</h3>
-    <${ListaDeBarras} itens=${r.semanas.map(s => ({ n: `Semana de ${diaEMes(s.semana)}`, v: s.v, rotulo: `${dinheiro(s.v)} · ${pct(s.acumulado, 0)} até aqui` }))} />
+    <${Colunas} itens=${r.semanas.map(s => ({ n: diaEMes(s.semana), v: s.v, rotulo: dinheiro(s.v) }))} descricao=${'Dinheiro recebido por semana: ' + r.semanas.map(s => `semana de ${diaEMes(s.semana)}, ${dinheiro(s.v)}`).join('; ')} />
     <p class="hint">Metade do dinheiro tinha chegado até a semana de ${diaEMes(r.metade)}. Receitas pela data registrada na prestação de contas.</p>`;
 }
 
@@ -42,7 +43,8 @@ export function RedeDaCampanha({ f, chave, ctx, onPick }) {
 export function DinheiroEntreEleicoes({ cand, ctx, nomeDoCargo }) {
   const campanhas = ctx.dinheiro[NORM(cand.nome || cand.urna)] || [];
   if (campanhas.length < 2) return null;
-  return html`<h3>Em cada eleição</h3><ul class="posicoes">${[...campanhas].sort((a, b) => a[0] - b[0]).map(([ano, cargo, recebido, gasto, votos]) => html`<li>
+  const ordenadas = [...campanhas].sort((a, b) => a[0] - b[0]);
+  return html`<h3>Em cada eleição</h3><${Colunas} itens=${ordenadas.map(c => ({ n: c[0], v: c[3], rotulo: dinheiro(c[3]) }))} descricao=${'Gasto declarado em cada eleição: ' + ordenadas.map(c => `${c[0]}, ${dinheiro(c[3])}`).join('; ')} /><ul class="posicoes">${[...campanhas].sort((a, b) => a[0] - b[0]).map(([ano, cargo, recebido, gasto, votos]) => html`<li>
     <span class="nm">${ano} · ${nomeDoCargo[cargo] || cargo}</span><span class="vv">${dinheiro(gasto)}</span>
     <small>recebeu ${dinheiro(recebido)} · ${nf.format(votos)} votos${gasto && votos ? ` · ${centavos(gasto / votos)} por voto` : ''}</small></li>`)}</ul>
     <p class="hint">Gasto declarado em cada eleição; a ligação entre eleições é pelo nome completo. Valores nominais.</p>`;

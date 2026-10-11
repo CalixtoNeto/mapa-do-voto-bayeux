@@ -1,11 +1,11 @@
 // Peças comuns às páginas de perfil.
-import { dinheiro, titleCase } from '../formato.mjs';
+import { dinheiro, nomeDeQuem } from '../formato.mjs';
 import { usarLimite } from '../componentes.mjs';
 import { agruparLigacoes } from './calculos-perfil.mjs';
 const { html } = window.htmPreact;
 
 export const ano = data => String(data || '').slice(0, 4);
-export const nomeProprio = nome => titleCase(nome);
+export const nomeProprio = nome => nomeDeQuem(nome);
 
 export function Voltar({ para = '#perfis', texto = 'Todos os perfis' }) {
   return html`<a class="voltar" href=${para}>← ${texto}</a>`;
@@ -34,9 +34,9 @@ const campanha = (c, comCandidato) => `${PAPEL[c.papel]} ${dinheiro(c.valor)}${c
 // Credores do município ligados a campanhas, um por linha: { ano, credor, pago, valor, papel, quem?, eleicao }
 export function Ligacoes({ ligacoes, comCandidato }) {
   const grupos = agruparLigacoes(ligacoes), [limite, botao] = usarLimite(grupos.length);
-  if (!grupos.length) return html`<p class="hint">Nenhum credor da Prefeitura ou da Câmara com o mesmo nome de quem doou ou prestou serviço a esta campanha.</p>`;
+  if (!grupos.length) return html`<p class="hint">Nenhum doador ou fornecedor desta campanha aparece, com o mesmo documento, entre os credores do município.</p>`;
   return html`<ul class="locais ligacoes">${grupos.slice(0, limite).map(g => html`<li><span class="ln">${nomeProprio(g.credor)}
       ${g.campanhas.map(c => html`<small>${campanha(c, comCandidato)}</small>`)}</span>
     <span class="lv">${dinheiro(g.pago)}<small>${periodo(g.anos)}</small></span></li>`)}</ul>${botao}
-    <p class="hint">À esquerda, o que a pessoa ou empresa doou à campanha ou recebeu dela; à direita, o que o município pagou a ela. Ligação feita pelo nome: pode haver homônimos.</p>`;
+    <p class="ressalva" role="note">Cruzamento automático entre a prestação de contas (TSE) e os pagamentos do município (TCE-PB) pelo documento: empresa pelo CNPJ; pessoa física pelos dígitos centrais do CPF (os que o TCE-PB publica) e pelo nome completo. À esquerda, o valor na campanha; à direita, o que o município pagou. Aparecer nas duas bases não indica relação entre a doação ou o serviço e o pagamento: pessoas e empresas atendem campanhas e órgãos públicos ao mesmo tempo por razões comuns (trabalho, comércio, serviço público).</p>`;
 }

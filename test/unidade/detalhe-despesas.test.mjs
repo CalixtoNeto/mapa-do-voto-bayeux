@@ -58,7 +58,7 @@ test('alerta quando um fornecedor recebe, sem licitação ou por dispensa, mais 
     despesa('LOJA Y', 'MATERIAL DE EXPEDIENTE', 61000, '01-Janeiro'),
     despesa('LOJA Z', 'MATERIAL DE EXPEDIENTE', 90000, '01-Janeiro', 'Pregão'),
   ]);
-  assert.deepEqual(r.filter(a => a[0] === 'fracionamento'), [['fracionamento', 'POSTO X', 'COMBUSTÍVEIS', 80000, 3, 62725.59]]);
+  assert.deepEqual(r.filter(a => a[0] === 'semDisputaAcimaDaReferencia'), [['semDisputaAcimaDaReferencia', 'POSTO X', 'COMBUSTÍVEIS', 80000, 3, 62725.59]]);
 });
 
 test('alerta de pico: um mês com mais de 3 vezes a mediana mensal do mesmo tipo de despesa', () => {

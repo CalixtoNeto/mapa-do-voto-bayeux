@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, crescimentosAnormais, contratacoesEmAnoDeEleicao, vereadoresEmOrdem, serieAnual, mesAno }
+import { slug, taxa, resumoDaRemuneracao, extremosDaAfinidade, ligacoesDoCandidato, ligacoesDoAno, agruparLigacoes, comprasQueDobraram, contratacoesEmAnoDeEleicao, vereadoresEmOrdem, serieAnual, mesAno, execucaoDoEmpenho }
   from '../../public/js/perfil/calculos-perfil.mjs';
 
 test('endereço do perfil a partir do nome', () => {
@@ -69,9 +69,9 @@ test('crescimento anormal: tipo de compra que dobrou e cresceu R$ 1 milhão entr
   const ano = (a, compras, m = meses) => ({ ano: a, despesas: { meses: m, comprasPorElemento: compras } });
   const anos = [ano('2025', [['Publicidade', 3e6], ['Material', 2e6], ['Obras', 9e6]]), ano('2024', [['Publicidade', 1e6], ['Material', 1.5e6], ['Obras', 3e5]]),
     ano('2026', [['Publicidade', 9e6]], meses.slice(0, 9))];
-  assert.deepEqual(crescimentosAnormais(anos, '2025'), [['Obras', 3e5, 9e6], ['Publicidade', 1e6, 3e6]]);
-  assert.deepEqual(crescimentosAnormais(anos, '2026'), [], 'ano incompleto não é comparado');
-  assert.deepEqual(crescimentosAnormais(anos, '2024'), [], 'sem o ano anterior');
+  assert.deepEqual(comprasQueDobraram(anos, '2025'), [['Obras', 3e5, 9e6], ['Publicidade', 1e6, 3e6]]);
+  assert.deepEqual(comprasQueDobraram(anos, '2026'), [], 'ano incompleto não é comparado');
+  assert.deepEqual(comprasQueDobraram(anos, '2024'), [], 'sem o ano anterior');
 });
 
 test('contratações de comissionados e temporários no 1º semestre de ano de eleição municipal', () => {
@@ -81,4 +81,12 @@ test('contratações de comissionados e temporários no 1º semestre de ano de e
   assert.deepEqual(contratacoesEmAnoDeEleicao({ ...ano, ano: '2025' }), [], 'só em ano de eleição municipal');
   const pouco = { ano: '2024', servidores: { tiposPorMes: { 'Cargo Comissionado': serie(300, 330) } } };
   assert.deepEqual(contratacoesEmAnoDeEleicao(pouco), [], 'menos de 20% e de 50 pessoas a mais');
+});
+
+test('execução: quanto do empenhado já foi pago, e a faixa para colorir a barra', () => {
+  assert.deepEqual(execucaoDoEmpenho(6e6, 6e6), { fracao: 1, faixa: 'completa' });
+  assert.deepEqual(execucaoDoEmpenho(650e3, 400e3), { fracao: 400 / 650, faixa: 'parcial' });
+  assert.equal(execucaoDoEmpenho(2e6, 50e3).faixa, 'baixa');
+  assert.deepEqual(execucaoDoEmpenho(0, 0), { fracao: 0, faixa: 'baixa' });
+  assert.equal(execucaoDoEmpenho(100, 130).fracao, 1);
 });

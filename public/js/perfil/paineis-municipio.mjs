@@ -1,6 +1,7 @@
-// O dinheiro do município num ano, pelos dados do TCE-PB: quanto pagou, em que área, a quem, a folha,
-// as licitações e as emendas recebidas.
-import { pct, nf, dinheiro } from '../formato.mjs';
+// O dinheiro do município num ano, pelos dados do TCE-PB: números do ano, folha, licitações e emendas recebidas.
+// Área, órgão e fornecedor ficam na árvore de "Para onde foi o dinheiro" (arvore.mjs).
+import { pct, nf, dinheiro, sentence } from '../formato.mjs';
+import { ArvoreDeBarras } from '../arvore.mjs';
 import { ListaDeBarras, usarLimite } from '../componentes.mjs';
 import { mesAno } from './calculos-perfil.mjs';
 import { Estatisticas, Secao, nomeProprio } from './pecas.mjs';
@@ -26,28 +27,28 @@ function Recebedores({ lista }) {
 
 const barras = (lista, i = 1) => html`<${ListaDeBarras} itens=${lista.map(l => ({ n: l[0], v: l[i], rotulo: dinheiro(l[i]) }))} />`;
 
-export function GastosDoAno({ a }) {
-  if (!a.despesas) return null;
-  return html`<${Secao} id="mg" titulo=${`Onde o dinheiro foi gasto em ${a.ano}`}>
-    <h3>Por área</h3>${barras(a.despesas.funcoes.slice(0, 10))}
-    <h3>Por órgão</h3>${barras(a.despesas.orgaos, 2)}
-    <h3>Quem mais recebeu</h3><${Recebedores} lista=${a.despesas.credores} />
-  <//>`;
-}
+// Folha e licitações em árvore (tipo de cargo → órgão; modalidade → vencedor) quando o detalhe do ano já tem;
+// senão, as listas do resumo, que não cruzam os dois níveis.
+const arvoreDe = (detalhe, id) => detalhe?.arvores?.[id]?.v > 0 ? detalhe.arvores[id] : null;
 
-export function FolhaDoAno({ a }) {
+export function FolhaDoAno({ a, detalhe }) {
   if (!a.servidores) return null;
+  const arvore = arvoreDe(detalhe, 'folha');
   const itens = a.servidores.tipos.map(([tipo, pessoas, total]) => ({ n: tipo, v: total, rotulo: `${dinheiro(total)} · ${nf.format(pessoas)} pessoas` }));
-  return html`<${Secao} id="mf" titulo="Folha de pessoal"><h3>Por tipo de cargo</h3><${ListaDeBarras} itens=${itens} />
-    <p class="hint">Pessoas no último mês publicado e total pago no ano.</p><//>`;
+  return html`<${Secao} id="mf" titulo="Folha de pessoal">
+    ${arvore ? html`<p class="hint">Tipo de cargo → órgão. Toque num item para abrir.</p><div class="arvore"><${ArvoreDeBarras} arvore=${arvore} /></div>`
+      : html`<h3>Por tipo de cargo</h3><${ListaDeBarras} itens=${itens} />`}
+    <p class="hint">Total pago no ano. Pessoas no último mês publicado: ${a.servidores.tipos.map(([tipo, pessoas]) => `${tipo.toLowerCase()} ${nf.format(pessoas)}`).join(' · ')}.</p><//>`;
 }
 
-export function LicitacoesDoAno({ a }) {
+export function LicitacoesDoAno({ a, detalhe }) {
   if (!a.licitacoes?.modalidades.length) return null;
+  const arvore = arvoreDe(detalhe, 'licitacoes');
   const itens = a.licitacoes.modalidades.map(([m, n, v]) => ({ n: m, v, rotulo: `${dinheiro(v)} · ${n}` }));
-  return html`<${Secao} id="ml" titulo="Licitações"><${ListaDeBarras} itens=${itens} />
-    <h3>Quem mais venceu</h3><${Recebedores} lista=${a.licitacoes.vencedores} />
-    <p class="hint">Valor das propostas vencedoras e número de licitações por modalidade.</p><//>`;
+  return html`<${Secao} id="ml" titulo="Licitações">
+    ${arvore ? html`<p class="hint">Modalidade → vencedor. Toque num item para abrir.</p><div class="arvore"><${ArvoreDeBarras} arvore=${arvore} rotulo=${(nome, nivel) => nivel === 1 && !/^Outros \(/.test(nome) ? nomeProprio(nome) : sentence(nome)} /></div>`
+      : html`<${ListaDeBarras} itens=${itens} /><h3>Quem mais venceu</h3><${Recebedores} lista=${a.licitacoes.vencedores} />`}
+    <p class="hint">Valor das propostas vencedoras. Licitações por modalidade: ${a.licitacoes.modalidades.map(([m, n]) => `${m.toLowerCase()} ${nf.format(n)}`).join(' · ')}.</p><//>`;
 }
 
 export function EmendasRecebidas({ a }) {
