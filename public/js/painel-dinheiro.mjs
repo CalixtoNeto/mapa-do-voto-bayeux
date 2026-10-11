@@ -47,7 +47,7 @@ export function criarDinheiro(cfg) {
       <${BarraDeOrigens} grupos=${r.grupos} total=${r.recebido} />
       <${PosicaoNoCargo} posicoes=${posicoes} nomeDoCargo=${sentence(cfg.nomeDoCargo[cand.cargo] || '').toLowerCase()} />
       <${DespesasDoCandidato} categorias=${r.categorias} />
-      <${DoadoresDoCandidato} doacoes=${f.doa} quantos=${f.nd} recebido=${r.recebido} />
+      <${DoadoresDoCandidato} f=${f} chave=${chave} ctx=${ctx} recebido=${r.recebido} onPick=${onPick} />
       ${ctx && html`<${RedeDaCampanha} f=${f} chave=${chave} ctx=${ctx} onPick=${onPick} />`}
       <${RitmoDaArrecadacao} semanas=${f.rs} />
       ${ctx && html`<${DinheiroEntreEleicoes} cand=${cand} ctx=${ctx} nomeDoCargo=${cfg.nomeDoCargo} />`}

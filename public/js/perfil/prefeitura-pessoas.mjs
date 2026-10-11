@@ -4,20 +4,20 @@ import { Bloco } from '../estrutura.mjs';
 import { Cartao, Aviso } from '../cartao.mjs';
 import { Pilha } from '../graficos.mjs';
 import { Sparkline } from '../sparkline.mjs';
-import { Ranking } from '../ranking.mjs';
-import { ArvoreDeBarras } from '../arvore.mjs';
+import { usarLimite } from '../componentes.mjs';
+import { ArvoreComLegenda } from './arvore-legenda.mjs';
+import { arvoreDasModalidades, arvoreDosCredores } from './arvores-prefeitura.mjs';
 import { partesComResto } from '../calculos-graficos.mjs';
 import { mesAno } from './calculos-perfil.mjs';
-import { maioresCredores } from './calculos-municipio.mjs';
-import { comParticipacao } from './calculos-fatias.mjs';
 import { participacao } from './formato-perfil.mjs';
-import { Desdobrar } from './desdobrar.mjs';
 import { nomeProprio } from './pecas.mjs';
 const { html } = window.htmPreact;
 
 const CORES = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'];
 const arvoreDe = (detalhe, id) => detalhe?.arvores?.[id]?.v > 0 ? detalhe.arvores[id] : null;
-const rotuloDoVencedor = (nome, nivel) => nivel === 1 && !/^Outros \(/.test(nome) ? nomeProprio(nome) : sentence(nome);
+const semOutros = nome => !/^Outros \(/.test(nome);
+const rotuloDoVencedor = (nome, nivel) => nivel === 1 && semOutros(nome) ? nomeProprio(nome) : sentence(nome);
+const rotuloDoCredor = (nome, nivel) => nivel === 0 ? nomeProprio(nome) : sentence(nome);
 
 function Folha({ a, detalhe }) {
   const total = a.servidores.tipos.reduce((s, t) => s + t[2], 0), arvore = arvoreDe(detalhe, 'folha');
@@ -26,7 +26,7 @@ function Folha({ a, detalhe }) {
   return html`<${Cartao} tipo="Barra empilhada · composição" titulo="Folha por tipo de vínculo" sub=${`${dinheiro(total)} pagos em ${a.ano}. Cada cor é uma parte do total.`}
     nota=${`Pessoas no último mês publicado: ${a.servidores.tipos.map(([tipo, n]) => `${tipo.toLowerCase()} ${nf.format(n)}`).join(' · ')}.`}>
     <${Pilha} partes=${partes} descricao=${'Folha por tipo de vínculo: ' + partes.map(p => `${p.nome} ${p.rotulo}`).join('; ')} />
-    ${arvore && html`<${Desdobrar} titulo="Abrir por tipo de cargo e órgão"><${ArvoreDeBarras} arvore=${arvore} /><//>`}<//>`;
+    ${arvore && html`<${ArvoreComLegenda} legenda="Vínculo → órgão · R$" arvore=${arvore} rotulo=${rotuloDoVencedor} />`}<//>`;
 }
 
 function Servidores({ a }) {
@@ -38,17 +38,18 @@ function Servidores({ a }) {
 }
 
 function Licitacoes({ a, detalhe }) {
-  const lista = comParticipacao(a.licitacoes.modalidades.map(([n, processos, v]) => ({ n, v, processos }))), total = lista.reduce((s, m) => s + m.v, 0);
-  const arvore = arvoreDe(detalhe, 'licitacoes');
-  return html`<${Cartao} tipo="Barra horizontal · ranking" titulo="Licitações por modalidade" sub=${`${dinheiro(total)} em propostas vencedoras. A barra compara o valor.`}>
-    <${Ranking} descricao="Licitações por modalidade" itens=${lista.map(m => ({ n: m.n, nota: `${nf.format(m.processos)} ${m.processos === 1 ? 'processo' : 'processos'}`, v: m.v, rotulo: dinheiro(m.v), lado: m.v ? participacao(m.v, total) : '—' }))} />
-    ${arvore && html`<${Desdobrar} titulo="Ver quem venceu, por modalidade"><${ArvoreDeBarras} arvore=${arvore} rotulo=${rotuloDoVencedor} /><//>`}<//>`;
+  const arvore = arvoreDasModalidades(a.licitacoes.modalidades, arvoreDe(detalhe, 'licitacoes'));
+  return html`<${Cartao} tipo="Árvore expansível" titulo="Licitações por modalidade" sub=${`${dinheiro(arvore.v)} em propostas vencedoras.`}
+    nota="A barra compara com o maior do mesmo nível; a nota mostra os processos e a parte de cada modalidade.">
+    <${ArvoreComLegenda} legenda="Modalidade → vencedor · R$" arvore=${arvore} rotulo=${rotuloDoVencedor} escala="maior" /><//>`;
 }
 
-function Credores({ a }) {
-  const lista = maioresCredores(a.despesas?.credores || [], 40);
-  return html`<${Cartao} classe="largo" tipo="Barra horizontal · ranking" titulo="Maiores credores" sub=${`Valores pagos em ${a.ano}, sem contar a própria Prefeitura`}>
-    <${Ranking} descricao="Maiores credores" itens=${lista.map(c => ({ n: nomeProprio(c.n), nota: c.vezes > 1 ? `${nf.format(c.vezes)} pagamentos` : null, v: c.v, rotulo: dinheiro(c.v) }))} />
+function Credores({ a, detalhe }) {
+  const arvore = arvoreDosCredores(a.despesas.credores, arvoreDe(detalhe, 'area')), [limite, botao] = usarLimite(arvore.filhos.length);
+  return html`<${Cartao} classe="largo" tipo="Árvore expansível" titulo="Maiores credores" sub=${`Valores pagos em ${a.ano}, sem contar a própria Prefeitura`}
+    nota="Abaixo de cada credor, a área e o tipo de despesa em que recebeu, pelo detalhamento do ano.">
+    <${ArvoreComLegenda} legenda="Credor → área → tipo de despesa · R$" arvore=${{ ...arvore, filhos: arvore.filhos.slice(0, limite) }} rotulo=${rotuloDoCredor}
+      rotuloDoTotal=${`Total dos ${arvore.filhos.length} maiores`} ordenarRaiz=${false} escala="maior" />${botao}
     <${Aviso}>Valores atípicos são contas do site sobre os dados do TCE-PB, não julgamento sobre os fornecedores.<//><//>`;
 }
 
@@ -56,5 +57,5 @@ export function FolhaLicitacoesCredores({ a, detalhe }) {
   return html`<${Bloco} id="pf" titulo="Folha, licitações e quem recebe" colunas="tres"
     lede="A folha dividida por vínculo, os servidores mês a mês, as licitações por modalidade e quem mais recebeu da Prefeitura.">
     ${a.servidores && html`<${Folha} a=${a} detalhe=${detalhe} />`}${a.servidores?.meses?.length > 0 && html`<${Servidores} a=${a} />`}
-    ${a.licitacoes?.modalidades.length > 0 && html`<${Licitacoes} a=${a} detalhe=${detalhe} />`}${a.despesas?.credores?.length > 0 && html`<${Credores} a=${a} />`}<//>`;
+    ${a.licitacoes?.modalidades.length > 0 && html`<${Licitacoes} a=${a} detalhe=${detalhe} />`}${a.despesas?.credores?.length > 0 && html`<${Credores} a=${a} detalhe=${detalhe} />`}<//>`;
 }

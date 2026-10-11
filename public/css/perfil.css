@@ -28,8 +28,16 @@
 .cartao .sub .legenda-linha{margin-top:4px}
 .cartao .chips{margin:0; padding:0; flex-wrap:wrap}
 .cartao .arvore{display:flex; flex-direction:column; gap:10px}
+.cartao .legenda-arvore{margin:0; font-size:13px; line-height:1.4}
+.cartao .arvore .sanfona .ln small{display:block; font-size:12.5px; color:var(--muted); font-weight:400}
+.cartao .arvore .sanfona .abre{min-height:44px}
+.cartao .arvore .sanfona .peso{grid-column:2 / -1}
+/* matérias do vereador: o link e a ementa bastam, sem o "1" nem a barra */
+.arvore-materias .filhos .lv,.arvore-materias .filhos .bar{display:none}
+.arvore-materias .filhos .ln a{display:inline-block; padding:8px 0; color:var(--ink); text-decoration:underline; text-underline-offset:3px}
+.arvore-materias .filhos .ln small{padding-bottom:6px}
 .cartao .lista-perfis a{padding:12px 2px}
-.cartao .locais,.cartao .execucao,.cartao .convenios,.cartao .materias{margin:0}
+.cartao .locais,.cartao .convenios{margin:0}
 .cartao .stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .cartao .link{align-self:flex-start; min-height:40px}
 
@@ -56,7 +64,6 @@
 .colunas.mensais .parcial i{background:color-mix(in srgb, var(--r2) 14%, transparent); border:1.5px dashed var(--r4); border-bottom:0; box-sizing:border-box}
 .colunas.sobrepostas{height:230px; gap:3px}
 .colunas.sobrepostas div{max-width:64px}
-.cartao .execucao li{grid-template-columns:1fr} .cartao .ex-barra{grid-column:1} .cartao .ex-valores{justify-content:flex-start; gap:4px 18px; flex-wrap:wrap}
 .colunas.sobrepostas .cv{font-size:10px} .colunas.sobrepostas .cn{font-size:10.5px; white-space:nowrap; overflow:visible; padding-top:3px}
 
 /* cartões */
@@ -71,7 +78,6 @@
 .desdobrar .sanfona{border-top:0}
 .numero-grande{margin:4px 0 2px}
 .numero-grande b{font-size:clamp(36px,5vw,44px)}
-.cartao .execucao li{padding:10px 2px}
 .cartao .barras-meta{margin-top:2px}
 .barras-meta .nm a{color:inherit; text-decoration:none} .barras-meta .nm a:hover{text-decoration:underline}
 .cartao .alertas{gap:16px}

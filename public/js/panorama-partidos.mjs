@@ -1,22 +1,26 @@
-// Panorama do cargo: fundo eleitoral por partido (e a cota de gênero), perfil de candidatos e eleitos,
-// maiores doadores.
-import { pct, sentence, titleCase, dinheiro } from './formato.mjs';
+// Panorama do cargo: fundo eleitoral por partido (e a cota de gênero) e perfil de candidatos e eleitos.
+import { pct, sentence, dinheiro } from './formato.mjs';
 import { cotaPorPartido, perfilDoGrupo } from './calculos.mjs';
 import { nomeDe, usarLimite } from './componentes.mjs';
 import { Cartao } from './cartao.mjs';
+import { ArvoreDoCargo } from './arvore-do-cargo.mjs';
+import { arvoreDoFundo } from './calculos-arvores-dinheiro.mjs';
 const { html, useMemo } = window.htmPreact;
 
-export function FundoPorPartido({ cfg, cands, financas, perfis }) {
+const metaDoPartido = p => {
+  const m = p.fefcMulheres / p.fefc, n = p.fefcNegros / p.fefc;
+  return `${m < 0.3 ? '⚠ ' : ''}${pct(m, 0)} para mulheres · ${pct(n, 0)} para pessoas negras · ${p.mulheres} de ${p.candidatos} candidaturas são de mulheres`;
+};
+
+export function FundoPorPartido({ cfg, cands, financas, perfis, onPick }) {
   const linhas = useMemo(() => cotaPorPartido(cands, financas, perfis, cfg.chaveDe).filter(p => p.fefc > 0), [cands, financas, perfis]);
   const [limite, botao] = usarLimite(linhas.length);
+  const partidoDe = c => perfis?.c?.[cfg.chaveDe(c)]?.p || c.partido || '?';
+  const arvore = useMemo(() => arvoreDoFundo(linhas.slice(0, limite), cands, financas, cfg.chaveDe, { nomeDe, nota: metaDoPartido, partidoDe }), [linhas, limite]);
   if (!linhas.length) return null;
-  const max = linhas[0].fefc;
-  return html`<${Cartao} tipo="Lista · barra por partido" titulo="Fundo eleitoral por partido" sub="A barra mede o fundo eleitoral recebido pelos candidatos do partido."
-      nota=${`⚠ marca os partidos que deram menos de 30% do fundo eleitoral ${cfg.regiao} a mulheres. A regra dos 30% vale para o total nacional do partido, então isto indica como o dinheiro foi distribuído aqui, não uma irregularidade. Pessoas negras: pretas e pardas.`}>
-    <ul class="partidos">${linhas.slice(0, limite).map(p => { const m = p.fefcMulheres / p.fefc, n = p.fefcNegros / p.fefc;
-      return html`<li><span class="nm">${p.partido}</span><span class="vv">${dinheiro(p.fefc)}</span>
-        <span class="bar" aria-hidden="true"><i style=${`width:${(p.fefc / max * 100).toFixed(1)}%`}></i></span>
-        <span class="meta"><span class=${m < 0.3 ? 'abaixo' : ''}>${m < 0.3 ? '⚠ ' : ''}${pct(m, 0)} para mulheres</span> · ${pct(n, 0)} para pessoas negras · ${p.mulheres} de ${p.candidatos} candidaturas são de mulheres</span></li>`; })}</ul>${botao}<//>`;
+  return html`<${Cartao} tipo="Árvore de barras · por partido" titulo="Fundo eleitoral por partido" sub="A barra mede o fundo eleitoral recebido pelos candidatos do partido."
+      nota=${`Toque num partido para ver os candidatos que receberam o fundo. ⚠ marca os partidos que deram menos de 30% do fundo eleitoral ${cfg.regiao} a mulheres. A regra dos 30% vale para o total nacional do partido, então isto indica como o dinheiro foi distribuído aqui, não uma irregularidade. Pessoas negras: pretas e pardas.`}>
+    <${ArvoreDoCargo} arvore=${arvore} formato=${dinheiro} onPick=${onPick} ordenar=${true} legenda="Partido → candidato · fundo eleitoral" />${botao}<//>`;
 }
 
 function BarrasDoPerfil({ titulo, linhas, totalCands, totalEleitos }) {
@@ -35,18 +39,4 @@ export function PerfilDoCargo({ cfg, cands, perfis }) {
       nota="Candidatos que receberam votos nesta eleição, pelo cadastro do TSE (autodeclaração).">
     <${BarrasDoPerfil} titulo="Gênero" linhas=${grupos.g} totalCands=${totalCands} totalEleitos=${totalEleitos} />
     <${BarrasDoPerfil} titulo="Cor ou raça" linhas=${grupos.r} totalCands=${totalCands} totalEleitos=${totalEleitos} /><//>`;
-}
-
-export function Doadores({ cfg, cands, financas, onPick }) {
-  const porChave = useMemo(() => new Map(cands.map(c => [cfg.chaveDe(c), c])), [cands]);
-  const lista = useMemo(() => (financas?.doadores || []).map(d => {
-    const para = d.c.filter(([k]) => porChave.has(k)).map(([k, v]) => ({ cand: porChave.get(k), v }));
-    return { ...d, para, v: para.reduce((s, p) => s + p.v, 0) };
-  }).filter(d => d.para.length).sort((a, b) => b.v - a.v).slice(0, 30), [financas, porChave]);
-  const [limite, botao] = usarLimite(lista.length);
-  if (!lista.length) return null;
-  return html`<${Cartao} tipo="Lista · doadores" titulo="Maiores doadores"
-      nota=${`Doações de pessoas${financas.doadores.some(d => d.t === 'pj') ? ' e empresas' : ''} a candidatos deste cargo, somadas pelo CPF/CNPJ do doador (que o site não mostra).`}>
-    <ol class="doadores">${lista.slice(0, limite).map(d => html`<li><div class="cab"><span class="nm">${titleCase(d.n)}</span><span class="vv">${dinheiro(d.v)}</span></div>
-      <p>${d.para.slice(0, 5).map((p, i) => html`${i ? ', ' : ''}<button type="button" class="link" onClick=${() => onPick(p.cand)}>${nomeDe(p.cand)}</button> (${dinheiro(p.v)})`)}${d.para.length > 5 ? ` e mais ${d.para.length - 5}` : ''}</p></li>`)}</ol>${botao}<//>`;
 }

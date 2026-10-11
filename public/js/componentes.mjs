@@ -22,9 +22,3 @@ export function BarraDeOrigens({ grupos, total }) {
       <b>${dinheiro(g.v)}</b><small>${pct(g.v / total, 0)}</small></li>`)}</ul>
   </div>`;
 }
-
-export function ListaDeBarras({ itens }) {
-  const max = Math.max(1, ...itens.map(i => i.v));
-  return html`<ul class="locais">${itens.map(i => html`<li><span class="ln">${i.n}</span><span class="lv">${i.rotulo}</span>
-    <span class="bar" aria-hidden="true"><i style=${`width:${(i.v / max * 100).toFixed(1)}%`}></i></span></li>`)}</ul>`;
-}

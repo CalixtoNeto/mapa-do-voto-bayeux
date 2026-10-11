@@ -113,6 +113,7 @@ const CFG = {
   agrupar: (ano, porLocal) => somaPorBairro(ano, porLocal),
   base: 'data/eleicoes',
   carregarAno: ano => TABELAS[ano] ? Promise.resolve() : lerJson(`data/secoes-${ano}.json`).then(t => { TABELAS[ano] = t; }).catch(() => {}),
+  locaisDoLugar: (c, key, ds) => (bairrosDe(ds.ano).find(b => b.key === key)?.locais || []).map(i => ({ nome: localNome(TABELAS[ds.ano].locais[i].nome), v: (c.loc || {})[i] || 0 })).sort((x, y) => y.v - x.v),
   nomeDoLugar: (key, ds) => (bairrosDe(ds.ano).find(b => b.key === key) || { name: key }).name,
   foraDasFinancas: c => c.cargo !== '11' && c.cargo !== '13' ? 'O site mostra o dinheiro de campanha só dos candidatos a prefeito e vereador: a campanha dos outros cargos é estadual e não dá para dividi-la pelos votos de Bayeux.' : '',
   ehMajoritario: c => c.cargo === '11',
@@ -322,11 +323,6 @@ function BairroCard({ view, b, pinned, onClear, linha }) {
       <div><dt>Variação de votos</dt><dd class=${linha.d > 0 ? 'up' : linha.d < 0 ? 'down' : ''}>${dv(linha.d)}</dd></div>
       <div><dt>Parcela no bairro</dt><dd class=${linha.dp > 0 ? 'up' : linha.dp < 0 ? 'down' : ''}>${pp(linha.dp)}</dd></div>
     </dl>`}
-    <details><summary>Votos por local de votação (${b.locais.length})</summary>
-      <ul class="locais" aria-label="Votos por local de votação">
-        ${b.locais.map(l => html`<li><span class="ln">${localNome(l.nome)}</span><span class="lv">${nf.format(l.v)}</span>
-          <span class="bar" aria-hidden="true"><i style=${`width:${(l.v / max * 100).toFixed(1)}%`}></i></span></li>`)}
-      </ul></details>
     <p class="hint">${nf.format(b.eleitores)} eleitores aptos nos locais deste bairro.</p>
   </div>`;
 }
@@ -412,33 +408,18 @@ function CandidatePicker({ cands, value, onPick }) {
 function Ranking({ view, metric, selected, onSelect }) {
   const [sort, setSort] = useState('votos');
   useEffect(() => setSort(metric), [metric]);
-  const rows = useMemo(() => {
-    if (!view) return [];
-    const r = view.bairros.map(b => ({ ...b }));
-    if (sort === 'votos') r.sort((a, b) => b.v - a.v || a.name.localeCompare(b.name)); else if (sort === 'pct') r.sort((a, b) => b.p - a.p || b.v - a.v); else r.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-    r.forEach((x, i) => x.pos = i + 1);
-    return r;
-  }, [view, sort]);
+  const arvore = useMemo(() => view ? AN.arvoreDosLugares(view.bairros.map(b => ({ ...b, name: titleCase(b.name), locais: b.locais.map(l => ({ ...l, nome: localNome(l.nome) })) })), { ordem: sort, parcela: f => pct(f) }) : null, [view, sort]);
   if (!view) return null;
-  const max = Math.max(1e-9, ...rows.map(x => sort === 'pct' ? x.p : x.v));
   return html`<section class="ranking" aria-label="Bairros">
     <div class="rk-head">
-      <span class="rotulo-pagina">Bairro · votos · % dos votos do bairro</span>
+      <span class="rotulo-pagina">Bairro → local de votação · votos · % dos votos</span>
       <select aria-label="Ordenar bairros" value=${sort} onChange=${e => setSort(e.target.value)}>
         <option value="votos">Mais votos</option><option value="pct">Maior percentual</option><option value="nome">Nome</option>
       </select>
     </div>
-    <ol>
-      ${rows.map(x => html`<li key=${x.key} class=${x.key === selected ? 'on' : ''}>
-        <button type="button" onClick=${() => onSelect(x.key)}>
-          <span class="pos">${sort === 'nome' ? '' : x.pos}</span>
-          <span class="nm">${titleCase(x.name)}</span>
-          <span class="vv">${nf.format(x.v)}</span>
-          <span class="pp">${x.v ? pct(x.p) : '—'}</span>
-          <span class="bar" aria-hidden="true"><i style=${`width:${((sort === 'pct' ? x.p : x.v) / max * 100).toFixed(1)}%`}></i></span>
-        </button></li>`)}
-    </ol>
-    <${AN.ComoLer}><p>A barra compara ${sort === 'pct' ? 'a parcela do bairro (o maior valor ocupa a barra inteira)' : 'os votos (o maior valor ocupa a barra inteira)'}, não os dois números ao mesmo tempo. A linha em vermelho suave é o bairro fixado no mapa.</p><//>
+    <${AN.ArvoreDeBarras} arvore=${arvore} formato=${nf.format} escala="maior" ordenarRaiz=${false} mostrarTotal=${false}
+      rotulo=${nome => nome} ativo=${k => k === selected} aoAbrir=${k => k && onSelect(k)} />
+    <${AN.ComoLer}><p>Toque num bairro para abrir os locais de votação e fixá-lo no mapa. A barra compara com o maior da lista; o percentual é a parcela do candidato entre os votos nominais do bairro (ou do local).</p><//>
   </section>`;
 }
 
@@ -719,7 +700,7 @@ function App() {
   const painelAtual = abasDoPainel.some(a => a[0] === painel) ? painel : abasDoPainel[0][0];
   const painelDoCandidato = () => ({
     bairros: html`<${Stats} view=${view} semBairros=${semBairros} />
-      ${!semBairros && (cmp ? html`<${ComparaRanking} cmp=${cmp} selected=${selected} onSelect=${selectFromList} />` : html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />`)}
+      ${!semBairros && (cmp ? html`<${ComparaRanking} cmp=${cmp} selected=${selected} onSelect=${selectFromList} />` : html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${setSelected} />`)}
       ${entradas.length > 1 && html`<${Trajetoria} entradas=${entradas} view=${view} comp=${comp} pode=${podeComparar} onComparar=${e => { setComp(c => c && c.ano === e.ano && c.turno === e.turno && c.cargo === e.cargo && c.nr === e.nr ? null : e); setSelected(null); }} onSair=${() => setComp(null)} />`}`,
     forca: html`<${PAINEL.Concentracao} cand=${candAtual} /><${PAINEL.ForcaDoVoto} cand=${candAtual} ctx=${ctx} />`,
     dinheiro: html`<${PAINEL.Dinheiro} cand=${candAtual} financas=${an.financas} ano=${view.ano} linhasDoCargo=${linhasDoCargo} ctx=${ctx} onPick=${escolher} />

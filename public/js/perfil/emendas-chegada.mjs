@@ -4,12 +4,11 @@ import { Bloco } from '../estrutura.mjs';
 import { Cartao } from '../cartao.mjs';
 import { LinhaDoTempo } from '../linha-do-tempo.mjs';
 import { Treemap } from '../treemap.mjs';
-import { Ranking } from '../ranking.mjs';
-import { ArvoreDeBarras } from '../arvore.mjs';
+import { ArvoreComLegenda } from './arvore-legenda.mjs';
+import { arvoreDosFavorecidos } from './arvores-emendas.mjs';
 import { autorDoPico } from './calculos-emendas.mjs';
-import { agruparPequenos, comParticipacao, pontosDeDestaque, rotulosEspacados } from './calculos-fatias.mjs';
+import { agruparPequenos, pontosDeDestaque, rotulosEspacados } from './calculos-fatias.mjs';
 import { anoParcial } from './calculos-municipio.mjs';
-import { participacao } from './formato-perfil.mjs';
 import { OrigemDasEmendas } from './origem-das-emendas.mjs';
 import { nomeProprio } from './pecas.mjs';
 const { html } = window.htmPreact;
@@ -43,16 +42,17 @@ function Autores({ r }) {
 }
 
 function QuemRecebeu({ r }) {
-  const lista = comParticipacao(r.porFavorecido.map(([nome, natureza, v]) => ({ n: nomeProprio(nome), natureza, v }))), total = lista.reduce((s, i) => s + i.v, 0);
-  return html`<${Cartao} tipo="Barra horizontal · ranking" titulo="Quem recebeu" sub="Favorecidos, R$ milhões. A barra compara o valor.">
-    <${Ranking} descricao="Quem recebeu as emendas" itens=${lista.map(i => ({ n: i.n, nota: i.natureza, v: i.v, rotulo: dinheiro(i.v), lado: participacao(i.v, total) }))} /><//>`;
+  const arvore = arvoreDosFavorecidos(r.arvore, r.porFavorecido);
+  return html`<${Cartao} tipo="Árvore expansível" titulo="Quem recebeu" sub=${`${dinheiro(arvore.v)} desde ${r.porAno[0][0]}.`}
+    nota="A barra compara com o maior do mesmo nível. Pagamentos a pessoas físicas aparecem somados, sem os nomes.">
+    <${ArvoreComLegenda} legenda="Favorecido → autor → ano · R$" arvore=${arvore} rotulo=${rotuloDoRecebido} escala="maior" /><//>`;
 }
 
 export function QuemMandou({ r }) {
   return html`<${Bloco} id="er" titulo="Quem mandou e quem recebeu" colunas="dois-tercos"
-    lede="O treemap mostra o peso de cada autor; o ranking ao lado mostra para quem foi o dinheiro.">
+    lede="O treemap mostra o peso de cada autor; a árvore ao lado mostra para quem foi o dinheiro e quem mandou.">
     <${Autores} r=${r} /><${QuemRecebeu} r=${r} />
-    ${r.arvore?.v > 0 && html`<${Cartao} classe="largo" tipo="Árvore expansível" titulo="Do autor até quem recebeu" sub="Autor da emenda → quem recebeu → ano. Toque num item para abrir."
+    ${r.arvore?.v > 0 && html`<${Cartao} classe="largo" tipo="Árvore expansível" titulo="Do autor até quem recebeu" sub="A mesma conta vista do lado de quem mandou."
       nota="Pagamentos a pessoas físicas aparecem somados, sem os nomes.">
-      <div class="arvore"><${ArvoreDeBarras} arvore=${r.arvore} rotulo=${rotuloDoRecebido} /></div><//>`}<//>`;
+      <${ArvoreComLegenda} legenda="Autor → favorecido → ano · R$" arvore=${r.arvore} rotulo=${rotuloDoRecebido} /><//>`}<//>`;
 }

@@ -4,21 +4,20 @@ import { Bloco } from '../estrutura.mjs';
 import { Cartao } from '../cartao.mjs';
 import { ColunasSobrepostas } from '../colunas-pilhas.mjs';
 import { Ranking } from '../ranking.mjs';
-import { Legenda } from '../legenda.mjs';
-import { ListaDeExecucao, ListaDeConvenios } from './execucao.mjs';
+import { ListaDeConvenios } from './execucao.mjs';
+import { ArvoreComLegenda } from './arvore-legenda.mjs';
+import { arvoreDaExecucao } from './arvores-emendas.mjs';
 import { anosCompletos, funcoesComValor } from './calculos-emendas.mjs';
 import { milhoes, participacao } from './formato-perfil.mjs';
 import { nomeProprio } from './pecas.mjs';
 const { html } = window.htmPreact;
 
-const emendas = n => `${n} emenda${n > 1 ? 's' : ''}`;
-const LEGENDA = [['100% pago', 'var(--s3)'], ['25% a 99%', 'var(--r3)'], ['menos de 25%', 'var(--s2)'], ['empenhado', 'var(--trilho)']];
-
 function PorAutor({ e }) {
-  return html`<${Cartao} tipo="Barra de execução · empenhado × pago" titulo="Por autor" sub=${html`<${Legenda} itens=${LEGENDA} />`}
-    nota="Valor mostrado: pago e empenhado. A barra mostra a parte paga; a cor diz a faixa.">
-    <${ListaDeExecucao} itens=${e.porAutor.map(([autor, empenhado, pago, n, de, ate]) =>
-      ({ nome: nomeProprio(autor), detalhe: `${emendas(n)} · ${de === ate ? de : `${de}–${ate}`}`, empenhado, pago }))} /><//>`;
+  const arvore = arvoreDaExecucao(e.porAutor);
+  return html`<${Cartao} tipo="Árvore expansível · empenhado e pago" titulo="Por autor" sub=${`${dinheiro(arvore.v)} empenhados.`}
+    nota="O valor é o empenhado (reservado); abaixo, a parte já paga e a que ainda não saiu.">
+    <${ArvoreComLegenda} legenda="Autor → pago e ainda não pago · R$" arvore=${arvore} escala="maior"
+      rotulo=${(nome, nivel) => nivel === 0 ? nomeProprio(nome) : nome} /><//>`;
 }
 
 function PorAno({ e }) {
@@ -39,7 +38,7 @@ function PorFuncao({ e }) {
 export function Execucao({ e }) {
   const empenhado = e.porAno.reduce((s, a) => s + a[1], 0), pago = e.porAno.reduce((s, a) => s + a[2], 0);
   return html`<${Bloco} id="ed" titulo="Execução das emendas com Bayeux como destino" colunas="um-terco"
-    lede=${`${dinheiro(empenhado)} empenhados e ${dinheiro(pago)} pagos. Empenhado é o valor reservado; pago é o que já saiu. A barra mostra a parte paga.`}>
+    lede=${`${dinheiro(empenhado)} empenhados e ${dinheiro(pago)} pagos. Empenhado é o valor reservado; pago é o que já saiu.`}>
     <${PorAutor} e=${e} /><${PorAno} e=${e} /><${PorFuncao} e=${e} />
     ${e.convenios.length > 0 && html`<${Cartao} classe="largo" tipo="Lista · convênios" titulo="Convênios mais recentes"
       nota="Emendas em que o Portal registra Bayeux como local de aplicação: valor empenhado e pago (com restos a pagar).">

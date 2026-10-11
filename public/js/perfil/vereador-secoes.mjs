@@ -1,24 +1,32 @@
 // Seções da página de um vereador: matérias de autoria, votos nominais, afinidade, partidos e remuneração.
 import { pct, nf, dinheiro, sentence } from '../formato.mjs';
 import { Pilha } from '../graficos.mjs';
-import { Ranking } from '../ranking.mjs';
+import { ArvoreComLegenda } from './arvore-legenda.mjs';
+import { arvoreDeConcordancia, arvoreDasMaterias, rotuloDaMateria, arvoreDaRemuneracao } from './arvores-camara.mjs';
 import { extremosDaAfinidade, resumoDaRemuneracao, mesAno } from './calculos-perfil.mjs';
 import { Estatisticas, ano } from './pecas.mjs';
 const { html } = window.htmPreact;
 const SAPL = 'https://sapl.bayeux.pb.leg.br';
 
+// Nas matérias recentes o rótulo é o link para o SAPL e a ementa; o "1" e a barra de cada matéria não dizem nada e ficam escondidos.
+const rotuloDasMaterias = recentes => {
+  const porRotulo = new Map(recentes.map(r => [rotuloDaMateria(r), r]));
+  return (nome, nivel) => {
+    const r = porRotulo.get(nome);
+    return nivel === 1 && r ? html`<a href=${`${SAPL}/materia/${r[0]}`} target="_blank" rel="noopener">${nome}</a><small>${r[4]}</small>` : nome;
+  };
+};
+
 export function Materias({ m }) {
   if (!m.total) return html`<p class="hint">Nenhuma matéria de autoria registrada no SAPL nesta legislatura.</p>`;
-  return html`<${Ranking} descricao="Matérias por tipo" itens=${m.porTipo.map(([tipo, n]) => ({ n: tipo, v: n, rotulo: nf.format(n) }))} />
-    <h4>Mais recentes</h4>
-    <ul class="materias">${m.recentes.map(([id, tipo, numero, a, ementa, data]) => html`<li>
-      <a href=${`${SAPL}/materia/${id}`} target="_blank" rel="noopener">${tipo} nº ${numero}/${a}</a>
-      <small>${data ? data.split('-').reverse().join('/') : ''}</small><p>${sentence(ementa)}</p></li>`)}</ul>`;
+  return html`<div class="arvore-materias"><${ArvoreComLegenda} legenda=${`Tipo → matérias mais recentes (as ${m.recentes.length} últimas de ${nf.format(m.total)})`}
+    arvore=${arvoreDasMaterias(m.porTipo, m.recentes, m.total)} formato=${nf.format} mostrarTotal=${false} rotulo=${rotuloDasMaterias(m.recentes)} /></div>`;
 }
 
 function Afinidade({ titulo, itens, nomes }) {
-  return itens.length ? html`<h4>${titulo}</h4><${Ranking} descricao=${titulo} itens=${itens.map(([id, iguais, comuns]) =>
-    ({ n: nomes.get(id) || '?', v: iguais / comuns, rotulo: pct(iguais / comuns, 0), lado: `${iguais} de ${comuns}` }))} />` : null;
+  const arvore = arvoreDeConcordancia(itens.map(([id, iguais, comuns]) => ({ nome: nomes.get(id) || '?', parte: iguais, total: comuns })), ['Votaram igual', 'Votaram diferente']);
+  return itens.length ? html`<h4>${titulo}</h4><${ArvoreComLegenda} legenda="Vereador → votos iguais e diferentes · % das votações em comum"
+    arvore=${arvore} formato=${v => pct(v, 0)} escala="maior" ordenarRaiz=${false} mostrarTotal=${false} rotulo=${nome => nome} />` : null;
 }
 
 export function Votacoes({ v, nomes }) {
@@ -38,10 +46,13 @@ export function Partidos({ v }) {
       html`<li><span class="ln">${sigla}</span><span class="lv">${ano(desde)}–${ate ? ano(ate) : 'hoje'}</span></li>`)}</ul>`}`;
 }
 
-export function Remuneracao({ rem }) {
+const reais = v => `R$ ${nf.format(Math.round(v))}`;
+
+export function Remuneracao({ rem, meses }) {
   if (!rem) return html`<p class="hint">Nome não encontrado na folha da Câmara publicada pelo TCE-PB.</p>`;
   return html`<${Estatisticas} itens=${[{ rotulo: `Recebido em ${mesAno(rem.mes)}`, valor: dinheiro(rem.valor), nota: sentence(rem.cargo) },
-    { rotulo: 'Total no mandato', valor: dinheiro(rem.total), nota: `${rem.meses} meses` }]} />`;
+    { rotulo: 'Total no mandato', valor: dinheiro(rem.total), nota: `${rem.meses} meses` }]} />
+    <${ArvoreComLegenda} legenda="Ano → mês · R$ recebidos" arvore=${arvoreDaRemuneracao(meses)} formato=${reais} escala="maior" ordenarRaiz=${false} mostrarTotal=${false} rotulo=${nome => nome} />`;
 }
 
 export const remuneracaoDe = v => resumoDaRemuneracao(v.remuneracao);

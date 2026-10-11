@@ -13,7 +13,7 @@ import { criarLugares } from './panorama-lugares.mjs';
 import { criarAbertura } from './panorama-abertura.mjs';
 import { criarDinheiro } from './panorama-dinheiro.mjs';
 import { criarComparecimento } from './panorama-comparecimento.mjs';
-import { MaisVotados } from './panorama-ranking.mjs';
+import { criarMaisVotados } from './panorama-ranking.mjs';
 const { html, useMemo } = window.htmPreact;
 
 const MUITOS_CANDIDATOS = 12;
@@ -27,12 +27,12 @@ export function criarPanorama(cfg) {
     return html`<${QuemVotouEmQuem} cfg=${cfg} cands=${cands} ctx=${ctx} />
       ${!cfg.ehMajoritario(cands[0]) && cands.length > MUITOS_CANDIDATOS && html`<${DistribuicaoDosVotos} cands=${cands} ctx=${ctx} />`}
       <${Bloco} id="b-partidos" titulo="Partidos e candidatos" colunas="metade" lede="Os partidos em hierarquia e quem disputou e quem se elegeu.">
-        ${ctx && html`<${Partidos} linhas=${linhas} ctx=${ctx} onPick=${onPick} />`}
+        ${ctx && html`<${Partidos} cfg=${cfg} linhas=${linhas} ctx=${ctx} onPick=${onPick} />`}
         ${perfis && html`<${PerfilDoCargo} cfg=${cfg} cands=${cands} perfis=${perfis} />`}<//>
       ${ctx && html`<${Bloco} id="b-lugares" titulo=${`Onde o voto está, por ${cfg.lugarNome}`}
           lede=${`Quem tem voto de reduto, onde as disputas foram mais apertadas e o perfil do eleitorado de onde vêm os votos.`}>
-        <${Redutos} cfg=${cfg} cands=${cands} selecionado=${selecionado} onPick=${onPick} />
-        <${Disputas} ctx=${ctx} /><${EleitoradoDosMaisVotados} ctx=${ctx} /><//>`}`;
+        <${Redutos} cfg=${cfg} cands=${cands} selecionado=${selecionado} onPick=${onPick} ctx=${ctx} />
+        <${Disputas} ctx=${ctx} onPick=${onPick} /><${EleitoradoDosMaisVotados} ctx=${ctx} /><//>`}`;
   }
-  return { Abertura: criarAbertura(cfg), MaisVotados, Votos, Dinheiro: criarDinheiro(cfg), Comparecimento: criarComparecimento(cfg) };
+  return { Abertura: criarAbertura(cfg), MaisVotados: criarMaisVotados(cfg), Votos, Dinheiro: criarDinheiro(cfg), Comparecimento: criarComparecimento(cfg) };
 }

@@ -132,3 +132,10 @@
 }
 @media (min-width:900px){ .hero:has(.indicadores.denso){grid-template-columns:1fr} }
 @media (min-width:900px) and (max-width:1099px){ .hero{grid-template-columns:1fr} }
+
+/* árvore de votos (bairro → local de votação): a linha do lugar fixado no mapa fica em vermelho suave */
+.sanfona .ramo.ativa > .abre{background:color-mix(in srgb, var(--accent) 8%, transparent)}
+.sanfona .ramo.ativa > .abre .bar i{background:var(--r5)}
+.ranking .sanfona .lv{font-size:17px}
+.sanfona .aviso-ramo .ln{color:var(--muted); font-size:13px; grid-column:2 / -1}
+.ranking > .sanfona{max-height:min(70vh,640px); overflow:auto; overscroll-behavior:contain}

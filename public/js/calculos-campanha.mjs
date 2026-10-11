@@ -13,17 +13,6 @@ export function somarCampanhas(cands, financas, chaveDe) {
     gasto: lista.reduce((s, x) => s + x.resumo.gasto, 0), maiorGasto: maior };
 }
 
-// As maiores categorias de despesa do cargo; "demais" é o que a despesa total declarada tem além delas.
-export function categoriasDeGasto(cands, financas, chaveDe, quantas = 8) {
-  const somas = new Map();
-  for (const { resumo } of comContas(cands, financas, chaveDe)) {
-    for (const [nome, v] of resumo.categorias) somas.set(nome, (somas.get(nome) || 0) + v);
-  }
-  const itens = [...somas].map(([nome, v]) => ({ nome, v })).sort((a, b) => b.v - a.v).slice(0, quantas);
-  const total = somarCampanhas(cands, financas, chaveDe).gasto;
-  return { itens, total, demais: Math.max(0, total - itens.reduce((s, i) => s + i.v, 0)) };
-}
-
 export function composicaoDasCampanhas(cands, financas, chaveDe) {
   return comContas(cands, financas, chaveDe).filter(x => x.resumo.recebido > 0)
     .map(({ cand, resumo }) => ({ cand, recebido: resumo.recebido, partes: resumo.grupos.map(({ id, nome, v }) => ({ id, nome, v })) }));
