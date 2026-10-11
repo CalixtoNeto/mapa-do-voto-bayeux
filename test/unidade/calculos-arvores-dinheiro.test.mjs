@@ -57,3 +57,9 @@ test('parcela: sem casas, e uma casa quando é menos de 1%', () => {
   assert.equal(parcelaDe(0.666), '67%');
   assert.equal(parcelaDe(0.004), '0,4%');
 });
+
+test('gasto do cargo: fornecedores além do limite viram "Demais fornecedores"', () => {
+  const { filhos } = arvoreDosGastosDoCargo([ana, bia], financas, chaveDe, { limite: 1 });
+  assert.deepEqual(filhos[0][2].map(f => [f[0], f[1]]), [['Grafica', 210], ['Demais fornecedores (1)', 90]]);
+  assert.equal(filhos[0][2][1][2], null);
+});

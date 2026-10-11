@@ -31,7 +31,7 @@ function OndeVaiMelhor({ cand, cfg, ctx }) {
   if (!lista.length) return null;
   return html`<h3>Onde vai melhor</h3>
     <${ArvoreDoCargo} arvore=${arvore} formato=${nf.format} legenda=${`${sentence(cfg.lugarNome)}${cfg.locaisDoLugar ? ' → local de votação' : ''} · votos`} />
-    <p class="hint">Em ordem de quanto o ${cfg.lugarNome} pesa para ele em relação ao conjunto: a parcela é a dele entre os votos nominais do ${cfg.lugarNome}.${cfg.locaisDoLugar ? ' Dentro do lugar, a porcentagem é a parcela dos votos dele em cada local de votação.' : ''}</p>`;
+    <p class="hint">Em ordem de quanto o ${cfg.lugarNome} pesa para ele em relação ao conjunto: a parcela é a dele entre os votos nominais do ${cfg.lugarNome}.${cfg.locaisDoLugar ? ' Dentro do ${cfg.lugarNome}, a porcentagem é a parcela dos votos dele nesse ${cfg.lugarNome} que veio de cada local de votação.' : ''}</p>`;
 }
 
 function EleitoradoDosVotos({ cand, cfg, ctx }) {

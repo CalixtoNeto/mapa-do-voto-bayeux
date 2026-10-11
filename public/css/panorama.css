@@ -18,19 +18,6 @@ main > .aviso{margin:18px 0 0}
 .cartao .perfil-grupo h3{font:600 15px var(--serif); margin:10px 0 4px}
 
 /* ranking com barra de 8px: dois números por linha, a barra mede só um; linha em destaque com fundo de 7% de vermelho */
-.rank-barras{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
-.rank-barras li{display:grid; grid-template-columns:22px minmax(0,1fr) auto 48px; gap:4px 10px; align-items:baseline; padding:9px 6px 10px; border-bottom:1px solid var(--line)}
-.rank-barras .pos{font-size:12px; color:var(--muted); text-align:right}
-.rank-barras .nm{min-width:0; font-size:15px; line-height:1.3; overflow-wrap:anywhere}
-.rank-barras .nm small{display:block; font-size:12.5px; color:var(--muted)}
-.rank-barras .nm .link{padding:3px 0; min-height:0; text-align:left; font:inherit; text-decoration:none}
-.rank-barras .nm .link:hover{text-decoration:underline}
-.rank-barras .vv{display:flex; flex-direction:column; align-items:flex-end; line-height:1.25} .rank-barras .vv b{font:600 15px var(--serif)}
-.rank-barras .vv em{font:normal 12px var(--sans); color:var(--muted)}
-.rank-barras .pc{font-size:12.5px; color:var(--muted); text-align:right}
-.rank-barras .trilho{grid-column:2 / -1; height:8px; background:var(--trilho); border-radius:4px; overflow:hidden}
-.rank-barras .trilho i{display:block; height:100%; border-radius:4px; background:var(--r3)}
-.rank-barras li.destaque{background:color-mix(in srgb, var(--accent) 7%, transparent)} .rank-barras li.destaque .trilho i{background:var(--r5)}
 
 /* legenda em linha (cores das séries e das barras) */
 .legenda-linha{display:flex; flex-wrap:wrap; gap:4px 16px; margin:0; padding:0; list-style:none; font-size:13px; color:var(--muted)}
@@ -57,15 +44,15 @@ main > .aviso{margin:18px 0 0}
 .cartao .calor td{min-width:54px}
 .bloco > h2 + .aviso{margin-top:12px}
 
-/* árvores de barras dos cartões: legenda da hierarquia, botão da ficha e nomes que abrem a ficha */
-.cartao .arvore-legenda{margin:0; font:500 12px/1.3 var(--sans); letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
-.cartao .sanfona{margin-top:2px}
-.cartao .sanfona .lv{justify-self:end}
-.cartao .sanfona .peso{grid-column:2 / -1; grid-row:3; justify-self:end; white-space:normal}
-.cartao .sanfona .link{min-height:40px; padding:0 2px; align-self:auto; text-align:left; font:inherit}
-.cartao .sanfona .nome-cand{color:var(--ink); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
-.cartao .sanfona .nome-cand:hover{text-decoration-color:currentColor}
-.cartao .sanfona .ramo.folha:has(> .abre .ver-ficha) .bar,.cartao .sanfona .ramo.folha:has(> .abre .ver-ficha) .peso{display:none}
-.cartao .sanfona .ver-ficha{color:var(--accent); font-weight:600}
-.cartao .sanfona .abre{row-gap:2px}
-.cartao .sanfona .filhos .abre{padding:6px 4px 4px}
+/* árvores de barras dos cartões do panorama e dos painéis da ficha: legenda da hierarquia, botão da ficha e nomes que abrem a ficha */
+.arvore-cargo .arvore-legenda{margin:0; font:500 12px/1.3 var(--sans); letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.arvore-cargo .sanfona{margin-top:2px}
+.arvore-cargo .sanfona .lv{justify-self:end}
+.arvore-cargo .sanfona .peso{grid-column:2 / -1; grid-row:3; justify-self:end; white-space:normal}
+.arvore-cargo .sanfona .link{min-height:40px; padding:0 2px; align-self:auto; text-align:left; font:inherit}
+.arvore-cargo .sanfona .nome-cand{color:var(--ink); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
+.arvore-cargo .sanfona .nome-cand:hover{text-decoration-color:currentColor}
+.arvore-cargo .sanfona .ramo.folha:has(> .abre .ver-ficha) .bar,.arvore-cargo .sanfona .ramo.folha:has(> .abre .ver-ficha) .peso{display:none}
+.arvore-cargo .sanfona .ver-ficha{color:var(--accent); font-weight:600}
+.arvore-cargo .sanfona .abre{row-gap:2px}
+.arvore-cargo .sanfona .filhos .abre{padding:6px 4px 4px}

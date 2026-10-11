@@ -22,7 +22,7 @@ export const opcoesDosLugares = (cfg, ds, extra = {}) => ({
 });
 
 export function ArvoreDoCargo({ arvore, legenda, formato, onPick, ordenar = false, escala = 'maior', ativo }) {
-  return html`<p class="arvore-legenda">${legenda}</p>
+  return html`<div class="arvore-cargo"><p class="arvore-legenda">${legenda}</p>
     <${ArvoreDeBarras} arvore=${arvore} formato=${v => v ? formato(v) : ''} escala=${escala} ordenarRaiz=${ordenar} mostrarTotal=${false}
-      rotulo=${rotuloDaArvore(onPick)} ativo=${ativo} />`;
+      rotulo=${rotuloDaArvore(onPick)} ativo=${ativo} /></div>`;
 }

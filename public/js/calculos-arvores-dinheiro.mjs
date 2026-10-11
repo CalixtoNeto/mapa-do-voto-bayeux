@@ -35,12 +35,18 @@ function somarFornecedor(quem, nome, v, cand) {
 const ramoDoFornecedor = (nome, f, totalDaCategoria) => [f.n ? `${nome} (${f.n})` : nome, f.v,
   comFilhos([...f.cands].map(([cand, v]) => [{ cand }, v, null, `${parcelaDe(v / f.v)} do fornecedor`]).sort((a, b) => b[1] - a[1])), `${parcelaDe(f.v / totalDaCategoria)} da categoria`];
 
-export function arvoreDosGastosDoCargo(cands, financas, chaveDe) {
+// Os maiores fornecedores da categoria; o resto vira um ramo só, para a lista não ter centenas de linhas.
+function fornecedoresDaCategoria(c, limite) {
+  const todos = [...c.quem].map(([q, f]) => ramoDoFornecedor(q, f, c.v)).sort((a, b) => b[1] - a[1]), resto = todos.slice(limite);
+  if (resto.length) todos.splice(limite, resto.length, [`Demais fornecedores (${resto.length})`, soma(resto), null, `${parcelaDe(soma(resto) / c.v)} da categoria`]);
+  return comFilhos(todos);
+}
+
+export function arvoreDosGastosDoCargo(cands, financas, chaveDe, { limite = 20 } = {}) {
   const categorias = cands.map(cand => ({ cand, dc: financas?.c?.[chaveDe(cand)]?.dc || [] }));
   const porCategoria = juntarFornecedores(categorias);
   const total = [...porCategoria.values()].reduce((s, c) => s + c.v, 0);
-  const filhos = [...porCategoria].map(([nome, c]) => [sentence(nome), c.v,
-    comFilhos([...c.quem].map(([q, f]) => ramoDoFornecedor(q, f, c.v)).sort((a, b) => b[1] - a[1])), `${parcelaDe(c.v / total)} do gasto`]);
+  const filhos = [...porCategoria].map(([nome, c]) => [sentence(nome), c.v, fornecedoresDaCategoria(c, limite), `${parcelaDe(c.v / total)} do gasto`]);
   return { v: total, filhos };
 }
 

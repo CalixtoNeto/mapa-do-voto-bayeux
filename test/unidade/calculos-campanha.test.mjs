@@ -1,7 +1,7 @@
 // Dinheiro de campanha somado por cargo (public/js/calculos-campanha.mjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { somarCampanhas, categoriasDeGasto, composicaoDasCampanhas, custoPorVotoEmOrdem, gastoDosEleitos } from '../../public/js/calculos-campanha.mjs';
+import { somarCampanhas, composicaoDasCampanhas, custoPorVotoEmOrdem, gastoDosEleitos } from '../../public/js/calculos-campanha.mjs';
 import { tipoDaEleicao } from '../../public/js/calculos-series.mjs';
 
 const cands = [{ key: 'a', total: 100 }, { key: 'b', total: 10 }, { key: 'c', total: 5 }];
@@ -18,13 +18,6 @@ test('soma do cargo: receitas por origem, despesas e maior gasto, só dos candid
   assert.equal(s.gasto, 850);
   assert.deepEqual(s.grupos.map(g => [g.id, g.v]), [['fefc', 700], ['partido', 0], ['doacoes', 100], ['outros', 100]]);
   assert.deepEqual([s.maiorGasto.cand.key, s.maiorGasto.gasto], ['a', 700]);
-});
-
-test('categorias de gasto: as maiores e o que sobra em "demais", sobre a despesa total declarada', () => {
-  const c = categoriasDeGasto(cands, financas, chaveDe, 1);
-  assert.deepEqual(c.itens, [{ nome: 'Impressos', v: 500 }]);
-  assert.equal(c.total, 850);
-  assert.equal(c.demais, 350);
 });
 
 test('composição das campanhas: partes de cada origem, só de quem recebeu', () => {
