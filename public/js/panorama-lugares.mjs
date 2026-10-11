@@ -46,11 +46,11 @@ function EleitoradoDosMaisVotados({ cfg, ctx }) {
 }
 
 export function criarLugaresDoCargo(cfg) {
-  return function LugaresDoCargo({ ctx }) {
+  // parte: 'votos' (disputas e eleitorado dos votos) ou 'comparecimento' (variação da abstenção).
+  return function LugaresDoCargo({ ctx, parte }) {
     const lugares = useMemo(() => cfg.lugares(ctx.ds), [ctx]);
-    return html`<section class="analise" aria-labelledby="lg"><h2 id="lg">Por ${cfg.lugarNome}</h2>
-      <${Disputa} cfg=${cfg} ctx=${ctx} lugares=${lugares} />
-      <${Abstencao} cfg=${cfg} ctx=${ctx} />
-      <${EleitoradoDosMaisVotados} cfg=${cfg} ctx=${ctx} /></section>`;
+    return html`<section class="analise" aria-labelledby=${'lg-' + parte}><h2 id=${'lg-' + parte}>Por ${cfg.lugarNome}</h2>
+      ${parte === 'votos' && html`<${Disputa} cfg=${cfg} ctx=${ctx} lugares=${lugares} /><${EleitoradoDosMaisVotados} cfg=${cfg} ctx=${ctx} />`}
+      ${parte === 'comparecimento' && html`<${Abstencao} cfg=${cfg} ctx=${ctx} />`}</section>`;
   };
 }

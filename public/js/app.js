@@ -117,7 +117,7 @@ const CFG = {
   cargosComQuociente: ['13'],
   nomeDoCargo: CARGO_NOMES,
 };
-const PAINEL = AN.criarPainelDoCandidato(CFG), Panorama = AN.criarPanorama(CFG);
+const PAINEL = AN.criarPainelDoCandidato(CFG), PANORAMA = AN.criarPanorama(CFG);
 const CAMADAS = [['vencedor', 'Mais votado'], ['abstencao', 'Abstenção'], ['brancos', 'Brancos'], ['nulos', 'Nulos']];
 const lerJson = async u => { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error(u); return r.json(); };
 
@@ -267,57 +267,64 @@ function MapCanvas({ ano, view, metric, selected, onSelect, hover, onHover, clas
 }
 
 // ---------- Componentes ----------
-function Legend({ classes, metric, setMetric, view, modoVar, varModo, setVarModo }) {
+// Pílulas que escolhem a cor do mapa (ou o tipo de comparação, quando há duas eleições).
+function ControlesDoMapa({ metric, setMetric, modoVar, varModo, setVarModo }) {
+  const itens = modoVar ? [['rel', 'Votos (%)'], ['pp', 'Parcela (p.p.)']] : [['votos', 'Votos'], ['pct', 'Parcela do bairro']];
+  return html`<div class="mapa-topo"><span class="rotulo-pagina">A cor e o tamanho mostram</span>
+    <${AN.Abas} itens=${itens} valor=${modoVar ? varModo : metric} aoMudar=${modoVar ? setVarModo : setMetric} rotulo="Cor dos círculos" estilo="pilula" /></div>`;
+}
+
+// Três círculos aninhados na mesma escala do mapa (raio proporcional à raiz dos votos), com valores redondos.
+const redondo = v => { const base = 10 ** Math.floor(Math.log10(Math.max(v, 1))); return Math.max(1, Math.round(v / base) * base); };
+function LegendaTamanho({ maximo }) {
+  const pequeno = window.innerWidth < 500, rmin = pequeno ? 4 : 5, rmax = pequeno ? 24 : 34;
+  const valores = [...new Set([maximo, maximo / 3, maximo / 15].map(redondo))], raio = v => rmin + (rmax - rmin) * Math.sqrt(Math.min(1, v / maximo));
+  const alt = 2 * raio(valores[0]) + 4, largura = 2 * rmax + 70;
+  return html`<div class="legenda-tamanho"><div><p class="rotulo-pagina">Tamanho = votos</p>
+    <svg width=${largura} height=${alt} role="img" aria-label=${'Tamanho do círculo: ' + valores.map(v => nf.format(v) + ' votos').join(', ')}>
+      ${valores.map(v => html`<circle cx=${rmax} cy=${alt - raio(v) - 1} r=${raio(v)} />
+        <line x1=${rmax} x2=${2 * rmax + 4} y1=${alt - 2 * raio(v) - 1} y2=${alt - 2 * raio(v) - 1} stroke="var(--muted)" stroke-width="0.8" />
+        <text x=${2 * rmax + 8} y=${alt - 2 * raio(v) + 3}>${nf.format(v)}${v === valores[valores.length - 1] ? ' votos' : ''}</text>`)}</svg></div>
+    <p><b>Contorno tracejado</b>Bairro sem votos</p><p><b>Contorno vermelho</b>Bairro fixado</p></div>`;
+}
+
+function Legend({ classes, metric, view, modoVar }) {
   if (modoVar) {
     const rel = modoVar === 'rel';
     const itens = rel ? ['Perdeu mais de 25% dos votos', 'Perdeu de 5% a 25%', 'Estável (até 5%)', 'Ganhou de 5% a 25%', 'Ganhou mais de 25% (ou veio de zero)']
       : ['Perdeu mais de 1 p.p.', 'Perdeu de 0,25 a 1 p.p.', 'Estável (até 0,25 p.p.)', 'Ganhou de 0,25 a 1 p.p.', 'Ganhou mais de 1 p.p.'];
-    return html`<div class="legend">
-      <div class="seg" role="radiogroup" aria-label="Cor da comparação">
-        <button type="button" role="radio" aria-checked=${rel} onClick=${() => setVarModo('rel')}>Cor: votos (%)</button>
-        <button type="button" role="radio" aria-checked=${!rel} onClick=${() => setVarModo('pp')}>Cor: parcela (p.p.)</button>
-      </div>
-      <ul>${itens.map((t, i) => html`<li><i style=${`background:var(--d${i})`}></i>${t}</li>`)}</ul>
-      <p class="hint">${rel ? 'A cor mostra quanto os votos do candidato cresceram ou caíram entre as duas eleições.' : 'A cor mostra a mudança da parcela dos votos do bairro entre as duas eleições. Entre cargos diferentes ela pode enganar: por exemplo, em anos de dois senadores cada eleitor tem dois votos.'} O tamanho do círculo é o maior número de votos do candidato no bairro entre as duas.</p>
-    </div>`;
+    return html`<div class="legend"><ul>${itens.map((t, i) => html`<li><i style=${`background:var(--d${i})`}></i>${t}</li>`)}</ul>
+      <${AN.ComoLer} titulo="Como ler a cor"><p>${rel ? 'A cor mostra quanto os votos do candidato cresceram ou caíram entre as duas eleições.' : 'A cor mostra a mudança da parcela dos votos do bairro entre as duas eleições. Entre cargos diferentes ela pode enganar: por exemplo, em anos de dois senadores cada eleitor tem dois votos.'} O tamanho do círculo é o maior número de votos do candidato no bairro entre as duas.</p><//></div>`;
   }
-  const n = classes ? classes.b.length + 1 : 0;
-  const fmt = v => metric === 'votos' ? nf.format(v) : pct(v, 1);
-  const items = [];
+  const n = classes ? classes.b.length + 1 : 0, fmt = v => metric === 'votos' ? nf.format(v) : pct(v, 1), items = [];
   if (view && n) for (let i = 0; i < n; i++) {
-    const lo = i === 0 ? classes.min : classes.b[i - 1];
-    const hi = i === n - 1 ? classes.max : (metric === 'votos' ? classes.b[i] - 1 : classes.b[i]);
+    const lo = i === 0 ? classes.min : classes.b[i - 1], hi = i === n - 1 ? classes.max : (metric === 'votos' ? classes.b[i] - 1 : classes.b[i]);
     items.push(html`<li><i style=${`background:var(--r${rampIndex(i, n)})`}></i>${lo === hi ? fmt(lo) : `${fmt(lo)}–${fmt(hi)}`}</li>`);
   }
-  return html`<div class="legend">
-    <div class="seg" role="radiogroup" aria-label="Cor dos círculos">
-      <button type="button" role="radio" aria-checked=${metric === 'pct'} onClick=${() => setMetric('pct')}>Cor: % no bairro</button>
-      <button type="button" role="radio" aria-checked=${metric === 'votos'} onClick=${() => setMetric('votos')}>Cor: votos</button>
-    </div>
-    ${view && html`<ul>${items}<li><i style="background:var(--zero)"></i>Sem votos</li></ul>`}
-    ${view && html`<p class="hint">O tamanho do círculo é proporcional aos votos do candidato no bairro.</p>`}
-  </div>`;
+  return html`<div class="legend">${view && html`<ul>${items}<li><i style="background:var(--zero)"></i>Sem votos</li></ul>`}
+    ${view && html`<${LegendaTamanho} maximo=${Math.max(1, ...view.bairros.map(b => b.v))} />`}</div>`;
 }
 
 function BairroCard({ view, b, pinned, onClear, linha }) {
   if (!view || !b) return html`<p class="hint">${view ? 'Toque ou clique num bairro para ver os números e as escolas.' : ''}</p>`;
   const max = Math.max(1, ...b.locais.map(l => l.v));
   return html`<div class=${'muni' + (pinned ? ' pinned' : '')} aria-live="polite">
-    <div class="muni-head"><h3>${titleCase(b.name)}</h3>${pinned && html`<button type="button" class="link" onClick=${onClear}>Fechar</button>`}</div>
+    <div class="muni-head"><h3>${titleCase(b.name)}</h3>${pinned ? html`<button type="button" class="link" onClick=${onClear}>Fixado · toque de novo para soltar</button>` : html`<span class="hint">Toque para fixar</span>`}</div>
     <dl>
-      <div><dt>Votos</dt><dd>${nf.format(b.v)}</dd></div>
-      <div><dt>Dos votos nominais do bairro</dt><dd>${b.t ? pct(b.p) : '—'}</dd></div>
-      <div><dt>Posição no bairro</dt><dd>${b.rank ? `${b.rank}º` : '—'}</dd></div>
+      <div><dt>votos</dt><dd>${nf.format(b.v)}</dd></div>
+      <div><dt>dos votos nominais do bairro</dt><dd>${b.t ? pct(b.p) : '—'}</dd></div>
+      <div><dt>posição no bairro</dt><dd>${b.rank ? `${b.rank}º` : '—'}</dd></div>
     </dl>
     ${linha && html`<dl class="cmp-dl">
       <div><dt>Votos ${linha.ant.ano} → ${linha.rec.ano}</dt><dd>${nf.format(linha.vAnt)} → ${nf.format(linha.vRec)}</dd></div>
       <div><dt>Variação de votos</dt><dd class=${linha.d > 0 ? 'up' : linha.d < 0 ? 'down' : ''}>${dv(linha.d)}</dd></div>
       <div><dt>Parcela no bairro</dt><dd class=${linha.dp > 0 ? 'up' : linha.dp < 0 ? 'down' : ''}>${pp(linha.dp)}</dd></div>
     </dl>`}
-    <ul class="locais" aria-label="Votos por local de votação">
-      ${b.locais.map(l => html`<li><span class="ln">${localNome(l.nome)}</span><span class="lv">${nf.format(l.v)}</span>
-        <span class="bar" aria-hidden="true"><i style=${`width:${(l.v / max * 100).toFixed(1)}%`}></i></span></li>`)}
-    </ul>
+    <details><summary>Votos por local de votação (${b.locais.length})</summary>
+      <ul class="locais" aria-label="Votos por local de votação">
+        ${b.locais.map(l => html`<li><span class="ln">${localNome(l.nome)}</span><span class="lv">${nf.format(l.v)}</span>
+          <span class="bar" aria-hidden="true"><i style=${`width:${(l.v / max * 100).toFixed(1)}%`}></i></span></li>`)}
+      </ul></details>
     <p class="hint">${nf.format(b.eleitores)} eleitores aptos nos locais deste bairro.</p>
   </div>`;
 }
@@ -339,15 +346,11 @@ function Trajetoria({ entradas, view, comp, onComparar, onSair, pode }) {
   </section>`;
 }
 
-function ComparaStats({ cmp }) {
-  const { ant, rec, rows } = cmp; const d = rec.total - ant.total, rel = ant.total ? d / ant.total : null;
-  const rot = v => `${v.ano} · ${sentence(v.cargoNome)}`;
-  return html`<dl class="stats">
-    <div><dt>Votos em ${rot(ant)}</dt><dd>${nf.format(ant.total)}</dd></div>
-    <div><dt>Votos em ${rot(rec)}</dt><dd>${nf.format(rec.total)}</dd></div>
-    <div><dt>Variação de votos</dt><dd class=${d > 0 ? 'up' : d < 0 ? 'down' : ''}>${dv(d)}${rel != null ? ` (${rel >= 0 ? '+' : '−'}${pct(Math.abs(rel), 1)})` : ''}</dd></div>
-    <div><dt>Bairros que cresceram / caíram</dt><dd>${rows.filter(r => r.d > 0).length} / ${rows.filter(r => r.d < 0).length}</dd></div>
-  </dl>`;
+function indicadoresDaComparacao({ ant, rec, rows }) {
+  const d = rec.total - ant.total, rel = ant.total ? d / ant.total : null, rot = v => `${v.ano} · ${sentence(v.cargoNome)}`;
+  return [{ rotulo: `Votos em ${rot(ant)}`, valor: nf.format(ant.total) }, { rotulo: `Votos em ${rot(rec)}`, valor: nf.format(rec.total) },
+    { rotulo: 'Variação de votos', valor: dv(d), classe: d > 0 ? 'up' : d < 0 ? 'down' : '', nota: rel != null ? `${rel >= 0 ? '+' : '−'}${pct(Math.abs(rel), 1)}` : null },
+    { rotulo: 'Bairros que cresceram / caíram', valor: `${rows.filter(r => r.d > 0).length} / ${rows.filter(r => r.d < 0).length}` }];
 }
 
 function ComparaRanking({ cmp, selected, onSelect }) {
@@ -416,9 +419,9 @@ function Ranking({ view, metric, selected, onSelect }) {
   }, [view, sort]);
   if (!view) return null;
   const max = Math.max(1e-9, ...rows.map(x => sort === 'pct' ? x.p : x.v));
-  return html`<section class="ranking" aria-labelledby="rk">
+  return html`<section class="ranking" aria-label="Bairros">
     <div class="rk-head">
-      <h2 id="rk">Bairros</h2>
+      <span class="rotulo-pagina">Bairro · votos · % dos votos do bairro</span>
       <select aria-label="Ordenar bairros" value=${sort} onChange=${e => setSort(e.target.value)}>
         <option value="votos">Mais votos</option><option value="pct">Maior percentual</option><option value="nome">Nome</option>
       </select>
@@ -433,16 +436,14 @@ function Ranking({ view, metric, selected, onSelect }) {
           <span class="bar" aria-hidden="true"><i style=${`width:${((sort === 'pct' ? x.p : x.v) / max * 100).toFixed(1)}%`}></i></span>
         </button></li>`)}
     </ol>
+    <${AN.ComoLer}><p>A barra compara ${sort === 'pct' ? 'a parcela do bairro (o maior valor ocupa a barra inteira)' : 'os votos (o maior valor ocupa a barra inteira)'}, não os dois números ao mesmo tempo. A linha em vermelho suave é o bairro fixado no mapa.</p><//>
   </section>`;
 }
 
 function Stats({ view, semBairros }) {
-  if (!view) return null;
-  if (semBairros) return html`<dl class="stats"><div><dt>Votos em ${CIDADE}</dt><dd>${nf.format(view.total)}</dd></div></dl>`;
-  const com = view.bairros.filter(b => b.v > 0);
-  const top = [...com].sort((a, b) => b.v - a.v)[0];
-  return html`<dl class="stats">
-    <div><dt>Votos em ${CIDADE}</dt><dd>${nf.format(view.total)}</dd></div>
+  if (!view || semBairros) return null;
+  const com = view.bairros.filter(b => b.v > 0), top = [...com].sort((a, b) => b.v - a.v)[0];
+  return html`<dl class="stats tres">
     <div><dt>Dos votos nominais para ${sentence(view.cargoNome).toLowerCase()}</dt><dd>${view.totCidade ? pct(view.total / view.totCidade) : '—'}</dd></div>
     <div><dt>Bairros com voto</dt><dd>${com.length} de ${view.bairros.length}</dd></div>
     <div><dt>Votos no maior reduto${top ? ` (${titleCase(top.name)})` : ''}</dt><dd>${top && view.total ? pct(top.v / view.total, 1) : '—'}</dd></div>
@@ -574,6 +575,8 @@ function App() {
     return () => window.removeEventListener('hashchange', aoMudar);
   }, []);
   const [candPendente, setCandPendente] = useState(null);
+  const [painel, setPainel] = useState(ls.get('mvb.painel') || 'bairros'), [subPanorama, setSubPanorama] = useState('votos');
+  useEffect(() => { ls.set('mvb.painel', painel); }, [painel]);
   const indiceAnalises = AN.usarIndiceDasAnalises('data/eleicoes');
   useEffect(() => { ls.set('mvb.varmodo', varModo); }, [varModo]);
   useEffect(() => { lerJson('data/eleicoes/pessoas.json').then(setPessoas).catch(() => { }); }, []);
@@ -711,18 +714,59 @@ function App() {
   const hasData = !!ds;
   const semBairros = !!(ds && ds.semBairros);
 
-  const botaoDeModo = ([m, rotulo]) => html`<button type="button" role="radio" aria-checked=${modo === m} onClick=${() => trocarModo(m)}>${rotulo}</button>`;
-  const seletorDeModo = [html`<span class="grupo-modo primeiro" aria-hidden="true">Visão</span>`, botaoDeModo(['candidato', 'Candidato']),
-    botaoDeModo(['panorama', 'Panorama do cargo']), botaoDeModo(['perfis', 'Perfil do município'])];
+  const ABAS_DE_MODO = [['candidato', 'Candidato'], ['panorama', 'Panorama do cargo'], ['perfis', 'Perfil do município']];
+  const nomeDoCargo = sentence((cargos.find(c => c[0] === cargo) || [cargo, CARGO_NOMES[cargo]])[1]);
+  const turnoDe = d => d.turno !== '1' ? ` · ${d.turno}º turno` : '';
+  const topBairro = view && [...view.bairros].filter(b => b.v > 0).sort((a, b) => b.p - a.p)[0];
+  const sPanorama = panorama && compCargo ? AN.somaDoComparecimento(compCargo) : null;
+  const totalNominais = cands.reduce((s, c) => s + c.total, 0);
 
-  return html`<div class=${'app' + (hasData || modo === 'perfis' ? '' : ' nodata') + (modo === 'perfis' ? ' com-perfis' : '')}>
-    <header class="top">
+  const abertura = panorama ? html`<${AN.Cabecalho} rotulo=${`Panorama · ${ds.ano}${turnoDe(ds)}`} titulo=${nomeDoCargo}
+        lede=${`${cands.length} candidatos com voto em ${CIDADE}. Os números vêm do arquivo de votação por seção eleitoral do TSE.`} />
+      <${AN.Indicadores} itens=${sPanorama ? [{ rotulo: 'Eleitores aptos', valor: nf.format(sPanorama.aptos) },
+        { rotulo: 'Compareceram', valor: nf.format(sPanorama.comparecimento), nota: `${pct(sPanorama.comparecimento / sPanorama.aptos, 1)} dos aptos` },
+        { rotulo: 'Abstenção', valor: pct(sPanorama.abstencao / sPanorama.aptos, 1), nota: `${nf.format(sPanorama.abstencao)} eleitores` },
+        cands[0] && { rotulo: 'Mais votado', valor: pct(cands[0].total / totalNominais, 1), nota: titleCase(cands[0].nome) }] : []} />`
+    : view ? html`<${AN.Cabecalho} rotulo=${`${sentence(view.cargoNome)} · ${view.ano}${turnoDe(view)}`} titulo=${titleCase(view.nome)}>
+        <p class="id">${view.nr}${view.partido ? ' · ' + view.partido : ''}<span> · ${view.posicao}º mais votado em ${CIDADE} entre ${view.nCands} candidatos${view.sit ? ' · ' + sentence(view.sit) : ''}</span></p><//>
+      <${AN.Indicadores} itens=${cmp ? indicadoresDaComparacao(cmp) : [{ rotulo: `Votos em ${CIDADE}`, valor: nf.format(view.total) },
+        { rotulo: 'Posição', valor: `${view.posicao}º`, nota: `de ${view.nCands} candidatos` },
+        !semBairros && topBairro && { rotulo: 'Maior parcela do bairro', valor: pct(topBairro.p), nota: `em ${titleCase(topBairro.name)}` }]} />`
+    : html`<${AN.Cabecalho} titulo=${hasData ? 'Escolha um candidato' : 'Votos por bairro'}
+        lede=${erro ? erro : carregando || !indice ? 'Carregando os resultados…' : hasData ? 'Busque pelo nome, número ou partido, ou veja o panorama do cargo.' : `Veja em quais bairros de ${CIDADE} cada candidato foi votado.`} />`;
+
+  const abasDoPainel = [!semBairros && ['bairros', 'Bairros'], !semBairros && !cmp && ['forca', 'Força do voto'], !cmp && ['dinheiro', 'Dinheiro'], !cmp && ['perfil', 'Quem é']].filter(Boolean);
+  const painelAtual = abasDoPainel.some(a => a[0] === painel) ? painel : abasDoPainel[0][0];
+  const painelDoCandidato = () => ({
+    bairros: html`<${Stats} view=${view} semBairros=${semBairros} />
+      ${!semBairros && (cmp ? html`<${ComparaRanking} cmp=${cmp} selected=${selected} onSelect=${selectFromList} />` : html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />`)}
+      ${entradas.length > 1 && html`<${Trajetoria} entradas=${entradas} view=${view} comp=${comp} pode=${podeComparar} onComparar=${e => { setComp(c => c && c.ano === e.ano && c.turno === e.turno && c.cargo === e.cargo && c.nr === e.nr ? null : e); setSelected(null); }} onSair=${() => setComp(null)} />`}`,
+    forca: html`<${PAINEL.Concentracao} cand=${candAtual} /><${PAINEL.ForcaDoVoto} cand=${candAtual} ctx=${ctx} />`,
+    dinheiro: html`<${PAINEL.Dinheiro} cand=${candAtual} financas=${an.financas} ano=${view.ano} linhasDoCargo=${linhasDoCargo} ctx=${ctx} onPick=${escolher} />
+      <${PAINEL.ForaDaCurva} cand=${candAtual} ctx=${ctx} />`,
+    perfil: html`<${PAINEL.QuemE} cand=${candAtual} perfis=${an.perfis} /><${PAINEL.Patrimonio} cand=${candAtual} ctx=${ctx} />${!semBairros && html`<${PAINEL.Dobradinhas} cand=${candAtual} ds=${ds} onPick=${escolher} />`}`,
+  })[painelAtual];
+  const propsDoPanorama = { cands, ano: ds && ds.ano, financas: an.financas, perfis: an.perfis, selecionado: candKey, onPick: escolher, ctx };
+  const mapaDoPanorama = panorama && html`<${MapCanvas} ano=${item.ano} view=${viewPanorama} metric="pct" selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classesPanorama} modoVar=${false} />
+      <${LegendaPanorama} camada=${camada} setCamada=${setCamada} classes=${classesPanorama} vence=${vence} nomeDe=${nomeDoCand} temComparecimento=${!!compCargo} />
+      <${CardPanorama} b=${viewPanorama && viewPanorama.bairros.find(b => b.key === shownKey)} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} vence=${vence} cands=${cands} numeros=${compBairros && compBairros[shownKey]} />
+      <${TabelaDoPanorama} ano=${ds.ano} camada=${camada} vence=${vence} cands=${cands} comp=${compBairros} />`;
+  const mapaDoCandidato = html`${!panorama && comp && !cmp && html`<p class="hint">Carregando a outra eleição…</p>`}
+      ${cmp && html`<p class="cmp-bar" role="note"><span>Comparando <strong>${cmp.ant.ano}${cmp.ant.turno !== '1' ? ' · 2º turno' : ''}</strong> (${sentence(cmp.ant.cargoNome)}) com <strong>${cmp.rec.ano}${cmp.rec.turno !== '1' ? ' · 2º turno' : ''}</strong> (${sentence(cmp.rec.cargoNome)})</span><button type="button" class="link" onClick=${() => setComp(null)}>Sair da comparação</button></p>`}
+      ${cmp && avisoComparacao(cmp) && html`<p class="aviso" role="alert">${avisoComparacao(cmp)}</p>`}
+      ${view && !semBairros && html`<${ControlesDoMapa} metric=${metric} setMetric=${setMetric} modoVar=${cmp ? varModo : false} varModo=${varModo} setVarModo=${setVarModo} />`}
+      <${MapCanvas} ano=${item ? item.ano : '2024'} view=${viewMapa} metric=${metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${classes} modoVar=${cmp ? varModo : false} />
+      ${view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} view=${view} modoVar=${cmp ? varModo : false} />`}
+      ${!semBairros && html`<${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} linha=${cmp && shown ? { ...(cmp.rows.find(r => r.key === shown.key) || {}), ant: cmp.ant, rec: cmp.rec } : null} />`}`;
+
+  return html`<div class=${'app' + (modo === 'perfis' ? ' com-perfis' : '')}>
+    <header class="topo">
       <p class="brand">Mapa da política <span>${CIDADE}</span></p>
+      <${AN.Abas} itens=${ABAS_DE_MODO} valor=${modo} aoMudar=${trocarModo} rotulo="O que ver" />
     </header>
 
-    ${modo === 'perfis' ? html`<section class="filters"><div class="seg modo" role="radiogroup" aria-label="O que ver">${seletorDeModo}</div></section>
-      <main class="perfis"><${PERFIS.PaginaDePerfis} aoVerNoMapa=${verNoMapa} /></main>` : html`${indice && html`<section class="filters" aria-label="Filtros">
-      <div class="seg modo" role="radiogroup" aria-label="O que ver">${seletorDeModo}</div>
+    ${modo === 'perfis' ? html`<main class="perfis" id="conteudo"><${PERFIS.PaginaDePerfis} aoVerNoMapa=${verNoMapa} /></main>` : html`
+    ${indice && html`<section class="filtros" aria-label="Filtros">
       <label class="field">Eleição
         <select value=${eleicao} onChange=${e => { setEleicao(e.target.value); setSelected(null); setCandKey(null); setComp(null); }}>
           ${indice.map(e => html`<option value=${e.id}>${rotuloEleicao(e)}</option>`)}
@@ -733,47 +777,23 @@ function App() {
       <${CandidatePicker} cands=${cands} value=${candKey} onPick=${k => { setCandKey(k); setModo('candidato'); setSelected(null); setComp(null); }} />`}
     </section>`}
 
-    <a class="pular" href="#conteudo">Pular para o mapa</a>
-    <main class="stage" id="conteudo" ref=${mapRef}>
-      ${panorama ? html`<div class="who">
-          <h1>${sentence((cargos.find(c => c[0] === cargo) || [cargo, CARGO_NOMES[cargo]])[1])}</h1>
-          <p>Panorama · ${ds.ano}${ds.turno !== '1' ? ' (2º turno)' : ''} · ${cands.length} candidatos com voto em ${CIDADE}</p>
-        </div>`
-      : view ? html`<div class="who">
-          <h1>${titleCase(view.nome)}</h1>
-          <p>${view.nr}${view.partido ? ' · ' + view.partido : ''} · ${sentence(view.cargoNome)} · ${view.ano}${view.turno !== '1' ? ` (${view.turno}º turno)` : ''}</p>
-          <p class="sub">${view.posicao}º mais votado em ${CIDADE} entre ${view.nCands} candidatos${view.sit ? ' · ' + sentence(view.sit) : ''}</p>
-        </div>`
-      : html`<div class="who empty"><h1>${hasData ? 'Escolha um candidato' : 'Votos por bairro'}</h1>
-          <p>${erro ? erro : carregando || !indice ? 'Carregando os resultados…' : hasData ? 'Busque pelo nome, número ou partido, ou veja o panorama do cargo.' : `Veja em quais bairros de ${CIDADE} cada candidato foi votado.`}</p></div>`}
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <main id="conteudo">
+      <section class="hero">${abertura}</section>
       ${semBairros && html`<p class="aviso" role="note">O TSE ainda não publicou o arquivo por seção desta eleição, então os votos por bairro não estão disponíveis. Por enquanto só aparece o total de ${CIDADE}.</p>`}
-      ${!panorama && comp && !cmp && html`<p class="hint">Carregando a outra eleição…</p>`}
-      ${!panorama && cmp && html`<p class="cmp-bar" role="note"><span>Comparando <strong>${cmp.ant.ano}${cmp.ant.turno !== '1' ? ' · 2º turno' : ''}</strong> (${sentence(cmp.ant.cargoNome)}) com <strong>${cmp.rec.ano}${cmp.rec.turno !== '1' ? ' · 2º turno' : ''}</strong> (${sentence(cmp.rec.cargoNome)})</span><button type="button" class="link" onClick=${() => setComp(null)}>Sair da comparação</button></p>`}
-      ${!panorama && cmp && avisoComparacao(cmp) && html`<p class="aviso" role="alert">${avisoComparacao(cmp)}</p>`}
-      <${MapCanvas} ano=${item ? item.ano : '2024'} view=${panorama ? viewPanorama : viewMapa} metric=${panorama ? 'pct' : metric} selected=${selected} onSelect=${setSelected} hover=${hover} onHover=${setHover} classes=${panorama ? classesPanorama : classes} modoVar=${!panorama && cmp ? varModo : false} />
-      ${panorama && html`<${LegendaPanorama} camada=${camada} setCamada=${setCamada} classes=${classesPanorama} vence=${vence} nomeDe=${nomeDoCand} temComparecimento=${!!compCargo} />`}
-      ${panorama && html`<${TabelaDoPanorama} ano=${ds.ano} camada=${camada} vence=${vence} cands=${cands} comp=${compBairros} />`}
-      ${panorama && html`<${CardPanorama} b=${viewPanorama && viewPanorama.bairros.find(b => b.key === shownKey)} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} vence=${vence} cands=${cands} numeros=${compBairros && compBairros[shownKey]} />`}
-      ${!panorama && view && !semBairros && html`<${Legend} classes=${classes} metric=${metric} setMetric=${setMetric} view=${view} modoVar=${cmp ? varModo : false} varModo=${varModo} setVarModo=${setVarModo} />`}
-      ${!panorama && !semBairros && html`<${BairroCard} view=${view} b=${shown} pinned=${!hover && !!selected} onClear=${() => setSelected(null)} linha=${cmp && shown ? { ...(cmp.rows.find(r => r.key === shown.key) || {}), ant: cmp.ant, rec: cmp.rec } : null} />`}
-    </main>
-
-    <aside class="side">
-      ${panorama ? html`<${StatsPanorama} comp=${compCargo} />
-        <${Panorama} cands=${cands} ano=${ds.ano} financas=${an.financas} perfis=${an.perfis} selecionado=${candKey} onPick=${escolher} ctx=${ctx} />`
-      : html`${cmp ? html`<${ComparaStats} cmp=${cmp} />` : html`<${Stats} view=${view} semBairros=${semBairros} />`}
-        ${view && !cmp && !semBairros && html`<${PAINEL.Concentracao} cand=${candAtual} />`}
-        ${view && !cmp && !semBairros && html`<${PAINEL.ForcaDoVoto} cand=${candAtual} ctx=${ctx} />`}
-        ${view && !cmp && html`<${PAINEL.ForaDaCurva} cand=${candAtual} ctx=${ctx} />`}
-        ${view && !cmp && html`<${PAINEL.Dinheiro} cand=${candAtual} financas=${an.financas} ano=${view.ano} linhasDoCargo=${linhasDoCargo} ctx=${ctx} onPick=${escolher} />`}
-        ${entradas.length > 1 && html`<${Trajetoria} entradas=${entradas} view=${view} comp=${comp} pode=${podeComparar} onComparar=${e => { setComp(c => c && c.ano === e.ano && c.turno === e.turno && c.cargo === e.cargo && c.nr === e.nr ? null : e); setSelected(null); }} onSair=${() => setComp(null)} />`}
-        ${!semBairros && (cmp ? html`<${ComparaRanking} cmp=${cmp} selected=${selected} onSelect=${selectFromList} />` : html`<${Ranking} view=${view} metric=${metric} selected=${selected} onSelect=${selectFromList} />`)}
-        ${view && !cmp && html`<${PAINEL.QuemE} cand=${candAtual} perfis=${an.perfis} />`}
-        ${view && !cmp && html`<${PAINEL.Patrimonio} cand=${candAtual} ctx=${ctx} />`}
-        ${view && !cmp && !semBairros && html`<${PAINEL.Dobradinhas} cand=${candAtual} ds=${ds} onPick=${escolher} />`}`}
+      ${panorama && html`<${AN.Abas} itens=${[['votos', 'Votos'], ['dinheiro', 'Dinheiro'], ['comparecimento', 'Comparecimento']]} valor=${subPanorama} aoMudar=${setSubPanorama} rotulo="Panorama" estilo="pilula" />`}
+      <div class="corpo">
+        ${panorama && subPanorama === 'votos' ? html`<div class="stage" ref=${mapRef}>${mapaDoPanorama}</div>
+          <aside class="side"><${PANORAMA.Votos} ...${propsDoPanorama} /></aside>`
+        : panorama ? html`<aside class="side largo">${subPanorama === 'dinheiro' ? html`<${PANORAMA.Dinheiro} ...${propsDoPanorama} />` : html`<${StatsPanorama} comp=${compCargo} /><${PANORAMA.Comparecimento} ...${propsDoPanorama} />`}</aside>`
+        : html`<div class="stage" ref=${mapRef}>${mapaDoCandidato}</div>
+          <aside class="side">
+            ${view && html`<div class="painel-abas"><${AN.Abas} itens=${abasDoPainel} valor=${painelAtual} aoMudar=${setPainel} rotulo="Análises do candidato" estilo="painel" />${painelDoCandidato()}</div>`}
+          </aside>`}
+      </div>
       <${Fonte} item=${item} />
       <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, API de resultados (ciclo atual) e Portal de Dados Abertos (votação e comparecimento por seção, eleitorado por local de votação, cadastro e bens dos candidatos, prestação de contas); contorno municipal do IBGE.</p>
-    </aside>`}
+    </main>`}
     <${AvisoLegal} />
   </div>`;
 }

@@ -65,22 +65,31 @@ function Redutos({ cfg, cands, selecionado, onPick }) {
     <p class="hint">Número efetivo de ${cfg.lugaresNome}: perto de 1, o voto vem quase todo de um lugar; quanto maior, mais espalhado. Só candidatos com pelo menos 0,5% dos votos do cargo.</p></section>`;
 }
 
+// Três páginas do panorama: Votos (quem venceu, partidos, redutos, disputas), Dinheiro (campanha, fundo, doadores e
+// fornecedores) e Comparecimento (abstenção e eleitorado). cands: os candidatos do cargo no turno mostrado, como o site os
+// monta (com partido); ctx: contexto.mjs.
 export function criarPanorama(cfg) {
   const LugaresDoCargo = criarLugaresDoCargo(cfg);
-  // cands: os candidatos do cargo no turno mostrado, como o site os monta (com partido); ctx: contexto.mjs.
-  return function Panorama({ cands, ano, financas, perfis, selecionado, onPick, ctx }) {
-    const eleito = c => ehEleito(c.sit || perfis?.c?.[cfg.chaveDe(c)]?.s);
-    const linhas = useMemo(() => linhasFinanceiras(cands, financas, cfg.chaveDe), [cands, financas]);
+  const usarLinhas = (cands, financas) => useMemo(() => linhasFinanceiras(cands, financas, cfg.chaveDe), [cands, financas]);
+  function Votos({ cands, perfis, selecionado, onPick, ctx }) {
+    const linhas = usarLinhas(cands, ctx?.financas);
+    return html`${perfis && html`<${PerfilDoCargo} cfg=${cfg} cands=${cands} perfis=${perfis} />`}
+      ${ctx && html`<${Partidos} linhas=${linhas} ctx=${ctx} onPick=${onPick} />`}
+      <${Redutos} cfg=${cfg} cands=${cands} selecionado=${selecionado} onPick=${onPick} />
+      ${ctx && html`<${LugaresDoCargo} ctx=${ctx} parte="votos" />`}`;
+  }
+  function Dinheiro({ cands, ano, financas, perfis, selecionado, onPick, ctx }) {
+    const eleito = c => ehEleito(c.sit || perfis?.c?.[cfg.chaveDe(c)]?.s), linhas = usarLinhas(cands, financas);
     return html`<section class="analise" aria-labelledby="dc"><h2 id="dc">Dinheiro da campanha</h2>
         <${DinheiroDoCargo} cfg=${cfg} cands=${cands} financas=${financas} ano=${ano} selecionado=${selecionado} onPick=${onPick} eleito=${eleito} /></section>
       ${financas && perfis && html`<${FundoPorPartido} cfg=${cfg} cands=${cands} financas=${financas} perfis=${perfis} />`}
-      ${perfis && html`<${PerfilDoCargo} cfg=${cfg} cands=${cands} perfis=${perfis} />`}
       ${ctx && html`<${DinheiroElege} linhas=${financas ? linhas : []} ctx=${ctx} />`}
-      ${ctx && html`<${Partidos} linhas=${linhas} ctx=${ctx} onPick=${onPick} />`}
       ${ctx && html`<${ConcentracaoDoFundo} linhas=${financas ? linhas : []} ctx=${ctx} />`}
-      <${Redutos} cfg=${cfg} cands=${cands} selecionado=${selecionado} onPick=${onPick} />
-      ${ctx && html`<${LugaresDoCargo} ctx=${ctx} />`}
       ${financas && html`<${Doadores} cfg=${cfg} cands=${cands} financas=${financas} onPick=${onPick} />`}
       ${financas && html`<${FornecedoresDoCargo} cfg=${cfg} cands=${cands} financas=${financas} onPick=${onPick} />`}`;
-  };
+  }
+  function Comparecimento({ ctx }) {
+    return ctx ? html`<${LugaresDoCargo} ctx=${ctx} parte="comparecimento" />` : null;
+  }
+  return { Votos, Dinheiro, Comparecimento };
 }

@@ -1,0 +1,53 @@
+/* ---------- Gráficos do sistema visual (treemap, séries, mapa de calor, barras com meta, colunas, dispersão) ---------- */
+/* treemap: quanto mais escuro o bloco, maior o valor */
+.treemap{position:relative; width:100%}
+.bloco-tm{position:absolute; box-sizing:border-box; display:flex; flex-direction:column; gap:1px; padding:8px 9px; overflow:hidden; border-radius:2px; line-height:1.25}
+.bloco-tm b{font:600 13px/1.2 var(--serif)} .bloco-tm span{font-size:12px} .bloco-tm small{font-size:11.5px; opacity:.8}
+.bloco-tm.c0{background:var(--r0)} .bloco-tm.c1{background:var(--r1)} .bloco-tm.c2{background:var(--r2)}
+.bloco-tm.c3{background:var(--r3)} .bloco-tm.c4{background:var(--r4)} .bloco-tm.c5{background:var(--r5)}
+.bloco-tm.c0,.bloco-tm.c1,.bloco-tm.c2{color:var(--t-fraca)} .bloco-tm.c3,.bloco-tm.c4,.bloco-tm.c5{color:var(--t-forte)}
+
+/* série no tempo (SVG na largura real) */
+.linha-tempo svg{display:block; max-width:100%}
+.malha line{stroke:var(--line); stroke-width:1} .malha text,.eixo-x,.titulo-eixo{fill:var(--muted); font:11px var(--sans)}
+.serie .linha{fill:none; stroke:var(--cor); stroke-width:2.2; stroke-linejoin:round; stroke-linecap:round}
+.serie .tracejada{stroke-dasharray:4 4}
+.serie .area{fill:var(--cor); opacity:.13}
+.serie circle{fill:var(--cor); stroke:var(--surface); stroke-width:1.5}
+.serie circle.vazado{fill:var(--surface); stroke:var(--cor); stroke-width:1.8}
+.serie .valor{fill:var(--ink); font:600 10.5px var(--serif); paint-order:stroke; stroke:var(--surface); stroke-width:3px}
+.nome-serie{font:500 12px var(--sans)}
+
+/* mapa de calor */
+.calor-rolagem{overflow-x:auto}
+.calor{width:100%; min-width:380px; border-collapse:separate; border-spacing:3px; font-size:12px}
+.calor th{padding:4px 6px; font:500 12px var(--sans); color:var(--muted); text-align:left; white-space:nowrap} .calor thead th{text-align:center}
+.calor td{padding:9px 4px; border-radius:3px; text-align:center; font:600 12px var(--serif); font-variant-numeric:tabular-nums}
+.calor td.c0{background:var(--r0)} .calor td.c1{background:var(--r1)} .calor td.c2{background:var(--r2)} .calor td.c3{background:var(--r3)} .calor td.c4{background:var(--r4)} .calor td.c5{background:var(--r5)}
+.calor td.c0,.calor td.c1,.calor td.c2{color:var(--t-fraca)} .calor td.c3,.calor td.c4,.calor td.c5{color:var(--t-forte)} .calor td.vazio{color:var(--muted)}
+
+/* barras com referência: o traço escuro é a média do grupo */
+.barras-meta{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.barras-meta li{display:grid; grid-template-columns:minmax(100px,170px) minmax(0,1fr) auto; align-items:center; gap:10px; padding:7px 2px; border-bottom:1px solid var(--line); font-size:14px}
+.barras-meta .nm{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.barras-meta .trilho{position:relative; height:8px; background:var(--trilho); border-radius:4px}
+.barras-meta .trilho i{display:block; height:100%; background:var(--r4); border-radius:4px}
+.barras-meta .trilho u{position:absolute; top:-5px; width:2px; height:18px; background:var(--ink)}
+.barras-meta .vv{display:flex; gap:6px; align-items:baseline; white-space:nowrap} .barras-meta .vv b{font:600 14px var(--serif)} .barras-meta small{font-size:12px; color:var(--muted)}
+@media (max-width:520px){ .barras-meta li{grid-template-columns:minmax(90px,120px) minmax(0,1fr) auto} .barras-meta small{display:none} }
+
+/* colunas sobrepostas (larga e clara: empenhado; estreita e escura: pago) e barras 100% empilhadas */
+.colunas.sobrepostas div{max-width:44px}
+.colunas.sobrepostas .par{flex:1; width:100%; position:relative; min-height:0}
+.colunas.sobrepostas .par i{position:absolute; bottom:0; display:block; border-radius:2px 2px 0 0}
+.colunas.sobrepostas .larga{left:0; right:0; background:var(--r1)} .colunas.sobrepostas .estreita{left:26%; right:26%; background:var(--r5)}
+.pilhas100{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px}
+.pilhas100 .cab{display:flex; justify-content:space-between; gap:12px; margin-bottom:4px; font-size:13.5px} .pilhas100 .cab b{font:600 14px var(--serif)}
+.pilhas100 .pilha{height:14px}
+
+/* sparkline, dispersão, rosca cheia (pizza) */
+.sparkline{display:block} .sparkline path{fill:none; stroke:var(--r5); stroke-width:2; stroke-linejoin:round; stroke-linecap:round} .sparkline circle{fill:var(--accent)}
+.dispersao svg{display:block; max-width:100%}
+.dispersao circle{fill:var(--r4); fill-opacity:.75; stroke:var(--surface); stroke-width:1.5}
+.rosca-aro.cheia{display:block}
+.numero-grande{display:flex; align-items:center; gap:18px; flex-wrap:wrap} .numero-grande b{font:600 44px/1 var(--serif)} .numero-grande small{display:block; font-size:13px; color:var(--muted)}

@@ -1,0 +1,127 @@
+/* ---------- Sistema visual ----------
+   Papel frio, tinta quase preta, fio de 1px em vez de caixa e um vermelho só (seleção e alerta). Faustina nos números e
+   títulos, Geist na interface. Quantidade é a escala azul; ganho e queda levam ▲ ▼ além da cor (azul e vermelho). */
+:root{ --up:#1F5E9E; --antes:#7B8794; --card:var(--surface); --sombra:none; --t-fraca:#15212C; --t-forte:#FFFFFF }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --up:#7DB4E8; --antes:#8696A4; --t-fraca:#E4EBF0; --t-forte:#0B1620 } }
+:root[data-theme="dark"]{ --up:#7DB4E8; --antes:#8696A4; --t-fraca:#E4EBF0; --t-forte:#0B1620 }
+
+.so-leitor{position:absolute; width:1px; height:1px; margin:0; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; list-style:none}
+.up::before,.down::before{font-size:.7em; vertical-align:.12em; margin-right:.3em}
+.up::before{content:"▲"} .down::before{content:"▼"}
+
+/* ----- página: cabeçalho com abas, filtros, abertura e corpo ----- */
+.app{display:block; max-width:1280px; margin:0 auto; padding:0 16px 56px}
+.topo{display:flex; align-items:flex-end; justify-content:space-between; gap:12px 24px; flex-wrap:wrap; padding-top:16px; border-bottom:1px solid var(--line)}
+.brand{margin:0; padding-bottom:13px; font:600 18px/1.2 var(--serif); white-space:nowrap}
+.brand span{font:400 14px var(--sans); color:var(--muted); margin-left:6px}
+.abas{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; max-width:100%}
+.abas::-webkit-scrollbar{display:none}
+.abas.aba button{flex:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; background:none; padding:0 14px; min-height:46px; font:400 15px var(--sans); color:var(--muted); cursor:pointer; white-space:nowrap}
+.abas.aba button:hover{color:var(--ink)}
+.abas.aba button[aria-selected="true"]{color:var(--ink); font-weight:500; border-bottom-color:var(--accent)}
+.abas.painel{border-bottom:1px solid var(--line); gap:22px}
+.abas.painel button{flex:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; background:none; padding:0 2px; min-height:44px; font:600 18px var(--serif); color:var(--muted); cursor:pointer; white-space:nowrap}
+.abas.painel button[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--ink)}
+.abas.pilula{flex-wrap:wrap; overflow:visible; gap:8px}
+.abas.pilula button{flex:none; border:1px solid var(--line); border-radius:999px; background:transparent; padding:0 16px; min-height:40px; font:400 14px var(--sans); cursor:pointer}
+.abas.pilula button[aria-selected="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+
+.filtros{display:grid; gap:12px 20px; padding:16px 0 4px; align-items:end}
+@media (min-width:820px){ .filtros{grid-template-columns:minmax(180px,230px) auto minmax(240px,1fr)} }
+.filtros .chips{margin:0; padding:0}
+.rotulo-pagina{margin:0 0 12px; font:500 12px/1.2 var(--sans); letter-spacing:.07em; text-transform:uppercase; color:var(--muted)}
+
+.hero{display:grid; gap:22px 48px; padding:28px 0 26px; align-items:end}
+@media (min-width:900px){ .hero{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)} }
+.who h1{margin:0; font:650 clamp(34px,6.2vw,56px)/1.03 var(--serif); letter-spacing:-.015em; text-wrap:balance}
+.who p{margin:10px 0 0; font-size:15px; color:var(--muted)}
+.who p.id{font-size:clamp(16px,2vw,20px); line-height:1.4; color:var(--ink)} .who p.id span{color:var(--muted)}
+.who .lede{max-width:60ch}
+.who.empty h1{font-weight:500}
+.indicadores{display:grid; grid-template-columns:repeat(var(--n,3),minmax(0,1fr)); gap:16px 22px; margin:0}
+.indicadores div{display:flex; flex-direction:column; border-top:2px solid var(--ink); padding-top:10px; min-width:0}
+.indicadores dt{font-size:13px; line-height:1.3; color:var(--muted)}
+.indicadores dd{margin:6px 0 0; font:600 clamp(26px,3.4vw,30px)/1.05 var(--serif); letter-spacing:-.01em; overflow-wrap:anywhere}
+.indicadores div:first-child dd{font-size:clamp(36px,5vw,48px)}
+.indicadores small{margin-top:6px; font-size:13px; line-height:1.35; color:var(--muted)}
+@media (max-width:560px){ .indicadores{grid-template-columns:repeat(2,minmax(0,1fr))} .indicadores div:first-child{grid-column:1 / -1} }
+
+.corpo{display:grid; gap:30px; padding-top:6px}
+@media (min-width:960px){
+  .corpo{grid-template-columns:minmax(0,1.5fr) minmax(340px,1fr); gap:24px 48px; align-items:start}
+  .corpo > .stage{position:sticky; top:16px}
+}
+.stage{display:flex; flex-direction:column; gap:14px; min-width:0}
+.side{display:flex; flex-direction:column; gap:26px; min-width:0}
+.painel-abas{display:flex; flex-direction:column; gap:20px}
+
+/* mapa: moldura de fio, legenda de tamanho e bairro fixado */
+.map{background:var(--surface); border:1px solid var(--line); border-radius:6px; overflow:hidden}
+.mapa-topo{display:flex; justify-content:space-between; align-items:center; gap:10px 16px; flex-wrap:wrap}
+.mapa-topo .rotulo-pagina{margin:0}
+.legenda-tamanho{display:flex; flex-wrap:wrap; gap:14px 36px; align-items:flex-end; padding-top:4px}
+.legenda-tamanho .rotulo-pagina{margin:0 0 6px}
+.legenda-tamanho svg{display:block; overflow:visible} .legenda-tamanho svg circle{fill:var(--r2); fill-opacity:.55; stroke:var(--r4); stroke-width:1.2}
+.legenda-tamanho svg text{fill:var(--muted); font:11.5px Geist}
+.legenda-tamanho p{margin:0; font-size:13px; line-height:1.4} .legenda-tamanho p b{display:block; font-weight:500; letter-spacing:.06em; text-transform:uppercase; font-size:11.5px; color:var(--muted)}
+.muni{border-top:2px solid var(--ink); padding-top:12px; display:flex; flex-direction:column; gap:10px}
+.muni.pinned{border-top-color:var(--accent)}
+.muni-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px}
+.muni h3{margin:0; font:600 28px/1.15 var(--serif)}
+.muni dl{display:flex; flex-wrap:wrap; gap:6px 28px; margin:0}
+.muni dl div{display:flex; align-items:baseline; gap:6px; flex-direction:row}
+.muni dd{margin:0; order:-1; font:600 26px/1.1 var(--serif)} .muni dt{font-size:13px; color:var(--muted)}
+.muni .hint{margin:0; font-size:13px}
+.muni details summary{cursor:pointer; font-size:14px; padding:6px 0}
+
+/* lista de bairros e demais listas de barras: fio, barra grossa com trilho, linha escolhida em vermelho suave */
+.ranking{display:flex; flex-direction:column; gap:10px}
+.ranking li button{grid-template-rows:auto 8px; gap:4px 10px; padding:11px 6px 10px}
+.ranking .bar,.locais .bar,.traj .bar,.partidos .bar{height:8px; border-radius:4px; background:var(--trilho)}
+.ranking .bar i,.locais .bar i,.traj .bar i{border-radius:4px; background:var(--r3)}
+.ranking li.on button{background:color-mix(in srgb, var(--accent) 8%, transparent)}
+.ranking li.on .bar i{background:var(--r5)}
+.ranking .vv{font:600 17px var(--serif)}
+.rk-head h2,.painel-abas h2,.analise h2,.traj h2{font:600 24px/1.2 var(--serif)}
+
+/* seções de análise do painel: fio no topo em vez de caixa; números em linha, sem cartão branco */
+.side > .analise,.side > .traj,.side > .ranking,.perfil > .analise,.painel-abas > .analise,.painel-abas > .traj,.painel-abas > .ranking{background:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none; padding:18px 0 0}
+.painel-abas > :first-child{border-top:0; padding-top:0}
+.stats{background:none; border:0; border-radius:0; box-shadow:none; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px}
+.stats div{border-top:1px solid var(--line); padding-top:8px}
+.stats dd{font:600 26px/1.1 var(--serif)}
+.stats small{display:block; margin-top:4px; font-size:13px; color:var(--muted)}
+.analise .rosca,.analise .waffle,.analise .grafico svg,.analise .pilha-fig,.analise > .colunas,.traj > .colunas{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:14px 16px}
+.analise .grafico svg{padding:0}
+
+/* cartão de gráfico */
+.cartao{margin:0; display:flex; flex-direction:column; gap:8px; min-width:0; padding:16px 18px 18px; background:var(--surface); border:1px solid var(--line); border-radius:8px}
+.cartao .kicker{font:500 11.5px/1.2 var(--sans); letter-spacing:.07em; text-transform:uppercase; color:var(--muted)}
+.cartao h3{margin:0; font:600 19px/1.25 var(--serif)}
+.cartao .sub{margin:-2px 0 4px; font-size:14px; line-height:1.4; color:var(--muted)}
+.cartao figcaption{margin-top:4px; font-size:13.5px; line-height:1.45; color:var(--muted)}
+.cartao .rosca,.cartao .waffle,.cartao .pilha-fig,.cartao > .colunas{background:none; border:0; padding:0}
+.bloco{margin-top:34px; padding-top:26px; border-top:1px solid var(--line)}
+.bloco h2{margin:0; font:600 26px/1.2 var(--serif)}
+.bloco > .lede{margin:8px 0 18px; max-width:58ch; font-size:15px; color:var(--muted)}
+.grade{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); align-items:start}
+@media (min-width:900px){ .grade.dois-tercos{grid-template-columns:minmax(0,2fr) minmax(0,1fr)} .grade.metade{grid-template-columns:repeat(2,minmax(0,1fr))} .grade.tres{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.como-ler{border:1px solid var(--line); border-radius:6px; background:var(--surface)}
+.como-ler summary{display:flex; align-items:center; min-height:46px; padding:0 16px; cursor:pointer; font-weight:500; list-style:none}
+.como-ler summary::-webkit-details-marker{display:none}
+.como-ler summary::after{content:"+"; margin-left:auto; font:400 20px var(--sans); color:var(--muted)}
+.como-ler[open] summary::after{content:"−"}
+.como-ler > div{padding:0 16px 14px; font-size:14px; line-height:1.5; color:var(--muted)}
+.aviso{border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:2px; background:var(--surface)}
+
+/* rodapé */
+.aviso-legal{margin-top:40px; border-top:1px solid var(--line); padding:16px 0 0; font-size:13px; line-height:1.5; color:var(--muted); display:flex; flex-direction:column; gap:6px; position:static; background:none}
+.aviso-legal p{margin:0; max-width:80ch}
+.side.largo{grid-column:1 / -1}
+.stats.tres{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:520px){ .stats.tres{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.indicadores.denso div:first-child dd{font-size:clamp(26px,3.4vw,30px)}
+.source.compact{border:0; border-top:1px solid var(--line); border-radius:0; background:none; padding:14px 0 0; margin-top:28px}
+.source.compact p{font-size:13px}
+.rk-head .rotulo-pagina{margin:0}
+.credits{margin:12px 0 0; font-size:13px; line-height:1.5; max-width:80ch}
