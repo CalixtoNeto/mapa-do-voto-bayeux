@@ -111,6 +111,8 @@ const CFG = {
   totDe: (ds, c) => porBairro(c.ano, ds.tot[c.ano + '|' + c.turno + '|' + c.cargo] || {}),
   lugares: ds => bairrosDe(ds.ano).map(b => b.key), lugarNome: 'bairro', lugaresNome: 'bairros', regiao: 'em Bayeux',
   agrupar: (ano, porLocal) => somaPorBairro(ano, porLocal),
+  base: 'data/eleicoes',
+  carregarAno: ano => TABELAS[ano] ? Promise.resolve() : lerJson(`data/secoes-${ano}.json`).then(t => { TABELAS[ano] = t; }).catch(() => {}),
   nomeDoLugar: (key, ds) => (bairrosDe(ds.ano).find(b => b.key === key) || { name: key }).name,
   foraDasFinancas: c => c.cargo !== '11' && c.cargo !== '13' ? 'O site mostra o dinheiro de campanha só dos candidatos a prefeito e vereador: a campanha dos outros cargos é estadual e não dá para dividi-la pelos votos de Bayeux.' : '',
   ehMajoritario: c => c.cargo === '11',
@@ -491,22 +493,6 @@ function CardPanorama({ b, pinned, onClear, vence, cands, numeros }) {
   </div>`;
 }
 
-function StatsPanorama({ comp }) {
-  if (!comp) return null;
-  const s = AN.somaDoComparecimento(comp);
-  const validos = s.comparecimento - s.brancos - s.nulos;
-  const partes = [{ nome: 'Votos válidos', v: validos, cor: 'var(--s1)', rotulo: pct(validos / s.aptos, 0) },
-    { nome: 'Abstenção', v: s.abstencao, cor: 'var(--s0)', rotulo: pct(s.abstencao / s.aptos, 0) },
-    { nome: 'Brancos e nulos', v: s.brancos + s.nulos, cor: 'var(--line)', rotulo: pct((s.brancos + s.nulos) / s.aptos, 0) }];
-  return html`<${AN.Rosca} partes=${partes} centro=${{ rotulo: 'Aptos', valor: nf.format(s.aptos) }} descricao=${`Dos ${nf.format(s.aptos)} eleitores aptos: ${partes.map(p => `${p.nome} ${p.rotulo}`).join(', ')}`} />
-  <dl class="stats">
-    <div><dt>Eleitores aptos</dt><dd>${nf.format(s.aptos)}</dd></div>
-    <div><dt>Abstenção</dt><dd>${pct(s.abstencao / s.aptos)}</dd></div>
-    <div><dt>Brancos</dt><dd>${pct(s.brancos / s.comparecimento)}</dd></div>
-    <div><dt>Nulos</dt><dd>${pct(s.nulos / s.comparecimento)}</dd></div>
-  </dl>`;
-}
-
 // Soma os números (comparecimento, perfil do eleitorado) dos locais de votação de cada bairro.
 function somaPorBairro(ano, porLocal) {
   const tamanho = Math.max(0, ...Object.values(porLocal).map(n => n.length));
@@ -718,15 +704,9 @@ function App() {
   const nomeDoCargo = sentence((cargos.find(c => c[0] === cargo) || [cargo, CARGO_NOMES[cargo]])[1]);
   const turnoDe = d => d.turno !== '1' ? ` · ${d.turno}º turno` : '';
   const topBairro = view && [...view.bairros].filter(b => b.v > 0).sort((a, b) => b.p - a.p)[0];
-  const sPanorama = panorama && compCargo ? AN.somaDoComparecimento(compCargo) : null;
-  const totalNominais = cands.reduce((s, c) => s + c.total, 0);
 
-  const abertura = panorama ? html`<${AN.Cabecalho} rotulo=${`Panorama · ${ds.ano}${turnoDe(ds)}`} titulo=${nomeDoCargo}
-        lede=${`${cands.length} candidatos com voto em ${CIDADE}. Os números vêm do arquivo de votação por seção eleitoral do TSE.`} />
-      <${AN.Indicadores} itens=${sPanorama ? [{ rotulo: 'Eleitores aptos', valor: nf.format(sPanorama.aptos) },
-        { rotulo: 'Compareceram', valor: nf.format(sPanorama.comparecimento), nota: `${pct(sPanorama.comparecimento / sPanorama.aptos, 1)} dos aptos` },
-        { rotulo: 'Abstenção', valor: pct(sPanorama.abstencao / sPanorama.aptos, 1), nota: `${nf.format(sPanorama.abstencao)} eleitores` },
-        cands[0] && { rotulo: 'Mais votado', valor: pct(cands[0].total / totalNominais, 1), nota: titleCase(cands[0].nome) }] : []} />`
+  const abertura = panorama ? html`<${PANORAMA.Abertura} sub=${subPanorama} ds=${ds} cands=${cands} ctx=${ctx} financas=${an.financas} cidade=${CIDADE}>
+        <${AN.Abas} itens=${[['votos', 'Votos'], ['dinheiro', 'Dinheiro'], ['comparecimento', 'Comparecimento']]} valor=${subPanorama} aoMudar=${setSubPanorama} rotulo="Panorama" estilo="pilula" /><//>`
     : view ? html`<${AN.Cabecalho} rotulo=${`${sentence(view.cargoNome)} · ${view.ano}${turnoDe(view)}`} titulo=${titleCase(view.nome)}>
         <p class="id">${view.nr}${view.partido ? ' · ' + view.partido : ''}<span> · ${view.posicao}º mais votado em ${CIDADE} entre ${view.nCands} candidatos${view.sit ? ' · ' + sentence(view.sit) : ''}</span></p><//>
       <${AN.Indicadores} itens=${cmp ? indicadoresDaComparacao(cmp) : [{ rotulo: `Votos em ${CIDADE}`, valor: nf.format(view.total) },
@@ -781,16 +761,15 @@ function App() {
     <main id="conteudo">
       <section class="hero">${abertura}</section>
       ${semBairros && html`<p class="aviso" role="note">O TSE ainda não publicou o arquivo por seção desta eleição, então os votos por bairro não estão disponíveis. Por enquanto só aparece o total de ${CIDADE}.</p>`}
-      ${panorama && html`<${AN.Abas} itens=${[['votos', 'Votos'], ['dinheiro', 'Dinheiro'], ['comparecimento', 'Comparecimento']]} valor=${subPanorama} aoMudar=${setSubPanorama} rotulo="Panorama" estilo="pilula" />`}
-      <div class="corpo">
-        ${panorama && subPanorama === 'votos' ? html`<div class="stage" ref=${mapRef}>${mapaDoPanorama}</div>
-          <aside class="side"><${PANORAMA.Votos} ...${propsDoPanorama} /></aside>`
-        : panorama ? html`<aside class="side largo">${subPanorama === 'dinheiro' ? html`<${PANORAMA.Dinheiro} ...${propsDoPanorama} />` : html`<${StatsPanorama} comp=${compCargo} /><${PANORAMA.Comparecimento} ...${propsDoPanorama} />`}</aside>`
-        : html`<div class="stage" ref=${mapRef}>${mapaDoCandidato}</div>
+      ${panorama && subPanorama === 'votos' && html`<div class="corpo"><div class="stage" ref=${mapRef}>${mapaDoPanorama}</div>
+          <aside class="side"><${PANORAMA.MaisVotados} ...${propsDoPanorama} /></aside></div>
+        <${PANORAMA.Votos} ...${propsDoPanorama} />`}
+      ${panorama && subPanorama === 'dinheiro' && html`<${PANORAMA.Dinheiro} ...${propsDoPanorama} cidade=${CIDADE} />`}
+      ${panorama && subPanorama === 'comparecimento' && html`<${PANORAMA.Comparecimento} ...${propsDoPanorama} />`}
+      ${!panorama && html`<div class="corpo"><div class="stage" ref=${mapRef}>${mapaDoCandidato}</div>
           <aside class="side">
             ${view && html`<div class="painel-abas"><${AN.Abas} itens=${abasDoPainel} valor=${painelAtual} aoMudar=${setPainel} rotulo="Análises do candidato" estilo="painel" />${painelDoCandidato()}</div>`}
-          </aside>`}
-      </div>
+          </aside></div>`}
       <${Fonte} item=${item} />
       <p class="credits">Os votos de cada seção são somados no bairro do local de votação, segundo o cadastro do TSE. Isso mostra onde o voto foi depositado, não onde o eleitor mora. Fontes: TSE, API de resultados (ciclo atual) e Portal de Dados Abertos (votação e comparecimento por seção, eleitorado por local de votação, cadastro e bens dos candidatos, prestação de contas); contorno municipal do IBGE.</p>
     </main>`}

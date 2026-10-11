@@ -3,7 +3,7 @@
 const { useState, useEffect } = window.htmPreact;
 
 const cache = new Map();
-const lerJson = url => {
+export const lerJson = url => {
   if (!cache.has(url)) cache.set(url, fetch(url, { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null));
   return cache.get(url);
 };

@@ -1,9 +1,9 @@
 /* ---------- Sistema visual ----------
    Papel frio, tinta quase preta, fio de 1px em vez de caixa e um vermelho só (seleção e alerta). Faustina nos números e
    títulos, Geist na interface. Quantidade é a escala azul; ganho e queda levam ▲ ▼ além da cor (azul e vermelho). */
-:root{ --up:#1F5E9E; --antes:#7B8794; --card:var(--surface); --sombra:none; --t-fraca:#15212C; --t-forte:#FFFFFF }
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --up:#7DB4E8; --antes:#8696A4; --t-fraca:#E4EBF0; --t-forte:#0B1620 } }
-:root[data-theme="dark"]{ --up:#7DB4E8; --antes:#8696A4; --t-fraca:#E4EBF0; --t-forte:#0B1620 }
+:root{ --trilho:#D5DADF; --up:#1F5E9E; --antes:#7B8794; --card:var(--surface); --sombra:none; --t-fraca:#15212C; --t-forte:#FFFFFF }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --trilho:#2A3947; --up:#7DB4E8; --antes:#8696A4; --t-fraca:#E4EBF0; --t-forte:#0B1620 } }
+:root[data-theme="dark"]{ --trilho:#2A3947; --up:#7DB4E8; --antes:#8696A4; --t-fraca:#E4EBF0; --t-forte:#0B1620 }
 
 .so-leitor{position:absolute; width:1px; height:1px; margin:0; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; list-style:none}
 .up::before,.down::before{font-size:.7em; vertical-align:.12em; margin-right:.3em}
@@ -125,3 +125,8 @@
 .source.compact p{font-size:13px}
 .rk-head .rotulo-pagina{margin:0}
 .credits{margin:12px 0 0; font-size:13px; line-height:1.5; max-width:80ch}
+@media (max-width:520px){
+  .abas.aba{width:100%} .abas.aba button{padding:0 9px; font-size:14px}
+  .abas.painel{gap:14px} .abas.painel button{font-size:16px}
+  .hero{padding:22px 0 20px}
+}

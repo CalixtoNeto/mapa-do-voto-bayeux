@@ -16,7 +16,7 @@ function Serie({ s, x, y, area, rotular }) {
   </g>`;
 }
 
-// series: [{ nome, cor, pontos: [[x, y] | null], formato(y), parcial? }]; rotulosX: [[x, texto]].
+// series: [{ nome, cor, pontos: [[x, y] | null], formato(y), parcial?, rotulos? (false: sem valores; lista: só nesses índices) }]; rotulosX: [[x, texto]].
 export function LinhaDoTempo({ series, rotulosX, formatoEixo = String, descricao, altura = 240, area = false }) {
   const [ref, w] = usarLargura();
   const maximo = Math.max(1e-9, ...series.flatMap(s => s.pontos.filter(Boolean).map(p => p[1])));
@@ -28,7 +28,7 @@ export function LinhaDoTempo({ series, rotulosX, formatoEixo = String, descricao
   return html`<div class="linha-tempo" ref=${ref}><svg width=${w} height=${altura} viewBox=${`0 0 ${w} ${altura}`} role="img" aria-label=${descricao}>
     ${marcas.map(m => html`<g class="malha"><line x1=${E} x2=${w - D} y1=${y(m)} y2=${y(m)} /><text x=${E - 8} y=${y(m) + 3.5} text-anchor="end">${formatoEixo(m)}</text></g>`)}
     ${rotulosX.map(([v, t]) => html`<text class="eixo-x" x=${x(v)} y=${altura - 8} text-anchor="middle">${t}</text>`)}
-    ${series.map((s, i) => html`<${Serie} s=${s} x=${x} y=${y} area=${area && i === 0} rotular=${poucos ? s.pontos.map((_, k) => k) : [pontas[i]]} />`)}
+    ${series.map((s, i) => html`<${Serie} s=${s} x=${x} y=${y} area=${area && i === 0} rotular=${Array.isArray(s.rotulos) ? s.rotulos : s.rotulos === false ? [] : poucos ? s.pontos.map((_, k) => k) : [pontas[i]]} />`)}
     ${series.map((s, i) => html`<text class="nome-serie" style=${`fill:${s.cor}`} x=${x(s.pontos[pontas[i]][0]) + 10} y=${ys[i] + 4}>${s.nome}</text>`)}
   </svg>
   <ul class="so-leitor">${series.map(s => html`<li>${s.nome}: ${s.pontos.filter(Boolean).map(p => `${p[0]}, ${s.formato(p[1])}`).join('; ')}</li>`)}</ul></div>`;
