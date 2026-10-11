@@ -23,15 +23,6 @@ button,input,select{font:inherit; color:inherit}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 a{color:inherit; text-underline-offset:3px}
 
-.app{max-width:1280px; margin:0 auto; padding:14px 16px 40px; display:flex; flex-direction:column; gap:18px}
-.app.nodata .stage{order:2}
-.app.nodata .side{order:3}
-.top{display:flex; align-items:baseline; justify-content:space-between; gap:12px; order:1}
-.brand{margin:0; font:600 17px/1.2 var(--serif); letter-spacing:.005em}
-.brand span{font-family:var(--sans); font-weight:400; font-size:14px; color:var(--muted); margin-left:6px}
-.filters{order:2; display:flex; flex-direction:column; gap:12px}
-.stage{order:3; display:flex; flex-direction:column; gap:12px; scroll-margin-top:12px}
-.side{order:4; display:flex; flex-direction:column; gap:26px}
 
 .field{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted)}
 select{appearance:none; background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2378858f' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center; border:1px solid var(--line); border-radius:10px; padding:10px 32px 10px 12px; min-height:44px}
@@ -132,15 +123,9 @@ h2{margin:0; font:600 21px/1.25 var(--serif)}
 .credits{margin:0; font-size:12.5px; color:var(--muted); max-width:60ch}
 
 @media (min-width:600px){
-  .app{padding:20px 24px 48px}
   .chips{margin:0; padding:0; flex-wrap:wrap}
-  .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media (min-width:960px){
-  .app{display:grid; grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr); grid-template-areas:"top top" "stage filters" "stage side"; grid-template-rows:auto auto 1fr; gap:22px 40px; align-items:start}
-  .top{grid-area:top} .filters{grid-area:filters} .side{grid-area:side} .stage{grid-area:stage; position:sticky; top:calc(env(safe-area-inset-top,0px) + 16px)}
-  .app.nodata{grid-template-areas:"top top" "stage side"}
-  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .ranking ol{max-height:46vh}
 }
 @media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto!important} }
@@ -264,8 +249,7 @@ figcaption .leg li{display:flex; gap:6px; align-items:center}
 .analise > .link{align-self:flex-start}
 
 /* ---------- perfis (só em Bayeux) ---------- */
-.com-perfis .filters{order:2}
-.perfis{order:3; display:flex; flex-direction:column; max-width:760px; width:100%}
+.perfis{display:flex; flex-direction:column; width:100%}
 .perfil{display:flex; flex-direction:column; gap:26px}
 .perfil-topo{display:flex; gap:16px; align-items:flex-start}
 .perfil-topo img{flex:none; width:88px; height:88px; object-fit:cover; border-radius:50%; background:var(--zero)}
@@ -287,10 +271,6 @@ figcaption .leg li{display:flex; gap:6px; align-items:center}
 .materias p{margin:0; flex-basis:100%; font-size:14px; overflow-wrap:anywhere}
 .ligacoes .lv small{font:400 12px var(--sans); color:var(--muted)}
 .locais .ln a{color:inherit}
-@media (min-width:960px){
-  .app.com-perfis{display:flex}
-  .perfis{margin:0 auto}
-}
 .ligacoes .ln{white-space:normal; overflow:visible}
 .ligacoes .ln small{display:block; font-size:12.5px; color:var(--muted)}
 .ligacoes .lv small{display:block; text-align:right}
@@ -318,8 +298,6 @@ button.abre{cursor:pointer}
 .grupo-alertas .ln small{display:block; color:var(--muted); font-size:12.5px}
 
 /* ---------- aviso legal, pular para o conteúdo e tabela do mapa ---------- */
-.aviso-legal{order:5; grid-column:1 / -1; border-top:1px solid var(--line); padding-top:14px; font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:6px}
-.aviso-legal p{margin:0; max-width:80ch}
 .pular{position:absolute; left:-9999px}
 .pular:focus{left:16px; top:8px; z-index:3; background:var(--surface); color:var(--ink); padding:8px 12px; border-radius:8px}
 .tabela-mapa summary{cursor:pointer; padding:8px 0; font-size:14px}
@@ -334,31 +312,16 @@ button.abre{cursor:pointer}
 .partidos .abre{display:grid; width:100%; grid-template-columns:1fr auto; gap:3px 10px; padding:8px 0; border:0; background:none; text-align:left; font:inherit; color:inherit; cursor:pointer}
 .partidos .abre:hover .nm{text-decoration:underline; text-underline-offset:3px}
 .partidos .vv small{font:400 12px var(--sans); color:var(--muted)}
-/* O mapa é sticky no desktop e, perto do fim da página, passaria por cima do rodapé: o rodapé fica numa linha
-   própria da grade, acima do mapa e com fundo opaco. */
-.aviso-legal{position:relative; z-index:3; background:var(--paper); padding-bottom:8px}
-@media (min-width:960px){
-  .app{grid-template-areas:"top top" "stage filters" "stage side" "foot foot"}
-  .app.nodata{grid-template-areas:"top top" "stage side" "foot foot"}
-  .aviso-legal{grid-area:foot}
-  .stage{z-index:1}
-}
-
 /* ---------- revisão visual: grupos rotulados, cards, contraste e barras ---------- */
-:root{ --muted:#4A5661; --card:#FFFFFF; --sombra:0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04); --trilho:#E6EAED }
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --muted:#A3B1BD; --card:#18232F; --sombra:none; --trilho:#223040 } }
-:root[data-theme="dark"]{ --muted:#A3B1BD; --card:#18232F; --sombra:none; --trilho:#223040 }
+:root{ --muted:#4A5661; --card:#FFFFFF; --sombra:0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04) }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --muted:#A3B1BD; --card:#18232F; --sombra:none } }
+:root[data-theme="dark"]{ --muted:#A3B1BD; --card:#18232F; --sombra:none }
 .field{font-size:11.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase}
 .field select{text-transform:none; letter-spacing:normal; font-weight:400; font-size:15px; color:var(--ink)}
 .picker label{font-size:11.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase}
 .seg.modo{flex-wrap:wrap}
 .seg.modo .grupo-modo.primeiro,.rotulo-filtro{flex-basis:100%; margin:0; font-size:11.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
 .grupo-filtro{display:flex; flex-direction:column; gap:6px}
-/* cards: estatísticas e blocos de análise em fundo branco, para os números se destacarem do fundo cinza */
-.stats{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; box-shadow:var(--sombra)}
-.stats div{border-top:0; padding-top:0}
-.side > .analise,.side > .traj,.side > .ranking,.perfil > .analise{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; box-shadow:var(--sombra)}
-.analise .stats{box-shadow:none; background:transparent; border:0; padding:0}
 /* trilho nas barras de proporção, para comparar as linhas de relance */
 .ranking .bar,.locais .bar,.traj .bar,.partidos .bar{background:var(--trilho); border-radius:2px}
 .ranking li button:hover,.lista-cands li button:hover,.locais .abre:hover{background:color-mix(in srgb, var(--ink) 4%, transparent)}
@@ -390,12 +353,6 @@ button.abre{cursor:pointer}
 .sanfona .filhos .lv{font-size:14px}
 .sanfona .filhos .bar{height:3px}
 @media (prefers-reduced-motion: reduce){ .sanfona .seta{transition:none} }
-
-/* ---------- modo perfil: cabeçalho, seletor e rodapé na mesma coluna centralizada do conteúdo ---------- */
-@media (min-width:960px){
-  .app.com-perfis{flex-direction:column; align-items:center}
-  .app.com-perfis > .top,.app.com-perfis > .filters,.app.com-perfis > .perfis,.app.com-perfis > .aviso-legal{width:100%; max-width:760px; margin-left:auto; margin-right:auto}
-}
 
 /* Gráficos de CSS puro (public/js/graficos.mjs) */
 .rosca{margin:0; display:flex; align-items:center; gap:18px; flex-wrap:wrap}

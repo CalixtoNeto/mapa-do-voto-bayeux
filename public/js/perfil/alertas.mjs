@@ -3,6 +3,7 @@
 import { pct, dinheiro, sentence, nf } from '../formato.mjs';
 import { comprasQueDobraram, contratacoesEmAnoDeEleicao, mesAno } from './calculos-perfil.mjs';
 import { nomeProprio } from './pecas.mjs';
+import { Aviso, ComoLer } from '../cartao.mjs';
 const { html } = window.htmPreact;
 
 const vezes = (a, b) => `${(a / b).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}×`;
@@ -48,11 +49,11 @@ export function Alertas({ a, anos }) {
   const lista = [...(a.alertas || []).map(comNomeAtual), ...contratacoesEmAnoDeEleicao(a).map(c => ['contratacoes', ...c]),
     ...comprasQueDobraram(anos, a.ano).map(c => ['crescimento', ...c])];
   return html`<div class="alertas">
-    <p class="ressalva" role="note"><b>Valores atípicos, calculados pelo site.</b> Comparamos os pagamentos registrados no Sagres (TCE-PB) com a mediana do próprio município. Valores assim costumam ter causas legítimas (contrato único, pagamento concentrado, forma de registro), e o site não avalia a legalidade de nenhuma despesa. Para conferir, consulte o dado de origem no <a href="https://dados-abertos.tce.pb.gov.br/" target="_blank" rel="noopener">portal de dados abertos do TCE-PB</a>.</p>
+    <${Aviso}><b>Valores atípicos, calculados pelo site.</b> Comparamos os pagamentos registrados no Sagres (TCE-PB) com a mediana do próprio município. Valores assim costumam ter causas legítimas (contrato único, pagamento concentrado, forma de registro), e o site não avalia a legalidade de nenhuma despesa. Para conferir, consulte o dado de origem no <a href="https://dados-abertos.tce.pb.gov.br/" target="_blank" rel="noopener">portal de dados abertos do TCE-PB</a>.<//>
     ${lista.length ? Object.keys(GRUPOS).map(tipo => { const doTipo = lista.filter(x => x[0] === tipo);
       return doTipo.length ? html`<${Grupo} tipo=${tipo} alertas=${doTipo} ano=${a.ano} />` : null; })
       : html`<p class="hint">Nenhum valor atípico pelos critérios do site neste ano.</p>`}
-    <details class="hint"><summary>Como calculamos</summary>
-      <p>Só entram compras, serviços, obras e locações (salários e previdência não). Pagamentos sem licitação acima do valor de referência: o mesmo fornecedor, no mesmo tipo de compra, recebeu sem licitação ou por dispensa mais que o valor de referência da dispensa por valor da Lei 14.133 (comparado de 2024 em diante); a soma é por fornecedor, não pelo critério da lei. Meses acima da mediana: mais de 3 vezes a mediana mensal do mesmo tipo de despesa e pelo menos R$ 300 mil. Fornecedor com 70% ou mais: 70% ou mais de um tipo de despesa de R$ 1 milhão ou mais. Vínculos comissionados e temporários: tipos que cresceram 20% e 50 pessoas entre janeiro e junho de ano de eleição municipal. Compras que dobraram: um tipo de compra que dobrou e cresceu R$ 1 milhão em relação ao ano anterior completo. Energia, água, telefone, tarifas e a publicação de atos oficiais ficam de fora.</p></details>
+    <${ComoLer} titulo="Como calculamos">
+      <p>Só entram compras, serviços, obras e locações (salários e previdência não). Pagamentos sem licitação acima do valor de referência: o mesmo fornecedor, no mesmo tipo de compra, recebeu sem licitação ou por dispensa mais que o valor de referência da dispensa por valor da Lei 14.133 (comparado de 2024 em diante); a soma é por fornecedor, não pelo critério da lei. Meses acima da mediana: mais de 3 vezes a mediana mensal do mesmo tipo de despesa e pelo menos R$ 300 mil. Fornecedor com 70% ou mais: 70% ou mais de um tipo de despesa de R$ 1 milhão ou mais. Vínculos comissionados e temporários: tipos que cresceram 20% e 50 pessoas entre janeiro e junho de ano de eleição municipal. Compras que dobraram: um tipo de compra que dobrou e cresceu R$ 1 milhão em relação ao ano anterior completo. Energia, água, telefone, tarifas e a publicação de atos oficiais ficam de fora.</p><//>
   </div>`;
 }

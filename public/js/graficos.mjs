@@ -2,11 +2,11 @@
 import { gradienteDaRosca, celulasDoWaffle, trechoDoHaltere, alturasDasColunas, rotulosDoEixo } from './calculos-graficos.mjs';
 const { html } = window.htmPreact;
 
-// partes: [{ nome, v, cor, rotulo }]; o centro mostra o total. A legenda em texto repete o que a rosca desenha.
-export function Rosca({ partes, centro, descricao }) {
+// partes: [{ nome, v, cor, rotulo }]; o centro mostra o total (rosca) ou fica cheio (pizza, só até três partes). A legenda em texto repete o que desenha.
+export function Rosca({ partes, centro, descricao, cheia = false }) {
   return html`<figure class="rosca">
-    <div class="rosca-aro" role="img" aria-label=${descricao} style=${`background:${gradienteDaRosca(partes)}`}>
-      <div class="rosca-miolo"><span>${centro.rotulo}</span><b>${centro.valor}</b></div></div>
+    <div class=${'rosca-aro' + (cheia ? ' cheia' : '')} role="img" aria-label=${descricao} style=${`background:${gradienteDaRosca(partes)}`}>
+      ${!cheia && html`<div class="rosca-miolo"><span>${centro.rotulo}</span><b>${centro.valor}</b></div>`}</div>
     <ul class="leg">${partes.map(p => html`<li><i style=${`background:${p.cor}`}></i><span>${p.nome}</span><b>${p.rotulo}</b></li>`)}</ul>
   </figure>`;
 }

@@ -6,7 +6,7 @@ Votos de candidatos a prefeito, vereador, deputado federal, deputado estadual, s
 
 ## Como usar
 
-![Escolhendo a eleição de 2024 e buscando a vereadora Naymara Carneiro](docs/uso.gif)
+![Escolhendo a eleição de 2024, o cargo de vereador e buscando a vereadora Naymara Carneiro; indicadores, mapa por bairro, cor por votos ou parcela e o bairro fixado](docs/uso.gif)
 
 Abra o site: ele lista todas as eleições disponíveis sozinho, sem precisar baixar nem enviar arquivos. Escolha a eleição (ano e turno), o cargo e o candidato. Clique num bairro para ver os votos em cada escola.
 
@@ -14,7 +14,7 @@ O partido vem dos votos de legenda do arquivo por seção e pode faltar quando o
 
 ## Comparar a evolução de um candidato
 
-![Comparando a votação do prefeito Expedito Pereira em 2012 e 2016](docs/comparar.gif)
+![Comparando a votação do prefeito Expedito Pereira em 2012 e 2016: evolução, mapa da variação com ▲ e ▼ e o ranking dos bairros](docs/comparar.gif)
 
 Quando o candidato disputou mais de uma eleição, a seção **Evolução do candidato** mostra os votos dele em cada uma, com a parcela dos votos nominais e a posição. A ligação entre eleições é feita pelo nome completo no TSE, inclusive entre cargos diferentes (por exemplo, vereador em 2016 e deputado em 2018).
 
@@ -26,9 +26,9 @@ O uso pensado é comparar **o mesmo cargo** (e o mesmo turno). É possível comp
 
 Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos Dados Abertos do TSE.
 
-**Na ficha do candidato** (botão *Candidato*):
+**Na ficha do candidato** (aba *Candidato*):
 
-![Análises da ficha de Maria Anunciada (vereadora, 2024): força do voto, valores distantes da mediana do cargo, dinheiro da campanha em árvore até cada fornecedor, quem doou, bens declarados e dobradinhas com os candidatos a prefeito](docs/candidato.gif)
+![Ficha de Maria Anunciada (vereadora, 2024) em abas: Bairros, Força do voto, Dinheiro (com a árvore até cada fornecedor e os valores distantes da mediana) e Quem é (bens e dobradinhas)](docs/candidato.gif)
 
 - **Valores distantes da mediana do cargo**: o que destoa na campanha em relação aos outros candidatos ao mesmo cargo na mesma eleição: uma categoria de gasto (combustível, impressos, veículos…) ou o custo por voto 3 vezes ou mais a mediana dos outros, recursos próprios acima dos bens declarados, um só doador ou fornecedor com metade ou mais do dinheiro, quem doou e também recebeu da campanha e despesas que ficaram sem pagar. É uma comparação estatística, sem juízo sobre as contas, e o painel diz isso antes da lista (com as causas legítimas mais comuns).
 - **Dinheiro da campanha**: quanto recebeu, quanto declarou ter gasto, **custo por voto**, quanto veio do **fundo eleitoral** e a origem do dinheiro (fundo eleitoral, fundo partidário e partido, doações, recursos próprios e de outros candidatos); a **posição entre os candidatos do cargo** no recebido, no gasto e no fundo eleitoral, com a mediana do cargo; **para onde foi o dinheiro** (todas as categorias de despesa, numa árvore que abre cada categoria até todos os fornecedores); **quem doou** (os dez maiores doadores, com a parcela de cada um no recebido); quanto **ficou sem pagar**, quanto veio do **maior doador** e de **recursos próprios**; **doadores e fornecedores em comum** com outras campanhas; **quando o dinheiro chegou** (por semana); e o dinheiro da mesma pessoa **em cada eleição** (recebido, gasto, votos e custo por voto).
@@ -38,9 +38,9 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 - **Concentração do voto**: de quantos bairros veio metade dos votos e o número efetivo de bairros (voto de reduto ou espalhado).
 - **Dobradinhas prováveis**: para cada outro cargo da mesma eleição (e, para senador, os outros senadores), os candidatos cuja votação sobe e desce nos mesmos bairros. Em cargos com poucos candidatos (governador, senador, prefeito) aparecem todos, inclusive os que andam ao contrário; nos outros, os cinco mais parecidos. Cada um traz a força da correlação (fraca, moderada ou forte).
 
-**No panorama do cargo** (botão *Panorama do cargo*):
+**No panorama do cargo** (aba *Panorama do cargo*):
 
-![Panorama de vereador em 2024: mais votado, abstenção, gasto × votos, fundo eleitoral por partido, quem disputou e quem se elegeu, partidos em hierarquia, concentração do fundo, voto de reduto, análises por bairro e maiores doadores e fornecedores](docs/panorama.gif)
+![Panorama de vereador em 2024 em três páginas: Votos (mais votados, rosca, histograma, partidos em hierarquia), Dinheiro (origem, o dinheiro elege?, fundo, doadores) e Comparecimento (abstenção ao longo do tempo, mapa de calor por bairro e ano)](docs/panorama.gif)
 
 - Mapa do **mais votado** em cada bairro e de **abstenção, brancos e nulos**, com os totais da cidade.
 - **Gasto × votos** de todos os candidatos, com diagonais de custo por voto, e rankings de menor e maior custo por voto, mais fundo eleitoral, mais dinheiro recebido e maior gasto.
@@ -86,9 +86,9 @@ Para gerar ou atualizar: **Actions → Gerar análises → Run workflow** (em br
 
 ## Perfis dos políticos
 
-![Perfil do município: Prefeitura (para onde foi o dinheiro em árvore, valores atípicos e folha), emendas em árvore, Câmara Municipal e a página de um vereador](docs/perfil.gif)
+![Perfil do município: Prefeitura (treemap e árvore de gastos, série anual, folha, valores atípicos), Câmara (presença, votos, alinhamento), Emendas e a página de um vereador](docs/perfil.gif)
 
-Em **Perfis** (ou direto em `#perfis`), quem governa Bayeux, com um endereço para cada perfil (`#perfil/prefeitura`, `#perfil/camara`, `#perfil/emendas`, `#perfil/cabo-rubem`…), bom para compartilhar:
+Em **Perfil do município** (ou direto em `#perfis`), quem governa Bayeux, com um endereço para cada perfil (`#perfil/prefeitura`, `#perfil/camara`, `#perfil/emendas`, `#perfil/cabo-rubem`…), bom para compartilhar:
 
 - **Prefeitura**: o(a) prefeito(a) eleito(a), votos, remuneração na folha e os **doadores e fornecedores da campanha que também receberam do município**, cruzados pelo documento. Para cada ano de 2017 em diante: quanto foi pago e **em que área**, por órgão, **quem mais recebeu**, quanto das **compras e serviços foi sem licitação**, a **folha** por tipo de cargo (efetivos, comissionados, contratados…), as **licitações** por modalidade e quem mais venceu, as **emendas que entraram no caixa** (União e Estado, individuais, de bancada e de comissão) e os doadores e fornecedores de campanhas municipais que receberam do município no ano.
 - **Para onde foi o dinheiro**: em cada ano, uma árvore de decomposição que começa no total pago e se abre a cada toque até o fornecedor: **por área** (área → tipo de despesa → fornecedor), **por secretaria ou fundo** (o Fundo Municipal de Saúde, por exemplo), **pela origem do dinheiro** (recursos próprios, SUS, FUNDEB…) e só o **dinheiro de emendas** (origem da emenda → área → tipo de despesa → fornecedor), identificado pelo código de controle que o próprio Sagres põe em cada pagamento.

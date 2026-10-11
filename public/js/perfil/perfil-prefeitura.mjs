@@ -1,41 +1,37 @@
-// Perfil da Prefeitura: quem governa (eleição, votos, remuneração, credores ligados à campanha) e o dinheiro
-// do município em cada ano publicado pelo TCE-PB.
-import { nf, dinheiro, sentence } from '../formato.mjs';
-import { resumoDaRemuneracao, ligacoesDoCandidato, ligacoesDoAno, mesAno } from './calculos-perfil.mjs';
-import { Voltar, Topo, Estatisticas, Secao, Ligacoes, nomeProprio } from './pecas.mjs';
-import { NumerosDoAno, FolhaDoAno, LicitacoesDoAno, EmendasRecebidas } from './paineis-municipio.mjs';
-import { ArvoreDeGastos } from './arvore.mjs';
-import { Alertas } from './alertas.mjs';
+// Perfil da Prefeitura: o dinheiro do município em cada ano publicado pelo TCE-PB, quem governa e as campanhas ligadas aos credores.
+import { nf } from '../formato.mjs';
+import { Aviso } from '../cartao.mjs';
+import { anoParcial } from './calculos-municipio.mjs';
+import { CabecalhoDoPerfil } from './cabecalho-perfil.mjs';
+import { indicadoresDoAno } from './indicadores-prefeitura.mjs';
+import { ParaOndeVai, AoLongoDoTempo } from './prefeitura-dinheiro.mjs';
+import { FolhaLicitacoesCredores } from './prefeitura-pessoas.mjs';
+import { Atipicos, EmendasNoCaixa, Campanhas } from './prefeitura-governo.mjs';
+import { nomeProprio } from './pecas.mjs';
 import { usarDetalhe } from './dados-perfil.mjs';
 const { html, useState } = window.htmPreact;
 
-function Prefeito({ p, anos, aoVerNoMapa }) {
-  const rem = resumoDaRemuneracao(p.remuneracao);
-  return html`<${Topo} titulo=${nomeProprio(p.nome)} linhas=${[`Prefeito(a) eleito(a) em ${p.ano}`, `${nf.format(p.votos)} votos`]}>
-      <button type="button" class="link" onClick=${() => aoVerNoMapa(p.ano, p.chave)}>Ver os votos de ${p.ano} no mapa</button><//>
-    <${Estatisticas} itens=${[rem && { rotulo: `Recebido em ${mesAno(rem.mes)}`, valor: dinheiro(rem.valor), nota: sentence(rem.cargo) }]} />
-    <${Secao} id="pc" titulo="Doadores e fornecedores da campanha que também receberam do município"><${Ligacoes} ligacoes=${ligacoesDoCandidato(anos, p.chave, p.ano)} /><//>`;
-}
-
 function Anos({ anos, ano, setAno }) {
-  return html`<div class="chips" role="radiogroup" aria-label="Ano">${anos.map(a =>
+  return html`<div class="chips seletor-ano" role="radiogroup" aria-label="Ano">${anos.map(a =>
     html`<button type="button" role="radio" aria-checked=${a.ano === ano} onClick=${() => setAno(a.ano)}>${a.ano}</button>`)}</div>`;
 }
+
+const ledeDoPrefeito = p => p ? `${nomeProprio(p.nome)}, eleito(a) em ${p.ano} com ${nf.format(p.votos)} votos. Gastos, folha, licitações e campanha, com dados do TCE-PB.`
+  : 'Gastos, folha, licitações e campanha, com dados do TCE-PB.';
 
 export function PerfilPrefeitura({ anos, aoVerNoMapa }) {
   const [ano, setAno] = useState(anos[0]?.ano);
   const a = anos.find(x => x.ano === ano) || anos[0], prefeito = anos[0]?.prefeito, detalhe = usarDetalhe(a?.ano);
-  if (!a) return html`<article class="perfil"><${Voltar} /><p class="hint">O TCE-PB ainda não tem dados de Bayeux.</p></article>`;
+  if (!a) return html`<article class="perfil"><${CabecalhoDoPerfil} pagina="prefeitura" rotulo="Perfil do município · Prefeitura" titulo="Prefeitura de Bayeux" /><${Aviso}>O TCE-PB ainda não tem dados de Bayeux.<//></article>`;
   return html`<article class="perfil">
-    <${Voltar} />
-    ${prefeito ? html`<${Prefeito} p=${prefeito} anos=${anos} aoVerNoMapa=${aoVerNoMapa} />` : html`<${Topo} titulo="Prefeitura de Bayeux" />`}
-    <h2 class="perfil-ano">O município em</h2><${Anos} anos=${anos} ano=${a.ano} setAno=${setAno} />
-    ${a.prefeito && a.prefeito.chave !== prefeito?.chave && html`<p class="hint">Em ${a.ano}, o prefeito eleito era ${nomeProprio(a.prefeito.nome)} (eleição de ${a.prefeito.ano}).</p>`}
-    <${NumerosDoAno} a=${a} />
-    <${Secao} id="pa" titulo=${`Para onde foi o dinheiro em ${a.ano}`}><${ArvoreDeGastos} key=${a.ano} arvores=${detalhe?.arvores} ano=${a.ano} /><//>
-    <${Secao} id="px" titulo=${`Valores atípicos nos pagamentos de ${a.ano}`}><${Alertas} a=${a} anos=${anos} /><//>
-    <${FolhaDoAno} a=${a} detalhe=${detalhe} /><${LicitacoesDoAno} a=${a} detalhe=${detalhe} /><${EmendasRecebidas} a=${a} />
-    <${Secao} id="pd" titulo=${`Doadores e fornecedores de campanhas que também receberam do município em ${a.ano}`}><${Ligacoes} ligacoes=${ligacoesDoAno(a)} comCandidato /><//>
-    <p class="hint">Fontes: TCE-PB (Sagres: despesas, folha, receitas e licitações da Prefeitura, da Câmara e dos demais órgãos municipais) e TSE. Mudanças de prefeito no meio do mandato (cassação, renúncia) não aparecem aqui.</p>
+    <${CabecalhoDoPerfil} pagina="prefeitura" rotulo=${`Perfil do município · Prefeitura · ${a.ano}${anoParcial(a) ? ', parcial' : ''}`} titulo="Prefeitura de Bayeux"
+      lede=${ledeDoPrefeito(prefeito)} indicadores=${indicadoresDoAno(a)}>
+      ${prefeito && html`<button type="button" class="link" onClick=${() => aoVerNoMapa(prefeito.ano, prefeito.chave)}>Ver os votos de ${prefeito.ano} no mapa</button>`}
+      <${Anos} anos=${anos} ano=${a.ano} setAno=${setAno} /><//>
+    ${a.prefeito && a.prefeito.chave !== prefeito?.chave && html`<${Aviso}>Em ${a.ano}, o prefeito eleito era ${nomeProprio(a.prefeito.nome)} (eleição de ${a.prefeito.ano}).<//>`}
+    <${ParaOndeVai} a=${a} detalhe=${detalhe} /><${AoLongoDoTempo} anos=${anos} a=${a} />
+    <${FolhaLicitacoesCredores} a=${a} detalhe=${detalhe} /><${Atipicos} a=${a} anos=${anos} />
+    <${EmendasNoCaixa} a=${a} /><${Campanhas} a=${a} anos=${anos} prefeito=${prefeito} />
+    <p class="fonte">Fonte: TCE-PB (Sagres: despesas, folha, receitas e licitações da Prefeitura, da Câmara e dos demais órgãos municipais) e TSE. Valores em reais correntes. Mudanças de prefeito no meio do mandato (cassação, renúncia) não aparecem aqui.</p>
   </article>`;
 }

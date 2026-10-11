@@ -3,6 +3,7 @@
 import { pct, sentence, titleCase, dinheiro } from './formato.mjs';
 import { cotaPorPartido, perfilDoGrupo } from './calculos.mjs';
 import { nomeDe, usarLimite } from './componentes.mjs';
+import { Cartao } from './cartao.mjs';
 const { html, useMemo } = window.htmPreact;
 
 export function FundoPorPartido({ cfg, cands, financas, perfis }) {
@@ -10,13 +11,12 @@ export function FundoPorPartido({ cfg, cands, financas, perfis }) {
   const [limite, botao] = usarLimite(linhas.length);
   if (!linhas.length) return null;
   const max = linhas[0].fefc;
-  return html`<section class="analise" aria-labelledby="fp"><h2 id="fp">Fundo eleitoral por partido</h2>
+  return html`<${Cartao} tipo="Lista · barra por partido" titulo="Fundo eleitoral por partido" sub="A barra mede o fundo eleitoral recebido pelos candidatos do partido."
+      nota=${`⚠ marca os partidos que deram menos de 30% do fundo eleitoral ${cfg.regiao} a mulheres. A regra dos 30% vale para o total nacional do partido, então isto indica como o dinheiro foi distribuído aqui, não uma irregularidade. Pessoas negras: pretas e pardas.`}>
     <ul class="partidos">${linhas.slice(0, limite).map(p => { const m = p.fefcMulheres / p.fefc, n = p.fefcNegros / p.fefc;
       return html`<li><span class="nm">${p.partido}</span><span class="vv">${dinheiro(p.fefc)}</span>
         <span class="bar" aria-hidden="true"><i style=${`width:${(p.fefc / max * 100).toFixed(1)}%`}></i></span>
-        <span class="meta"><span class=${m < 0.3 ? 'abaixo' : ''}>${m < 0.3 ? '⚠ ' : ''}${pct(m, 0)} para mulheres</span> · ${pct(n, 0)} para pessoas negras · ${p.mulheres} de ${p.candidatos} candidaturas são de mulheres</span></li>`; })}</ul>${botao}
-    <p class="hint">⚠ marca os partidos que deram menos de 30% do fundo eleitoral ${cfg.regiao} a mulheres. A regra dos 30% vale para o total nacional do partido, então isto indica como o dinheiro foi distribuído aqui, não uma irregularidade. Pessoas negras: pretas e pardas.</p>
-  </section>`;
+        <span class="meta"><span class=${m < 0.3 ? 'abaixo' : ''}>${m < 0.3 ? '⚠ ' : ''}${pct(m, 0)} para mulheres</span> · ${pct(n, 0)} para pessoas negras · ${p.mulheres} de ${p.candidatos} candidaturas são de mulheres</span></li>`; })}</ul>${botao}<//>`;
 }
 
 function BarrasDoPerfil({ titulo, linhas, totalCands, totalEleitos }) {
@@ -31,10 +31,10 @@ export function PerfilDoCargo({ cfg, cands, perfis }) {
   const grupos = useMemo(() => ({ g: perfilDoGrupo(cands, perfis, cfg.chaveDe, 'g'), r: perfilDoGrupo(cands, perfis, cfg.chaveDe, 'r') }), [cands, perfis]);
   const totalCands = grupos.g.reduce((s, l) => s + l.candidatos, 0), totalEleitos = grupos.g.reduce((s, l) => s + l.eleitos, 0);
   if (!totalCands) return null;
-  return html`<section class="analise" aria-labelledby="pf"><h2 id="pf">Quem disputou e quem se elegeu</h2>
+  return html`<${Cartao} tipo="Barras · candidatos e eleitos" titulo="Quem disputou e quem se elegeu" sub="Cada barra mede a parcela do grupo entre os candidatos e entre os eleitos."
+      nota="Candidatos que receberam votos nesta eleição, pelo cadastro do TSE (autodeclaração).">
     <${BarrasDoPerfil} titulo="Gênero" linhas=${grupos.g} totalCands=${totalCands} totalEleitos=${totalEleitos} />
-    <${BarrasDoPerfil} titulo="Cor ou raça" linhas=${grupos.r} totalCands=${totalCands} totalEleitos=${totalEleitos} />
-    <p class="hint">Candidatos que receberam votos nesta eleição, pelo cadastro do TSE (autodeclaração).</p></section>`;
+    <${BarrasDoPerfil} titulo="Cor ou raça" linhas=${grupos.r} totalCands=${totalCands} totalEleitos=${totalEleitos} /><//>`;
 }
 
 export function Doadores({ cfg, cands, financas, onPick }) {
@@ -45,8 +45,8 @@ export function Doadores({ cfg, cands, financas, onPick }) {
   }).filter(d => d.para.length).sort((a, b) => b.v - a.v).slice(0, 30), [financas, porChave]);
   const [limite, botao] = usarLimite(lista.length);
   if (!lista.length) return null;
-  return html`<section class="analise" aria-labelledby="dd"><h2 id="dd">Maiores doadores</h2>
+  return html`<${Cartao} tipo="Lista · doadores" titulo="Maiores doadores"
+      nota=${`Doações de pessoas${financas.doadores.some(d => d.t === 'pj') ? ' e empresas' : ''} a candidatos deste cargo, somadas pelo CPF/CNPJ do doador (que o site não mostra).`}>
     <ol class="doadores">${lista.slice(0, limite).map(d => html`<li><div class="cab"><span class="nm">${titleCase(d.n)}</span><span class="vv">${dinheiro(d.v)}</span></div>
-      <p>${d.para.slice(0, 5).map((p, i) => html`${i ? ', ' : ''}<button type="button" class="link" onClick=${() => onPick(p.cand)}>${nomeDe(p.cand)}</button> (${dinheiro(p.v)})`)}${d.para.length > 5 ? ` e mais ${d.para.length - 5}` : ''}</p></li>`)}</ol>${botao}
-    <p class="hint">Doações de pessoas${financas.doadores.some(d => d.t === 'pj') ? ' e empresas' : ''} a candidatos deste cargo, somadas pelo CPF/CNPJ do doador (que o site não mostra).</p></section>`;
+      <p>${d.para.slice(0, 5).map((p, i) => html`${i ? ', ' : ''}<button type="button" class="link" onClick=${() => onPick(p.cand)}>${nomeDe(p.cand)}</button> (${dinheiro(p.v)})`)}${d.para.length > 5 ? ` e mais ${d.para.length - 5}` : ''}</p></li>`)}</ol>${botao}<//>`;
 }
