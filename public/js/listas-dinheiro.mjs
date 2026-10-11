@@ -1,10 +1,12 @@
 // Detalhe do dinheiro de um candidato: posição entre os do cargo, para onde foi o gasto (categoria → todos os
-// fornecedores) e quem doou (os dez maiores no arquivo de finanças).
-import { pct, sentence, titleCase, dinheiro, nomeDeQuem } from './formato.mjs';
+// fornecedores) e quem doou (os dez maiores no arquivo de finanças, com as outras campanhas que cada um financiou).
+import { sentence, dinheiro, nomeDeQuem } from './formato.mjs';
 import { ArvoreDeBarras } from './arvore.mjs';
 import { arvoreDoGasto } from './calculos-arvore.mjs';
-import { ListaDeBarras } from './componentes.mjs';
-const { html } = window.htmPreact;
+import { redeDoCandidato } from './calculos.mjs';
+import { ArvoreDoCargo } from './arvore-do-cargo.mjs';
+import { arvoreDeDoadores } from './calculos-arvores-ficha.mjs';
+const { html, useMemo } = window.htmPreact;
 
 const ordinal = ({ posicao, de }) => posicao > 0 ? `${posicao}º de ${de}` : null;
 
@@ -31,10 +33,12 @@ export function DespesasDoCandidato({ categorias }) {
     <div class="arvore"><${ArvoreDeBarras} arvore=${arvoreDoGasto(categorias)} rotulo=${quemRecebeu} /></div>`;
 }
 
-export function DoadoresDoCandidato({ doacoes, quantos, recebido }) {
-  if (!doacoes?.length) return null;
+export function DoadoresDoCandidato({ f, chave, ctx, recebido, onPick }) {
+  const doacoes = f.doa, quantos = f.nd;
+  const rede = useMemo(() => ctx ? redeDoCandidato(doacoes, ctx.financas.doadores, chave, ctx.candPorChave) : [], [f, ctx]);
+  const arvore = useMemo(() => doacoes?.length ? arvoreDeDoadores(doacoes, rede, recebido) : null, [doacoes, rede, recebido]);
+  if (!arvore) return null;
   return html`<h3>Quem doou</h3>
-    <${ListaDeBarras} itens=${doacoes.map(([n, t, v]) => ({ n: t === 'pj' ? html`${titleCase(n)} <small>(empresa)</small>` : titleCase(n), v,
-      rotulo: recebido ? `${dinheiro(v)} · ${pct(v / recebido, 0)}` : dinheiro(v) }))} />
-    <p class="hint">${quantos > doacoes.length ? `Os ${doacoes.length} maiores de ${quantos} doadores. ` : ''}Doações de pessoas e empresas, somadas pelo CPF/CNPJ (que o site não mostra); a porcentagem é sobre todo o dinheiro recebido.</p>`;
+    <${ArvoreDoCargo} arvore=${arvore} formato=${dinheiro} onPick=${onPick} ordenar=${true} legenda="Doador → outras campanhas que ele também financiou · R$" />
+    <p class="hint">${quantos > doacoes.length ? `Os ${doacoes.length} maiores de ${quantos} doadores. ` : ''}Doações de pessoas e empresas, somadas pelo CPF/CNPJ (que o site não mostra); a porcentagem é sobre todo o dinheiro recebido. Toque num doador que também financiou outras campanhas para vê-las.</p>`;
 }

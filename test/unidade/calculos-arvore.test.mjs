@@ -15,3 +15,25 @@ test('gasto da campanha como árvore: categoria e quem recebeu nela', () => {
   assert.equal(arvore.v, 1000);
   assert.deepEqual(ramoDaArvore(arvore, ['Impressos']), { valor: 700, filhos: [['GRAFICA', 500], ['Outros (2)', 200]] });
 });
+
+import { arvoreDosLugares } from '../../public/js/calculos-arvore.mjs';
+
+const lugares = [
+  { key: 'A', name: 'Alto', v: 30, t: 200, p: 0.15, locais: [{ nome: 'Escola 1', v: 20, t: 120 }, { nome: 'Escola 2', v: 10, t: 80 }, { nome: 'Escola 3', v: 0, t: 50 }] },
+  { key: 'B', name: 'Baixo', v: 50, t: 100, p: 0.5, locais: [{ nome: 'Creche', v: 50, t: 100 }] },
+  { key: 'C', name: 'Centro', v: 0, t: 90, p: 0, locais: [{ nome: 'Praça', v: 0, t: 90 }] },
+];
+const parcela = f => `${Math.round(f * 100)}%`;
+
+test('lugares como árvore: lugar → local de votação, com a parcela como nota e a chave do lugar', () => {
+  const { v, filhos } = arvoreDosLugares(lugares, { ordem: 'votos', parcela });
+  assert.equal(v, 80);
+  assert.deepEqual(filhos.map(f => f[0]), ['Baixo', 'Alto']);
+  assert.deepEqual(filhos[1], ['Alto', 30, [['Escola 1', 20, null, '17%'], ['Escola 2', 10, null, '13%']], '15%', 'A']);
+});
+
+test('lugares como árvore: lugar sem voto fica de fora; ordem por parcela ou por nome', () => {
+  assert.deepEqual(arvoreDosLugares(lugares, { ordem: 'pct', parcela }).filhos.map(f => f[0]), ['Baixo', 'Alto']);
+  assert.deepEqual(arvoreDosLugares(lugares, { ordem: 'nome', parcela }).filhos.map(f => f[0]), ['Alto', 'Baixo']);
+  assert.equal(arvoreDosLugares(lugares, { ordem: 'votos', parcela }).filhos.some(f => f[0] === 'Centro'), false);
+});

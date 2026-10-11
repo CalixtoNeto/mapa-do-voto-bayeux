@@ -1,7 +1,8 @@
 // Mais sobre o dinheiro de um candidato: pago e dívida, de quem ele depende, ritmo da arrecadação,
 // com quem divide doadores e fornecedores e o dinheiro dele em outras eleições.
-import { nf, pct, titleCase, dinheiro, centavos, diaEMes, NORM } from './formato.mjs';
-import { nomeDe } from './componentes.mjs';
+import { nf, pct, dinheiro, centavos, diaEMes, NORM } from './formato.mjs';
+import { ArvoreDoCargo } from './arvore-do-cargo.mjs';
+import { arvoreDeParticipantes } from './calculos-arvores-dinheiro.mjs';
 import { Colunas } from './graficos.mjs';
 import { ritmoDaArrecadacao, dividaDeCampanha, dependencia, redeDoCandidato } from './calculos.mjs';
 const { html, useMemo } = window.htmPreact;
@@ -26,18 +27,22 @@ export function RitmoDaArrecadacao({ semanas }) {
     <p class="hint">Metade do dinheiro tinha chegado até a semana de ${diaEMes(r.metade)}. Receitas pela data registrada na prestação de contas.</p>`;
 }
 
-function ListaDaRede({ titulo, rede, verbo, onPick }) {
+// Quem se liga a mais de uma campanha: o valor do ramo é o que ele deu ou recebeu das outras campanhas.
+function ArvoreDaRede({ titulo, legenda, rede, deste, de, onPick }) {
+  const arvore = useMemo(() => arvoreDeParticipantes(rede.map(r => ({ n: r.n, v: r.outros.reduce((s, o) => s + o.v, 0), para: r.outros, deste: r.v })),
+    { nota: r => `${dinheiro(r.deste)} ${deste}`, de }), [rede]);
   if (!rede.length) return null;
-  return html`<h3>${titulo}</h3><ul class="rede">${rede.map(r => html`<li><span class="nm">${titleCase(r.n)}</span> ${verbo}${' '}${r.outros.slice(0, 4).map((o, i) => html`${i ? ', ' : ''}<button type="button" class="link" onClick=${() => onPick(o.cand)}>${nomeDe(o.cand)}</button> (${dinheiro(o.v)})`)}${r.outros.length > 4 ? ` e mais ${r.outros.length - 4}` : ''}</li>`)}</ul>`;
+  return html`<h3>${titulo}</h3><${ArvoreDoCargo} arvore=${arvore} formato=${dinheiro} onPick=${onPick} ordenar=${true} legenda=${legenda} />`;
 }
 
 export function RedeDaCampanha({ f, chave, ctx, onPick }) {
-  const doadores = useMemo(() => redeDoCandidato(f.doa, ctx.financas.doadores, chave, ctx.candPorChave), [f, ctx]);
+  const jaListados = new Set((f.doa || []).map(d => d[0]));
+  const doadores = useMemo(() => redeDoCandidato(f.doa, ctx.financas.doadores, chave, ctx.candPorChave).filter(r => !jaListados.has(r.n)), [f, ctx]);
   const fornecedores = useMemo(() => redeDoCandidato(f.fo, ctx.financas.fornecedores, chave, ctx.candPorChave), [f, ctx]);
   if (!doadores.length && !fornecedores.length) return null;
-  return html`<${ListaDaRede} titulo="Doadores em comum com outras campanhas" rede=${doadores} verbo="também doou a" onPick=${onPick} />
-    <${ListaDaRede} titulo="Fornecedores em comum com outras campanhas" rede=${fornecedores} verbo="também atendeu" onPick=${onPick} />
-    <p class="hint">Mostra quem se liga a mais de uma campanha nesta eleição; não indica, por si só, irregularidade nem acordo.</p>`;
+  return html`<${ArvoreDaRede} titulo="Outros doadores em comum com outras campanhas" legenda="Doador → outras campanhas que financiou · R$" rede=${doadores} deste="a este candidato" de="do que ele doou nas outras" onPick=${onPick} />
+    <${ArvoreDaRede} titulo="Fornecedores em comum com outras campanhas" legenda="Fornecedor → outras campanhas que atendeu · R$" rede=${fornecedores} deste="deste candidato" de="do que ele recebeu nas outras" onPick=${onPick} />
+    <p class="hint">Mostra quem se liga a mais de uma campanha nesta eleição; não indica, por si só, irregularidade nem acordo. Toque para ver as outras campanhas.</p>`;
 }
 
 export function DinheiroEntreEleicoes({ cand, ctx, nomeDoCargo }) {

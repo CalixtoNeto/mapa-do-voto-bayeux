@@ -15,3 +15,5 @@ export { BarrasComMeta } from './barras-meta.mjs';
 export { ColunasSobrepostas, Pilhas100 } from './colunas-pilhas.mjs';
 export { Sparkline } from './sparkline.mjs';
 export { Dispersao } from './dispersao.mjs';
+export { ArvoreDeBarras } from './arvore.mjs';
+export { arvoreDosLugares } from './calculos-arvore.mjs';

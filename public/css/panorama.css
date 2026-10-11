@@ -56,3 +56,16 @@ main > .aviso{margin:18px 0 0}
 .cartao .calor-rolagem{margin:0 -4px}
 .cartao .calor td{min-width:54px}
 .bloco > h2 + .aviso{margin-top:12px}
+
+/* árvores de barras dos cartões: legenda da hierarquia, botão da ficha e nomes que abrem a ficha */
+.cartao .arvore-legenda{margin:0; font:500 12px/1.3 var(--sans); letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.cartao .sanfona{margin-top:2px}
+.cartao .sanfona .lv{justify-self:end}
+.cartao .sanfona .peso{grid-column:2 / -1; grid-row:3; justify-self:end; white-space:normal}
+.cartao .sanfona .link{min-height:40px; padding:0 2px; align-self:auto; text-align:left; font:inherit}
+.cartao .sanfona .nome-cand{color:var(--ink); text-decoration:underline; text-decoration-color:var(--line); text-underline-offset:3px}
+.cartao .sanfona .nome-cand:hover{text-decoration-color:currentColor}
+.cartao .sanfona .ramo.folha:has(> .abre .ver-ficha) .bar,.cartao .sanfona .ramo.folha:has(> .abre .ver-ficha) .peso{display:none}
+.cartao .sanfona .ver-ficha{color:var(--accent); font-weight:600}
+.cartao .sanfona .abre{row-gap:2px}
+.cartao .sanfona .filhos .abre{padding:6px 4px 4px}

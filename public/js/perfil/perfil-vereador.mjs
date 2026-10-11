@@ -26,7 +26,7 @@ export function PerfilVereador({ v, camara, anos, aoVerNoMapa }) {
       <${Cartao} tipo="Barra empilhada · votos" titulo="Sim, não e abstenção"><${Votacoes} v=${v} nomes=${nomes} /><//>
       <${Cartao} tipo="Lista · matérias" titulo="Matérias de autoria"><${Materias} m=${v.materias} /><//><//>
     <${Bloco} id="vr" titulo="Remuneração e partido" colunas="metade">
-      <${Cartao} tipo="Folha da Câmara" titulo="Remuneração"><${Remuneracao} rem=${remuneracaoDe(v)} /><//>
+      <${Cartao} tipo="Folha da Câmara" titulo="Remuneração"><${Remuneracao} rem=${remuneracaoDe(v)} meses=${v.remuneracao} /><//>
       <${Cartao} tipo="Filiação" titulo="Partido"><${Partidos} v=${v} /><//><//>
     ${v.chave && html`<${Bloco} id="vc" titulo="Campanha e pagamentos do município">
       <${Cartao} classe="largo" tipo="Lista · campanha" titulo="Doadores e fornecedores da campanha" sub="Que também receberam do município">

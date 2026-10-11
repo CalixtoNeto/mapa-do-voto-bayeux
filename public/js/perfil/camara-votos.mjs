@@ -5,9 +5,9 @@ import { Cartao } from '../cartao.mjs';
 import { Pilhas100 } from '../colunas-pilhas.mjs';
 import { Rosca } from '../graficos.mjs';
 import { Dispersao } from '../dispersao.mjs';
-import { Ranking } from '../ranking.mjs';
+import { ArvoreComLegenda } from './arvore-legenda.mjs';
+import { arvoreDeConcordancia } from './arvores-camara.mjs';
 import { Legenda } from '../legenda.mjs';
-import { slug } from './calculos-perfil.mjs';
 import { votosPorVereador, totalDeVotos, alinhamentos, presencaXAlinhamento } from './calculos-camara.mjs';
 const { html } = window.htmPreact;
 
@@ -37,10 +37,10 @@ export function ComoVotam({ vereadores, votacoes }) {
 }
 
 function Alinhamento({ vereadores }) {
-  const lista = alinhamentos(vereadores);
-  return html`<${Cartao} tipo="Barra horizontal · ranking" titulo="Alinhamento com a maioria" sub="Não diz quem está certo: só quem votou junto com a maioria da Câmara."
-    nota="A barra mede votações em que votou como a maioria sobre as votações em que a maioria se formou e ele votou.">
-    <${Ranking} descricao="Alinhamento de cada vereador com a maioria" itens=${lista.map(l => ({ n: html`<a href=${'#perfil/' + slug(l.nome)}>${l.nome}</a>`, v: l.fracao, rotulo: pct0(l.fracao), lado: `${l.com} de ${l.de}` }))} /><//>`;
+  const arvore = arvoreDeConcordancia(alinhamentos(vereadores).map(l => ({ nome: l.nome, parte: l.com, total: l.de })), ['Com a maioria', 'Contra a maioria']);
+  return html`<${Cartao} tipo="Árvore expansível · ranking" titulo="Alinhamento com a maioria" sub="Não diz quem está certo: só quem votou junto com a maioria da Câmara."
+    nota="Em cada vereador, a parte das votações em que a maioria se formou e ele votou: com a maioria e contra ela.">
+    <${ArvoreComLegenda} legenda="Vereador → com e contra a maioria · % das votações" arvore=${arvore} formato=${pct0} escala="maior" mostrarTotal=${false} rotulo=${nome => nome} /><//>`;
 }
 
 function PresencaEAlinhamento({ vereadores }) {
