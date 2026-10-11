@@ -19,8 +19,8 @@
 .abas.aba button{flex:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; background:none; padding:0 14px; min-height:46px; font:400 15px var(--sans); color:var(--muted); cursor:pointer; white-space:nowrap}
 .abas.aba button:hover{color:var(--ink)}
 .abas.aba button[aria-selected="true"]{color:var(--ink); font-weight:500; border-bottom-color:var(--accent)}
-.abas.painel{border-bottom:1px solid var(--line); gap:22px}
-.abas.painel button{flex:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; background:none; padding:0 2px; min-height:44px; font:600 18px var(--serif); color:var(--muted); cursor:pointer; white-space:nowrap}
+.abas.painel{border-bottom:1px solid var(--line); gap:16px}
+.abas.painel button{flex:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px; background:none; padding:0 2px; min-height:44px; font:600 16.5px var(--serif); color:var(--muted); cursor:pointer; white-space:nowrap}
 .abas.painel button[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--ink)}
 .abas.pilula{flex-wrap:wrap; overflow:visible; gap:8px}
 .abas.pilula button{flex:none; border:1px solid var(--line); border-radius:999px; background:transparent; padding:0 16px; min-height:40px; font:400 14px var(--sans); cursor:pointer}
@@ -41,7 +41,7 @@
 .indicadores{display:grid; grid-template-columns:repeat(var(--n,3),minmax(0,1fr)); gap:16px 22px; margin:0}
 .indicadores div{display:flex; flex-direction:column; border-top:2px solid var(--ink); padding-top:10px; min-width:0}
 .indicadores dt{font-size:13px; line-height:1.3; color:var(--muted)}
-.indicadores dd{margin:6px 0 0; font:600 clamp(26px,3.4vw,30px)/1.05 var(--serif); letter-spacing:-.01em; overflow-wrap:anywhere}
+.indicadores dd{margin:6px 0 0; font:600 clamp(26px,3.4vw,30px)/1.05 var(--serif); letter-spacing:-.01em; white-space:nowrap}
 .indicadores div:first-child dd{font-size:clamp(36px,5vw,48px)}
 .indicadores small{margin-top:6px; font-size:13px; line-height:1.35; color:var(--muted)}
 @media (max-width:560px){ .indicadores{grid-template-columns:repeat(2,minmax(0,1fr))} .indicadores div:first-child{grid-column:1 / -1} }
@@ -130,3 +130,5 @@
   .abas.painel{gap:14px} .abas.painel button{font-size:16px}
   .hero{padding:22px 0 20px}
 }
+@media (min-width:900px){ .hero:has(.indicadores.denso){grid-template-columns:1fr} }
+@media (min-width:900px) and (max-width:1099px){ .hero{grid-template-columns:1fr} }
