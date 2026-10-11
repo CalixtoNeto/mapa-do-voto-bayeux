@@ -85,3 +85,9 @@ test('remuneração: ano com a soma e, abaixo, cada mês, do ano mais novo ao ma
   assert.deepEqual(a.filhos.map(f => [f[0], f[1], f[3]]), [['2025', 24, '2 meses'], ['2024', 10, '1 mês']]);
   assert.deepEqual(a.filhos[0][2], [['01/2025', 12, null, 'Presidente'], ['02/2025', 12, null, 'Presidente']]);
 });
+
+test('credores: nomes repetidos somam num ramo só e o que não cabe no valor do credor fica sem filhos', () => {
+  const area = { v: 100, filhos: [['SAUDE', 100, [['Serviços', 100, [['EMPRESA A', 60], ['EMPRESA B', 40]]]]]] };
+  const a = arvoreDosCredores([['EMPRESA A', '1', 30, 2], ['EMPRESA A', '2', 30, 1], ['EMPRESA B', '3', 10, 4]], area);
+  assert.deepEqual(a.filhos.map(f => [f[0], f[1], f[2].length]), [['EMPRESA A', 60, 1], ['EMPRESA B', 10, 0]]);
+});

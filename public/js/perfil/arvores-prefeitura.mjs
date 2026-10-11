@@ -26,11 +26,23 @@ const ramoDaArea = (area, tipos, doCredor) => {
   return [area, v, parteDoPai(filhos, v, `de ${area}`), `${parteTexto(v, doCredor)} do credor`];
 };
 
-// credores: [nome, documento, pago, vezes]. O valor do credor é o do arquivo; o que há abaixo vem do detalhe do ano.
+// Um credor pode vir em mais de uma linha (um documento por linha); a árvore por área só conhece o nome, então somam-se as linhas do mesmo nome.
+function somaPorNome(credores) {
+  const nomes = new Map();
+  for (const [n, doc, v, vezes] of credores) { const c = nomes.get(n); nomes.set(n, c ? [n, doc, c[2] + v, c[3] + vezes] : [n, doc, v, vezes]); }
+  return [...nomes.values()];
+}
+
+const FOLGA = 1.005;
+
+// credores: [nome, documento, pago, vezes]. O valor do credor é o do arquivo; o que há abaixo vem do detalhe do ano e só entra se couber nele
+// (o detalhe pode juntar homônimos ou pagamentos que a lista de credores não traz).
 export function arvoreDosCredores(credores, arvoreArea, quantos = 40) {
-  const indice = porFornecedor(arvoreArea), lista = maioresCredores(credores, quantos), total = soma(lista.map(c => [0, c.v]));
-  const filhos = lista.map(c => [c.n, c.v, [...(indice.get(c.n) || [])].map(([area, tipos]) => ramoDaArea(area, tipos, c.v)),
-    `${plural(c.vezes, 'pagamento', 'pagamentos')} · ${parteTexto(c.v, total)}`]);
+  const indice = porFornecedor(arvoreArea), lista = maioresCredores(somaPorNome(credores), quantos), total = soma(lista.map(c => [0, c.v]));
+  const filhos = lista.map(c => {
+    const areas = [...(indice.get(c.n) || [])].map(([area, tipos]) => ramoDaArea(area, tipos, c.v));
+    return [c.n, c.v, soma(areas) <= c.v * FOLGA ? areas : [], `${plural(c.vezes, 'pagamento', 'pagamentos')} · ${parteTexto(c.v, total)}`];
+  });
   return { v: soma(filhos), filhos };
 }
 
