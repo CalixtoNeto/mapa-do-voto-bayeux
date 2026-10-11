@@ -4,9 +4,10 @@ import { Cartao } from './cartao.mjs';
 import { Bloco } from './estrutura.mjs';
 import { MapaDeCalor } from './mapa-de-calor.mjs';
 import { Haltere } from './graficos.mjs';
-import { tabelaDeEleitores, variacaoDosEleitores } from './calculos-eleitorado.mjs';
+import { tabelaDeEleitores, variacaoDosEleitores, maioresLugares } from './calculos-eleitorado.mjs';
 const { html, useMemo } = window.htmPreact;
 
+const plural = (n, um, varios) => n === 1 ? um : varios;
 const sinal = d => `${d > 0 ? '+' : '−'}${nf.format(Math.abs(d))}`;
 
 function notaDoCadastro(suspeitos, nomes) {
@@ -22,18 +23,20 @@ function LinhaDoHaltere({ v, nomes, teto, anos }) {
 }
 
 export function EleitoradoPorLugar({ cfg, serie, anos }) {
-  const tabela = useMemo(() => serie && anos.length > 1 ? tabelaDeEleitores(serie.porAno, anos) : null, [serie, anos]);
+  const completa = useMemo(() => serie && anos.length > 1 ? tabelaDeEleitores(serie.porAno, anos) : null, [serie, anos]);
+  const tabela = useMemo(() => completa && maioresLugares(completa, cfg.maximoDeLugares), [completa]);
   const variacao = useMemo(() => tabela ? variacaoDosEleitores(tabela) : [], [tabela]);
   if (!tabela || tabela.lugares.length < 3) return null;
+  const recorte = completa.lugares.length > tabela.lugares.length ? `Os ${tabela.lugares.length} maiores ${cfg.lugaresNome} por eleitores em ${anos[anos.length - 1]}, de ${completa.lugares.length}. ` : '';
   const confiaveis = variacao.filter(v => !v.suspeito), ganhos = confiaveis.filter(v => v.diferenca > 0).slice(0, 6);
   const quedas = confiaveis.filter(v => v.diferenca < 0).slice(-3).reverse(), mostradas = [...ganhos, ...quedas];
   const teto = Math.max(1, ...mostradas.flatMap(v => [v.de, v.ate])), [de, ate] = [anos[0], anos[anos.length - 1]];
-  return html`<${Bloco} id="b-eleitorado" titulo=${`Onde os eleitores votam, por ${cfg.lugarNome}`} colunas="dois-tercos"
+  return html`<${Bloco} id="b-eleitorado" titulo=${recorte ? `Onde os eleitores votam: os ${tabela.lugares.length} maiores ${cfg.lugaresNome}` : `Onde os eleitores votam, por ${cfg.lugarNome}`} colunas="dois-tercos"
       lede=${`Mapa de calor por ${cfg.lugarNome} e ano, e haltere para ver quanto cada um mudou entre ${de} e ${ate}. Cor mais escura, mais eleitores.`}>
-    <${Cartao} tipo=${`Mapa de calor · ${cfg.lugarNome} × ano`} titulo="Eleitores por lugar de votação" nota=${notaDoCadastro(variacao.filter(v => v.suspeito), serie.nomes)}>
+    <${Cartao} tipo=${`Mapa de calor · ${cfg.lugarNome} × ano`} titulo="Eleitores por lugar de votação" nota=${recorte + notaDoCadastro(variacao.filter(v => v.suspeito), serie.nomes)}>
       <${MapaDeCalor} linhas=${tabela.lugares.map(l => serie.nomes[l])} colunas=${anos} valores=${tabela.valores} formato=${nf.format.bind(nf)}
         legenda=${`Eleitores aptos por ${cfg.lugarNome} em ${anos.join(', ')}`} /><//>
     <${Cartao} tipo=${`Haltere · variação ${de} → ${ate}`} titulo="Quem mais ganhou e perdeu eleitores" sub=${`Ponto cinza: ${de}. Ponto azul: ${ate}.`}
-        nota=${`Os ${ganhos.length} maiores ganhos e as ${quedas.length} maiores quedas em número de eleitores, de ${de} a ${ate}. Lugares com salto no cadastro ficam de fora (veja a nota do mapa de calor).`}>
+        nota=${`${recorte}${plural(ganhos.length, 'O maior ganho', 'Os ' + ganhos.length + ' maiores ganhos')} e ${plural(quedas.length, 'a maior queda', 'as ' + quedas.length + ' maiores quedas')} em número de eleitores, de ${de} a ${ate}. Lugares com salto no cadastro ficam de fora (veja a nota do mapa de calor).`}>
       <ul class="halteres">${mostradas.map(v => html`<${LinhaDoHaltere} v=${v} nomes=${serie.nomes} teto=${teto} anos=${anos} />`)}</ul><//><//>`;
 }

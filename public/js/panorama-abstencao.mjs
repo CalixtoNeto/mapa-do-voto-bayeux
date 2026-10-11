@@ -1,4 +1,4 @@
-// Abstenção ao longo do tempo: duas linhas (eleições municipais e gerais) e as colunas de eleitores aptos de cada eleição.
+// Abstenção ao longo do tempo: uma linha por tipo de eleição (municipais, gerais; só as que existem) e as colunas de eleitores aptos.
 import { nf, pct } from './formato.mjs';
 import { Cartao } from './cartao.mjs';
 import { Bloco } from './estrutura.mjs';
@@ -15,7 +15,7 @@ function textoDaSerie(eleicoes) {
   const partes = [];
   if (menor && outras.length) partes.push(`${menor.ano} teve a menor abstenção entre as municipais (${pct(menor.taxa)}); nas outras, ficou entre ${pct(Math.min(...outras))} e ${pct(Math.max(...outras))}.`);
   if (gerais.length > 1) partes.push(`Nas gerais, ficou entre ${pct(Math.min(...gerais))} e ${pct(Math.max(...gerais))}.`);
-  return `${partes.join(' ')} O eixo começa em zero.`;
+  return `${partes.join(' ')} O eixo começa em zero.`.trim();
 }
 
 function SerieDeAbstencao({ eleicoes }) {
@@ -24,7 +24,7 @@ function SerieDeAbstencao({ eleicoes }) {
   const series = [serie('Municipais', 'var(--r5)', s.municipal), serie('Gerais', 'var(--s2)', s.geral)].filter(Boolean);
   return html`<${Cartao} tipo=${`Série temporal · ${series.length > 1 ? 'duas linhas' : 'linha'}`} titulo=${`Abstenção por eleição, ${anos[0]} a ${anos[anos.length - 1]}`}
       sub="% dos eleitores aptos que não compareceram" nota=${textoDaSerie(eleicoes)}>
-    <ul class="legenda-linha"><li><i style="background:var(--r5)"></i>Municipais (prefeito)</li>${s.geral.length > 0 && html`<li><i style="background:var(--s2)"></i>Gerais (governador)</li>`}</ul>
+    <ul class="legenda-linha">${s.municipal.length > 0 && html`<li><i style="background:var(--r5)"></i>Municipais (prefeito)</li>`}${s.geral.length > 0 && html`<li><i style="background:var(--s2)"></i>Gerais (governador)</li>`}</ul>
     <${LinhaDoTempo} series=${series} rotulosX=${anos.map(a => [+a, a])} formatoEixo=${v => pct(v, 0)}
       descricao=${`Abstenção por eleição: ${series.map(x => `${x.nome}: ${x.pontos.map(p => `${p[0]}, ${pct(p[1], 1)}`).join('; ')}`).join('. ')}`} /><//>`;
 }
@@ -32,7 +32,7 @@ function SerieDeAbstencao({ eleicoes }) {
 function ColunasDeAptos({ eleicoes }) {
   const lista = [...eleicoes].sort((a, b) => a.ano - b.ano);
   return html`<${Cartao} tipo="Colunas · eleitores aptos" titulo="Eleitorado por eleição" sub="Milhares de eleitores aptos"
-      nota="As colunas escuras são as eleições municipais. A base começa em zero.">
+      nota=${lista.some(e => e.tipo === 'municipal') ? 'As colunas escuras são as eleições municipais. A base começa em zero.' : 'A base das colunas começa em zero.'}>
     <${ColunasDestacadas} itens=${lista.map(e => ({ n: e.ano.slice(2), v: e.aptos, rotulo: mil(e.aptos), escuro: e.tipo === 'municipal' }))}
       descricao=${`Eleitores aptos: ${lista.map(e => `${e.ano}, ${nf.format(e.aptos)}`).join('; ')}`} /><//>`;
 }
@@ -41,6 +41,6 @@ export function AbstencaoAoLongoDoTempo({ eleicoes }) {
   const validas = useMemo(() => eleicoes.filter(e => e.aptos > 0), [eleicoes]);
   if (validas.length < 2) return null;
   return html`<${Bloco} id="b-abstencao" titulo="Abstenção ao longo do tempo" colunas="dois-tercos"
-      lede="Série temporal com eixo proporcional: as eleições municipais e as gerais se alternam a cada dois anos e cada uma tem a sua linha.">
+      lede=${validas.some(e => e.tipo === 'municipal') ? 'Série temporal com eixo proporcional: as eleições municipais e as gerais se alternam a cada dois anos e cada uma tem a sua linha.' : 'Série temporal com eixo proporcional: a abstenção de cada eleição geral, com o eleitorado ao lado.'}>
     <${SerieDeAbstencao} eleicoes=${validas} /><${ColunasDeAptos} eleicoes=${validas} /><//>`;
 }

@@ -705,7 +705,7 @@ function App() {
   const turnoDe = d => d.turno !== '1' ? ` · ${d.turno}º turno` : '';
   const topBairro = view && [...view.bairros].filter(b => b.v > 0).sort((a, b) => b.p - a.p)[0];
 
-  const abertura = panorama ? html`<${PANORAMA.Abertura} sub=${subPanorama} ds=${ds} cands=${cands} ctx=${ctx} financas=${an.financas} cidade=${CIDADE}>
+  const abertura = panorama ? html`<${PANORAMA.Abertura} sub=${subPanorama} ds=${ds} cands=${cands} ctx=${ctx} financas=${an.financas}>
         <${AN.Abas} itens=${[['votos', 'Votos'], ['dinheiro', 'Dinheiro'], ['comparecimento', 'Comparecimento']]} valor=${subPanorama} aoMudar=${setSubPanorama} rotulo="Panorama" estilo="pilula" /><//>`
     : view ? html`<${AN.Cabecalho} rotulo=${`${sentence(view.cargoNome)} · ${view.ano}${turnoDe(view)}`} titulo=${titleCase(view.nome)}>
         <p class="id">${view.nr}${view.partido ? ' · ' + view.partido : ''}<span> · ${view.posicao}º mais votado em ${CIDADE} entre ${view.nCands} candidatos${view.sit ? ' · ' + sentence(view.sit) : ''}</span></p><//>
@@ -764,7 +764,7 @@ function App() {
       ${panorama && subPanorama === 'votos' && html`<div class="corpo"><div class="stage" ref=${mapRef}>${mapaDoPanorama}</div>
           <aside class="side"><${PANORAMA.MaisVotados} ...${propsDoPanorama} /></aside></div>
         <${PANORAMA.Votos} ...${propsDoPanorama} />`}
-      ${panorama && subPanorama === 'dinheiro' && html`<${PANORAMA.Dinheiro} ...${propsDoPanorama} cidade=${CIDADE} />`}
+      ${panorama && subPanorama === 'dinheiro' && html`<${PANORAMA.Dinheiro} ...${propsDoPanorama} />`}
       ${panorama && subPanorama === 'comparecimento' && html`<${PANORAMA.Comparecimento} ...${propsDoPanorama} />`}
       ${!panorama && html`<div class="corpo"><div class="stage" ref=${mapRef}>${mapaDoCandidato}</div>
           <aside class="side">

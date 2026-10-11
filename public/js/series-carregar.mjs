@@ -6,6 +6,8 @@ import { somaDoComparecimento } from './calculos.mjs';
 import { doisPrimeiros } from './calculos-votos.mjs';
 
 export const CARGO_DO_TIPO = { municipal: '11', geral: '3' };
+// O cargo majoritário da série dos 1º e 2º colocados: prefeito por padrão; cfg.cargoDosColocados troca (governador na Paraíba).
+export const cargoDosColocados = cfg => cfg.cargoDosColocados || CARGO_DO_TIPO.municipal;
 
 async function primeirosTurnos(base) {
   const indice = await lerJson(`${base}/index.json`);
@@ -25,9 +27,10 @@ export async function carregarComparecimentos(cfg) {
 
 export async function carregarColocados(cfg) {
   const lista = [];
-  for (const e of (await primeirosTurnos(cfg.base)).filter(x => x.cargos.some(c => c.cd === CARGO_DO_TIPO.municipal))) {
+  const cargo = cargoDosColocados(cfg);
+  for (const e of (await primeirosTurnos(cfg.base)).filter(x => x.cargos.some(c => c.cd === cargo))) {
     const dados = await lerJson(`${cfg.base}/${e.ano}-t1.json`);
-    const cands = (dados?.cands || []).filter(c => c.cargo === CARGO_DO_TIPO.municipal);
+    const cands = (dados?.cands || []).filter(c => c.cargo === cargo);
     if (cands.length) lista.push({ ano: e.ano, ...doisPrimeiros(cands) });
   }
   return lista;

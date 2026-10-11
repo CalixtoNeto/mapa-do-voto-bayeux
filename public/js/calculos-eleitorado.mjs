@@ -21,3 +21,9 @@ export function variacaoDosEleitores(tabela) {
     return de != null && ate != null ? { lugar, de, ate, diferenca: ate - de, suspeito: mudouCadastro(v) } : null;
   }).filter(Boolean).sort((a, b) => b.diferenca - a.diferenca);
 }
+
+// Em estados com centenas de lugares o mapa de calor fica ilegível: só os N de mais eleitores no último ano (sem limite, a tabela toda).
+export function maioresLugares(tabela, limite) {
+  if (!limite || tabela.lugares.length <= limite) return tabela;
+  return { ...tabela, lugares: tabela.lugares.slice(0, limite), valores: tabela.valores.slice(0, limite) };
+}

@@ -21,13 +21,15 @@ const PAPEL = { doou: 'doou', recebeu: 'recebeu' };
 const periodo = anos => anos.length > 1 ? `${anos[0]}–${anos[anos.length - 1]}` : anos[0];
 const campanha = (c, comCandidato) => `${PAPEL[c.papel]} ${dinheiro(c.valor)}${comCandidato && c.quem ? ` · ${nomeProprio(c.quem)} (${c.eleicao})` : ` em ${c.eleicao}`}`;
 
-// Credores do município ligados a campanhas, um por linha: { ano, credor, pago, valor, papel, quem?, eleicao }
-export function Ligacoes({ ligacoes, comCandidato }) {
+// Credores do poder público ligados a campanhas, um por linha: { ano, credor, pago, valor, papel, quem?, eleicao }.
+// pagador diz quem pagou e onde está o dado: { dos: 'do município', pagou: 'o município', fonte: 'TCE-PB' }.
+const PAGADOR_PADRAO = { dos: 'do município', pagou: 'o município', fonte: 'TCE-PB' };
+export function Ligacoes({ ligacoes, comCandidato, pagador = PAGADOR_PADRAO }) {
   const grupos = agruparLigacoes(ligacoes), [limite, botao] = usarLimite(grupos.length);
-  if (!grupos.length) return html`<p class="hint">Nenhum doador ou fornecedor desta campanha aparece, com o mesmo documento, entre os credores do município.</p>`;
+  if (!grupos.length) return html`<p class="hint">Nenhum doador ou fornecedor desta campanha aparece, com o mesmo documento, entre os credores ${pagador.dos}.</p>`;
   return html`<ul class="locais ligacoes">${grupos.slice(0, limite).map(g => html`<li><span class="ln">${nomeProprio(g.credor)}
       ${g.campanhas.map(c => html`<small>${campanha(c, comCandidato)}</small>`)}</span>
     <span class="lv">${dinheiro(g.pago)}<small>${periodo(g.anos)}</small></span></li>`)}</ul>${botao}
     <${Aviso}>Aparecer nas duas bases não indica relação entre a doação ou o serviço e o pagamento: pessoas e empresas atendem campanhas e órgãos públicos ao mesmo tempo por razões comuns (trabalho, comércio, serviço público).<//>
-    <${ComoLer} titulo="Como o cruzamento é feito">Cruzamento automático entre a prestação de contas (TSE) e os pagamentos do município (TCE-PB) pelo documento: empresa pelo CNPJ; pessoa física pelos dígitos centrais do CPF (os que o TCE-PB publica) e pelo nome completo. À esquerda, o valor na campanha; à direita, o que o município pagou.<//>`;
+    <${ComoLer} titulo="Como o cruzamento é feito">Cruzamento automático entre a prestação de contas (TSE) e os pagamentos ${pagador.dos} (${pagador.fonte}) pelo documento: empresa pelo CNPJ; pessoa física pelos dígitos centrais do CPF (os que ${pagador.fonte} publica) e pelo nome completo. À esquerda, o valor na campanha; à direita, o que ${pagador.pagou} pagou.<//>`;
 }

@@ -8,6 +8,7 @@ import { partesComResto } from './calculos-graficos.mjs';
 import { porPartido } from './calculos.mjs';
 import { PizzaDoEleitorado } from './panorama-pizza.mjs';
 import { SerieDosColocados } from './panorama-colocados.mjs';
+import { cargoDosColocados } from './series-carregar.mjs';
 const { html, useMemo } = window.htmPreact;
 
 const CORES = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'];
@@ -33,5 +34,5 @@ export function QuemVotouEmQuem({ cfg, cands, ctx }) {
       lede="Rosca e pizza servem para parte de um todo. A rosca leva o total no centro; a pizza, quando o todo é o eleitorado inteiro.">
     <${RoscaDosVotos} cands=${cands} porCandidato=${majoritario || cands.length <= MUITOS} />
     ${ctx?.comparecimento && html`<${PizzaDoEleitorado} comparecimento=${ctx.comparecimento} />`}
-    ${majoritario && html`<${SerieDosColocados} cfg=${cfg} />`}<//>`;
+    ${cands[0].cargo === cargoDosColocados(cfg) && html`<${SerieDosColocados} cfg=${cfg} />`}<//>`;
 }

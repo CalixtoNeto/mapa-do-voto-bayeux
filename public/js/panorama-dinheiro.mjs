@@ -14,7 +14,7 @@ const semDados = ano => +ano < 2018 ? 'O TSE publica a prestação de contas dos
 const Vazio = ({ texto }) => html`<${Bloco} id="b-sem-dinheiro" titulo="Dinheiro de campanha"><${Aviso}>${texto}<//><//>`;
 
 export function criarDinheiro(cfg) {
-  return function Dinheiro({ cands, ano, financas, perfis, selecionado, onPick, ctx, cidade }) {
+  return function Dinheiro({ cands, ano, financas, perfis, selecionado, onPick, ctx }) {
     const eleito = ctx?.eleito || (c => ehEleito(c.sit || perfis?.c?.[cfg.chaveDe(c)]?.s));
     const linhas = useMemo(() => financas ? linhasFinanceiras(cands, financas, cfg.chaveDe) : [], [cands, financas]);
     const fora = cands[0] ? cfg.foraDasFinancas(cands[0]) : '';
@@ -23,7 +23,7 @@ export function criarDinheiro(cfg) {
     const painel = ctx || { cands, eleito, perfis, chaveDe: cfg.chaveDe };
     return html`${!financas.final && html`<${Aviso}>Prestação de contas parcial: a final é entregue até 30 dias depois da eleição e os números ainda vão mudar.<//>`}
       <${DeOndeVeioEParaOndeFoi} cands=${cands} financas=${financas} chaveDe=${cfg.chaveDe} />
-      ${cfg.ehMajoritario(cands[0]) && html`<${CampanhasDoMajoritario} cands=${cands} financas=${financas} linhas=${linhas} chaveDe=${cfg.chaveDe} local=${cidade} />`}
+      ${cfg.ehMajoritario(cands[0]) && html`<${CampanhasDoMajoritario} cands=${cands} financas=${financas} linhas=${linhas} chaveDe=${cfg.chaveDe} local=${cfg.regiao} />`}
       <${DinheiroElege} linhas=${linhas} ctx=${painel} selecionado=${selecionado} onPick=${onPick} />
       <${Bloco} id="b-quem-pagou" titulo="Quem financiou e quem recebeu" colunas="metade"
           lede="Fundo eleitoral por partido, concentração, maiores doadores e maiores fornecedores do cargo.">
