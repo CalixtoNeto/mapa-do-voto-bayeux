@@ -7,9 +7,9 @@ const CABECALHO = ['ANO_ELEICAO', 'NR_TURNO', 'SG_UF', 'CD_MUNICIPIO', 'NR_ZONA'
   'QT_COMPARECIMENTO', 'QT_ABSTENCOES', 'QT_VOTOS_BRANCOS', 'QT_VOTOS_NULOS'];
 const secao = (sec, { mun = '19372', cargo = '13', uf = 'PB' } = {}, ...n) => ['2024', '1', uf, mun, '61', sec, cargo, ...n];
 
-function ler(linhas, cabecalho = CABECALHO) {
+function ler(linhas, cabecalho = CABECALHO, cargoAceito = cargo => cargo !== '1') {
   const porTurno = {}, localDaSecao = (campos, colunas) => ({ 100: 0, 101: 0, 200: 1 })[campos[colunas.NR_SECAO]];
-  const aoLinha = leitorDeComparecimento({ ano: '2024', localDaSecao, porTurno });
+  const aoLinha = leitorDeComparecimento({ ano: '2024', localDaSecao, porTurno, cargoAceito });
   aoLinha(linha(cabecalho), true);
   linhas.forEach(l => aoLinha(linha(l), false));
   return porTurno;
@@ -24,7 +24,7 @@ test('soma as seções no local de votação onde funcionam', () => {
 
 test('ignora outra cidade, cargo fora do site e seção sem local', () => {
   assert.deepEqual(ler([
-    secao('100', { mun: '20516' }, '1', '1', '0', '0', '0'), secao('100', { cargo: '1' }, '1', '1', '0', '0', '0'),
+    secao('100', { mun: '20516' }, '1', '1', '0', '0', '0'), secao('100', { cargo: '9' }, '1', '1', '0', '0', '0'),
     secao('999', {}, '1', '1', '0', '0', '0'),
   ]), {});
 });
@@ -32,4 +32,10 @@ test('ignora outra cidade, cargo fora do site e seção sem local', () => {
 test('quando o arquivo traz os votos de legenda, eles entram como quinto número', () => {
   assert.deepEqual(ler([secao('100', {}, '300', '250', '50', '5', '8', '12'), secao('101', {}, '200', '150', '50', '2', '4', '3')],
     [...CABECALHO, 'QT_VOTOS_LEGENDA_VALIDOS']), { 1: { 13: { 0: [500, 400, 7, 12, 15] } } });
+});
+
+test('presidente vem do arquivo nacional; o arquivo da UF deixa o cargo de fora', () => {
+  const linhas = [secao('100', { cargo: '1' }, '300', '250', '50', '5', '8')];
+  assert.deepEqual(ler(linhas, CABECALHO, cargo => cargo === '1'), { 1: { 1: { 0: [300, 250, 5, 8] } } });
+  assert.deepEqual(ler(linhas), {});
 });

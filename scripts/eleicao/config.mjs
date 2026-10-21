@@ -5,12 +5,15 @@ export const ANOS_PADRAO = ['2012', '2014', '2016', '2018', '2020', '2022', '202
 export const CARGOS = {
   PRESIDENTE: '1', GOVERNADOR: '3', SENADOR: '5', DEPUTADO_FEDERAL: '6', DEPUTADO_ESTADUAL: '7', PREFEITO: '11', VEREADOR: '13',
 };
+export const ehPresidente = cargo => cargo === CARGOS.PRESIDENTE;
+// O presidente só disputa nas eleições gerais (2014, 2018, 2022, 2026…).
+export const anoTemPresidente = ano => Number(ano) % 4 === 2;
 export const CARGOS_DA_API = Object.values(CARGOS);
 export const CARGOS_COM_2_TURNO = [CARGOS.PRESIDENTE, CARGOS.GOVERNADOR];
 
-// Cargos lidos do CSV por seção (o da UF não traz o presidente). Com menos dígitos que isto,
+// Cargos lidos do CSV por seção (o da UF não traz o presidente; ele vem do arquivo nacional). Com menos dígitos que isto,
 // o número votado é de partido (voto de legenda), não de candidato.
-export const DIGITOS_DO_CANDIDATO = { '3': 2, '5': 3, '6': 4, '7': 5, '11': 2, '13': 5 };
+export const DIGITOS_DO_CANDIDATO = { '1': 2, '3': 2, '5': 3, '6': 4, '7': 5, '11': 2, '13': 5 };
 export const VOTO_BRANCO = '95';
 export const VOTO_NULO = '96';
 

@@ -4,7 +4,7 @@ import { CDN, baixar, lerCsvDoZip } from '../lib/tse.mjs';
 import { porRegistro, inteiro } from '../lib/csv.mjs';
 import { novaApuracao, chaveDoCargo, somarVotoNoLocal, somarVotoEspecial, ehBrancoOuNulo }
   from '../eleicao/apuracao.mjs';
-import { UF, MUNICIPIO_TSE, DIGITOS_DO_CANDIDATO, PASTA_DOWNLOADS } from '../eleicao/config.mjs';
+import { UF, MUNICIPIO_TSE, DIGITOS_DO_CANDIDATO, PASTA_DOWNLOADS, ehPresidente, anoTemPresidente } from '../eleicao/config.mjs';
 import { carregarTabelaDeSecoes, localizadorDeSecoes } from './tabela-secoes.mjs';
 
 const COLUNAS_OBRIGATORIAS = ['ANO_ELEICAO', 'NR_TURNO', 'SG_UF', 'CD_MUNICIPIO', 'NR_ZONA', 'NR_SECAO', 'CD_CARGO',
@@ -18,19 +18,30 @@ export async function votacaoViaCsv(ano) {
   if (!tabela) return null;
   const porTurno = {}, partidos = {}, semLocal = new Set();
   const localDaSecao = localizadorDeSecoes(tabela);
-  const aoLinha = leitorDeVotosPorSecao({ ano, localDaSecao, porTurno, partidos, semLocal });
-  await lerCsvDoZip(zip, new RegExp(`_${UF}\\.csv$`, 'i'), aoLinha);
+  const leitor = cargoAceito => leitorDeVotosPorSecao({ ano, localDaSecao, porTurno, partidos, semLocal, cargoAceito });
+  await lerCsvDoZip(zip, new RegExp(`_${UF}\\.csv$`, 'i'), leitor(cargo => !ehPresidente(cargo)));
+  if (anoTemPresidente(ano)) await lerPresidente(ano, leitor(ehPresidente));
   if (semLocal.size) console.warn(`  CSV ${ano}: ${semLocal.size} seções sem local na tabela`);
   if (!Object.keys(porTurno).length) return null;
   return { fonte: 'csv', semBairros: false, partidos: { [ano]: partidos }, porTurno };
 }
 
-export function leitorDeVotosPorSecao({ ano, localDaSecao, porTurno, partidos, semLocal }) {
+// O CSV da UF não traz o presidente: os votos dele por seção vêm num arquivo nacional separado, que pode não existir ainda.
+async function lerPresidente(ano, aoLinha) {
+  try {
+    const zip = `${PASTA_DOWNLOADS}/secao-${ano}-BR.zip`;
+    if (await baixar(`${CDN}/votacao_secao/votacao_secao_${ano}_BR.zip`, zip)) await lerCsvDoZip(zip, /_BR\.csv$/i, aoLinha);
+    else console.warn(`  presidente ${ano}: arquivo nacional por seção ainda não publicado`);
+  } catch (e) { console.warn(`  presidente ${ano}: arquivo nacional por seção indisponível (${e.message})`); }
+}
+
+// cargoAceito: cada arquivo só lê os cargos que lhe cabem (o da UF não tem o presidente; o nacional só tem o presidente).
+export function leitorDeVotosPorSecao({ ano, localDaSecao, porTurno, partidos, semLocal, cargoAceito = () => true }) {
   return porRegistro({
     descartarRapido: linha => !linha.includes(MUNICIPIO_TSE),
     aoCabecalho: colunas => exigirColunas(colunas, ano),
     aoRegistro: (campos, colunas) => {
-      if (!ehDaEleicao(campos, colunas, ano)) return;
+      if (!ehDaEleicao(campos, colunas, ano) || !cargoAceito(campos[colunas.CD_CARGO])) return;
       const turno = campos[colunas.NR_TURNO], cargo = campos[colunas.CD_CARGO], numero = campos[colunas.NR_VOTAVEL];
       const apuracao = porTurno[turno] ||= novaApuracao();
       const votos = inteiro(campos[colunas.QT_VOTOS]);

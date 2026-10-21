@@ -115,7 +115,7 @@ const CFG = {
   carregarAno: ano => TABELAS[ano] ? Promise.resolve() : lerJson(`data/secoes-${ano}.json`).then(t => { TABELAS[ano] = t; }).catch(() => {}),
   locaisDoLugar: (c, key, ds) => (bairrosDe(ds.ano).find(b => b.key === key)?.locais || []).map(i => ({ nome: localNome(TABELAS[ds.ano].locais[i].nome), v: (c.loc || {})[i] || 0 })).sort((x, y) => y.v - x.v),
   nomeDoLugar: (key, ds) => (bairrosDe(ds.ano).find(b => b.key === key) || { name: key }).name,
-  foraDasFinancas: c => c.cargo !== '11' && c.cargo !== '13' ? 'O site mostra o dinheiro de campanha só dos candidatos a prefeito e vereador: a campanha dos outros cargos é estadual e não dá para dividi-la pelos votos de Bayeux.' : '',
+  foraDasFinancas: c => c.cargo !== '11' && c.cargo !== '13' ? `O site mostra o dinheiro de campanha só dos candidatos a prefeito e vereador: a campanha ${c.cargo === '1' ? 'de presidente é nacional' : 'dos outros cargos é estadual'} e não dá para dividi-la pelos votos de Bayeux.` : '',
   ehMajoritario: c => c.cargo === '11',
   cargosComQuociente: ['13'],
   nomeDoCargo: CARGO_NOMES,

@@ -7,8 +7,8 @@ const CABECALHO = ['ANO_ELEICAO', 'NR_TURNO', 'SG_UF', 'SG_UE', 'CD_CARGO', 'SQ_
   'DS_GENERO', 'DS_COR_RACA', 'DT_NASCIMENTO', 'DS_GRAU_INSTRUCAO', 'DS_OCUPACAO', 'ST_REELEICAO', 'DS_SIT_TOT_TURNO',
   'DS_SITUACAO_CANDIDATURA'];
 const linha = campos => campos.map(c => `"${c}"`).join(';');
-const candidata = ({ sq = '150', ue = '19372', cargo = '13', apta = 'APTO', sit = 'ELEITO POR QP' } = {}) =>
-  ['2024', '1', 'PB', ue, cargo, sq, '12345', 'PART', 'FEMININO', 'PRETA', '15/11/1990', 'ENSINO MÉDIO COMPLETO',
+const candidata = ({ sq = '150', ue = '19372', cargo = '13', apta = 'APTO', sit = 'ELEITO POR QP', uf = 'PB' } = {}) =>
+  ['2024', '1', uf, ue, cargo, sq, '12345', 'PART', 'FEMININO', 'PRETA', '15/11/1990', 'ENSINO MÉDIO COMPLETO',
     'COMERCIANTE', 'N', sit, apta];
 
 function lerCandidatos(linhas) {
@@ -51,4 +51,10 @@ test('os bens também somam por tipo, do maior para o menor', () => {
   }
   const perfil = perfisComBens(lerCandidatos([candidata()]), bens, tipos)['13|12345'];
   assert.deepEqual([perfil.b, perfil.bt], [450010, [['Casa', 400000], ['Veículo automotor terrestre', 50000], ['Outros', 10]]]);
+});
+
+test('presidente entra pelo arquivo nacional (UF e UE "BR"), sem depender de Bayeux', () => {
+  const perfis = perfisComBens(lerCandidatos([candidata({ uf: 'BR', ue: 'BR', cargo: '1', sq: '900' }),
+    candidata({ uf: 'SP', ue: 'SP', cargo: '3', sq: '901' })]), new Map());
+  assert.deepEqual(Object.keys(perfis), ['1|12345']);
 });
