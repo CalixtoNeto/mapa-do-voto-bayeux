@@ -333,7 +333,7 @@ function Trajetoria({ entradas, view, comp, onComparar, onSair, pode }) {
   const igual = (e, o) => o && e.ano === o.ano && e.turno === o.turno && e.cargo === o.cargo && e.nr === o.nr;
   return html`<section class="traj" aria-labelledby="tj">
     <div class="rk-head"><h2 id="tj">Evolução do candidato</h2>${comp && html`<button type="button" class="link" onClick=${onSair}>Sair da comparação</button>`}</div>
-    ${lista.length > 1 && html`<${AN.Colunas} itens=${lista.map(e => ({ n: e.ano, v: e.total, rotulo: nf.format(e.total) }))} descricao=${'Votos em cada eleição: ' + lista.map(e => `${e.ano}, ${nf.format(e.total)}`).join('; ')} />`}
+    ${lista.length > 1 && html`<${AN.Colunas} itens=${lista.map(e => ({ n: e.turno !== '1' ? `${e.ano} (2º)` : e.ano, v: e.total, rotulo: nf.format(e.total) }))} descricao=${'Votos em cada eleição: ' + lista.map(e => `${e.ano}${e.turno !== '1' ? ' (2º turno)' : ''}, ${nf.format(e.total)}`).join('; ')} />`}
     <ul>${lista.map(e => { const atual = igual(e, view), em = igual(e, comp);
       return html`<li key=${e.ano + e.turno + e.cargo} class=${em ? 'em' : ''}>
         <div class="tl"><span class="ty">${e.ano}${e.turno !== '1' ? ' · 2º turno' : ''}</span><span class="tc">${CARGO_NOMES[e.cargo] || e.cargo}</span>
