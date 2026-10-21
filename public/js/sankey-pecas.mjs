@@ -28,9 +28,9 @@ export function Faixa({ f, de, para, cor, formato }) {
     <title>${`${de.n} → ${para.n}: ${formato(f.v)}`}</title></path>`;
 }
 
-// Pontas: texto fora do desenho; meio: texto acima do nó. Duas linhas (nome e valor) quando há altura.
-export function Rotulo({ no, ultima, formato, total, limite }) {
-  const meio = no.coluna > 0 && no.coluna < ultima, duas = no.h >= 28 || meio;
+// Pontas: texto fora do desenho; meio: texto acima do nó (ou ao lado, se nada sai dele). Duas linhas (nome e valor) quando há altura.
+export function Rotulo({ no, ultima, formato, total, limite, semSaida }) {
+  const meio = no.coluna > 0 && no.coluna < ultima && !semSaida, duas = no.h >= 28 || meio;
   const [x, ancora] = meio ? [no.x + no.w / 2, 'middle'] : no.coluna === 0 ? [no.x - 7, 'end'] : [no.x + no.w + 7, 'start'];
   const y = meio ? no.y - 20 : no.y + no.h / 2 + (duas ? -3 : 4);
   return html`<text class="no-texto" x=${x} y=${y} text-anchor=${ancora}><tspan class="no-nome">${curta(no.n, limite)}</tspan>

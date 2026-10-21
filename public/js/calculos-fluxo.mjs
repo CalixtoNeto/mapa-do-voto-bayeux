@@ -6,9 +6,9 @@ const positivos = itens => itens.filter(i => i.v > 0);
 const coluna = (itens, prefixo, limite, rotulo) => agruparRestante(positivos(itens), limite, rotulo).map((i, k) => ({ ...i, id: prefixo + k }));
 const fluxosDoMeio = (nos, entrando) => nos.map(n => entrando ? { de: n.id, para: 'meio', v: n.v } : { de: 'meio', para: n.id, v: n.v });
 
-// origens e destinos: [{ n, v, alerta? }]; meio: nome do nó central.
-export function grafoComMeio({ origens, meio, destinos, limite = 8, rotulo = 'Outros' }) {
-  const de = coluna(origens, 'o', limite, rotulo), para = coluna(destinos, 'd', limite, rotulo);
+// origens e destinos: [{ n, v, alerta? }]; meio: nome do nó central; rotulo nomeia o resto dos destinos e rotuloOrigens o das origens.
+export function grafoComMeio({ origens, meio, destinos, limite = 8, rotulo = 'Outros', rotuloOrigens = 'Outros' }) {
+  const de = coluna(origens, 'o', limite, rotuloOrigens), para = coluna(destinos, 'd', limite, rotulo);
   return { colunas: [de, [{ id: 'meio', n: meio }], para], fluxos: [...fluxosDoMeio(de, true), ...fluxosDoMeio(para, false)] };
 }
 

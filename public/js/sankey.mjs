@@ -18,12 +18,12 @@ function medir(grafo, medida, altura) {
 export function Sankey({ grafo, formato, descricao, altura = 360 }) {
   const [ref, medida] = usarLargura(), { largura, margem, alto, desenho } = medir(grafo, medida, altura);
   const { nos, fluxos } = desenho, ultima = grafo.colunas.length - 1, nome = new Map(nos.map(n => [n.id, n]));
-  const cores = coresDosNos(nos, ultima), visiveis = nosComRotulo(nos), limite = Math.floor((margem - 10) / 6.4), comPct = margem >= 120;
+  const comSaida = new Set(fluxos.map(f => f.de)), cores = coresDosNos(nos, ultima), visiveis = nosComRotulo(nos), limite = Math.floor((margem - 10) / 6.4), comPct = margem >= 120;
   return html`<div class="sankey" ref=${ref}><div class="sankey-rolagem"><svg width=${largura} height=${alto + TOPO + 4} role="img" aria-label=${descricao}>
     <g transform=${`translate(${margem + 7} ${TOPO})`}>
       ${fluxos.map(f => html`<${Faixa} f=${f} de=${nome.get(f.de)} para=${nome.get(f.para)} formato=${formato} cor=${cores.get(nome.get(f.de).coluna === 0 ? f.de : f.para)} />`)}
       ${nos.map(n => html`<rect class="no" x=${n.x} y=${n.y} width=${n.w} height=${Math.max(1, n.h)} style=${`fill:${cores.get(n.id)}`}><title>${`${n.n}: ${formato(n.v)}`}</title></rect>`)}
-      ${nos.filter(n => visiveis.has(n.id)).map(n => html`<${Rotulo} no=${n} ultima=${ultima} formato=${formato} limite=${limite}
+      ${nos.filter(n => visiveis.has(n.id)).map(n => html`<${Rotulo} no=${n} ultima=${ultima} formato=${formato} limite=${limite} semSaida=${!comSaida.has(n.id)}
         total=${comPct && (n.coluna === 0 || n.coluna === ultima) ? somaDe(nos, n.coluna) : 0} />`)}
     </g></svg></div>
     <ul class="so-leitor">${fluxos.map(f => html`<li>${nome.get(f.de).n} para ${nome.get(f.para).n}: ${formato(f.v)}</li>`)}</ul></div>`;

@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { grafoDaCampanha } from '../../public/js/calculos-fluxo-campanha.mjs';
+import { grafoDoEleitorado } from '../../public/js/calculos-fluxo-eleitorado.mjs';
 import { grafoDaPrefeitura, grafoDasEmendas } from '../../public/js/perfil/calculos-fluxo-perfil.mjs';
 
 const nomes = coluna => coluna.map(n => n.n);
@@ -36,4 +37,12 @@ test('emendas: autor → favorecido somando os anos', () => {
   assert.deepEqual(g.colunas.map(nomes), [['Mersinho Lucena', 'Relator Geral'], ['Fundo Municipal de Saude', 'Associacao X']]);
   assert.equal(g.fluxos.reduce((s, f) => s + f.v, 0), 30);
   assert.equal(grafoDasEmendas(null), null);
+});
+
+test('eleitorado: aptos → compareceram ou abstenção → válidos, brancos e nulos', () => {
+  const g = grafoDoEleitorado({ aptos: 100, comparecimento: 80, brancos: 5, nulos: 7 });
+  assert.deepEqual(g.colunas.map(nomes), [['Aptos'], ['Compareceram', 'Abstenção'], ['Votos válidos', 'Nulos', 'Brancos']]);
+  assert.equal(g.fluxos.find(f => f.para === 'validos').v, 68);
+  assert.equal(g.fluxos.find(f => f.para === 'abstencao').v, 20);
+  assert.equal(grafoDoEleitorado({ aptos: 0, comparecimento: 0, brancos: 0, nulos: 0 }), null);
 });

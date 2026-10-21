@@ -10,7 +10,7 @@ export function grafoDaPrefeitura(a) {
   const d = a?.despesas;
   if (!d?.orgaos?.length || !d?.funcoes?.length) return null;
   return grafoComMeio({ origens: d.orgaos.map(o => ({ n: nomeDoOrgao(o[0]), v: o[2] })), meio: 'Pago',
-    destinos: d.funcoes.map(f => ({ n: nomeDaFuncao(f[0]), v: f[1] })), limite: 8, rotulo: 'Outras funções' });
+    destinos: d.funcoes.map(f => ({ n: nomeDaFuncao(f[0]), v: f[1] })), limite: 8, rotulo: 'Outras funções', rotuloOrigens: 'Outros órgãos' });
 }
 
 // arvore: autor → favorecido → ano, como vem em emendas.json (recebido.arvore).

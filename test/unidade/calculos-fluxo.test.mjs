@@ -44,3 +44,10 @@ test('grafo em pares: cada lado respeita o seu limite e o total se conserva', ()
 test('grafo em pares: sem pares válidos não há colunas com nós', () => {
   assert.deepEqual(grafoEmPares({ pares: [['a', 'b', 0]] }).fluxos, []);
 });
+
+test('grafo com meio: o resto das origens e o dos destinos têm rótulos próprios', () => {
+  const lista = prefixo => [9, 8, 7, 6].map((v, i) => ({ n: prefixo + i, v }));
+  const g = grafoComMeio({ origens: lista('o'), meio: 'M', destinos: lista('d'), limite: 3, rotulo: 'Outras funções', rotuloOrigens: 'Outros órgãos' });
+  assert.equal(g.colunas[0][2].n, 'Outros órgãos (2)');
+  assert.equal(g.colunas[2][2].n, 'Outras funções (2)');
+});
