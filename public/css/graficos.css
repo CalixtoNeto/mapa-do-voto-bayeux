@@ -51,3 +51,12 @@
 .dispersao circle{fill:var(--r4); fill-opacity:.75; stroke:var(--surface); stroke-width:1.5}
 .rosca-aro.cheia{display:block}
 .numero-grande{display:flex; align-items:center; gap:18px; flex-wrap:wrap} .numero-grande b{font:600 44px/1 var(--serif)} .numero-grande small{display:block; font-size:13px; color:var(--muted)}
+
+/* diagrama de fluxo (Sankey) e botões para alternar entre dois gráficos */
+.alternar,.sankey{min-width:0; max-width:100%}
+.sankey-rolagem{overflow-x:auto} .sankey svg{display:block}
+.sankey .faixa{fill:none; stroke-opacity:.32} .sankey .faixa:hover{stroke-opacity:.6}
+.sankey .no{shape-rendering:crispEdges}
+.sankey .no-texto{fill:var(--ink); font:500 12px var(--sans)} .sankey .no-valor{fill:var(--muted); font:600 12px var(--serif)}
+.alternar{display:flex; flex-direction:column; gap:12px}
+.alternar .abas.pilula button{min-height:32px; padding:0 14px; font-size:13px}

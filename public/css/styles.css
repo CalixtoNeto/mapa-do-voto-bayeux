@@ -392,6 +392,8 @@ button.abre{cursor:pointer}
 .cv-corpo .tag{display:inline-block; font-size:12px; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:2px 9px}
 .pilha-fig{margin:0; display:flex; flex-direction:column; gap:8px}
 .pilha-fig .pilha{height:14px}
-.colunas.densa{gap:3px} .colunas.densa .cv{display:none} .colunas.densa .ultima .cv{display:block}
+.colunas.densa{gap:3px} .colunas.densa .cv{display:none} .colunas.densa .ultima .cv{display:block; align-self:flex-end}
 .colunas .cn{min-height:1.2em}
+.colunas div{min-width:0}
+@media (max-width:520px){ .colunas{gap:4px} .colunas .cv{font-size:10px} }
 .posicoes li .haltere{grid-column:1 / 3}

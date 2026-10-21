@@ -4,6 +4,9 @@ import { Bloco } from '../estrutura.mjs';
 import { Cartao } from '../cartao.mjs';
 import { LinhaDoTempo } from '../linha-do-tempo.mjs';
 import { Treemap } from '../treemap.mjs';
+import { Sankey } from '../sankey.mjs';
+import { Alternar } from '../alternar.mjs';
+import { grafoDasEmendas } from './calculos-fluxo-perfil.mjs';
 import { ArvoreComLegenda } from './arvore-legenda.mjs';
 import { arvoreDosFavorecidos } from './arvores-emendas.mjs';
 import { autorDoPico } from './calculos-emendas.mjs';
@@ -35,10 +38,12 @@ export function QuantoChegou({ r, recente }) {
 const rotuloDoRecebido = (nome, nivel) => nivel < 2 ? nomeProprio(nome) : nome;
 
 function Autores({ r }) {
-  const itens = agruparPequenos(r.porAutor.map(([n, v]) => ({ n: nomeProprio(n), v })), 0.02), total = itens.reduce((s, i) => s + i.v, 0);
-  return html`<${Cartao} tipo="Treemap · árvore de autores" titulo="Recebido por autor da emenda" sub=${`${dinheiro(total)} desde ${r.porAno[0][0]}. A área é proporcional ao valor.`}
-    nota="Autores abaixo de 2% do total ficam agrupados em “Outros”. Cor mais escura = valor maior.">
-    <${Treemap} itens=${itens} formato=${dinheiro} altura=${340} descricao="Valor recebido por autor da emenda" /><//>`;
+  const itens = agruparPequenos(r.porAutor.map(([n, v]) => ({ n: nomeProprio(n), v })), 0.02), total = itens.reduce((s, i) => s + i.v, 0), grafo = grafoDasEmendas(r.arvore);
+  const treemap = html`<${Treemap} itens=${itens} formato=${dinheiro} altura=${340} descricao="Valor recebido por autor da emenda" />`;
+  return html`<${Cartao} tipo="Treemap · fluxo" titulo="Recebido por autor da emenda" sub=${`${dinheiro(total)} desde ${r.porAno[0][0]}. Em blocos, a área é proporcional ao valor; em fluxo, a faixa liga o autor a quem recebeu.`}
+    nota="Autores abaixo de 2% do total ficam agrupados em “Outros” nos blocos; no fluxo aparecem os oito maiores de cada lado. Cor mais escura = valor maior.">
+    ${grafo ? html`<${Alternar} rotulo="Forma de ver as emendas por autor" visoes=${[{ id: 'blocos', rotulo: 'Blocos', corpo: treemap },
+      { id: 'fluxo', rotulo: 'Fluxo', corpo: html`<${Sankey} grafo=${grafo} formato=${dinheiro} altura=${380} descricao="Valor das emendas por autor e favorecido" />` }]} />` : treemap}<//>`;
 }
 
 function QuemRecebeu({ r }) {

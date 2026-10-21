@@ -22,6 +22,7 @@ e `scripts/gerar-dados.mjs` (votos), a partir do TSE.
   e os módulos `public/js/*.mjs` são iguais nos dois; uma correção num vale para o outro.
 - Os cálculos do site ficam em `public/js/calculos*.mjs`, sem DOM, testados em `test/unidade/calculos*.test.mjs`.
   O que cada site faz diferente (lugares, chave do candidato) entra pelo `CFG` de `app.js` (`agrupar`, `nomeDoLugar`…).
+- Diagramas de fluxo (Sankey) e o botão que alterna com o treemap: `public/js/{sankey,sankey-pecas,alternar,calculos-sankey,calculos-fluxo*}.mjs` são iguais nos dois repositórios; os grafos de cada perfil ficam em `perfil/calculos-fluxo-perfil.mjs` (testados em `test/unidade/calculos-fluxo*.test.mjs`).
 - Nomes curtos das análises que o site lê: `c`, `r`, `d`, `rep`, `pg`, `dc`, `rs`, `doa`, `nd`, `fo`, `nf`, `doadores` e
   `fornecedores` (`n`, `t`, `v`, `c`) em finanças; `g`, `r`, `i`, `e`, `o`, `re`, `s`, `p`, `b`, `bt` no perfil;
   `[aptos, comparecimento, brancos, nulos, legenda?]` no comparecimento; `[eleitores, mulheres, jovens, idosos,

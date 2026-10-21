@@ -3,6 +3,7 @@
 import { pct, sentence, dinheiro, centavos } from './formato.mjs';
 import { BarraDeOrigens } from './componentes.mjs';
 import { resumoFinanceiro, custoPorVoto, posicoesNoCargo } from './calculos.mjs';
+import { FluxoDaCampanha } from './fluxo-da-campanha.mjs';
 import { PosicaoNoCargo, DespesasDoCandidato, DoadoresDoCandidato } from './listas-dinheiro.mjs';
 import { PagoEDependencia, RitmoDaArrecadacao, RedeDaCampanha, DinheiroEntreEleicoes } from './extras-dinheiro.mjs';
 const { html, useMemo } = window.htmPreact;
@@ -45,6 +46,7 @@ export function criarDinheiro(cfg) {
       <${NumerosDoDinheiro} r=${r} custo=${custo} posicao=${posicoes.custo} cand=${cand} />
       <${PagoEDependencia} f=${f} perfil=${ctx?.perfis?.c?.[chave]} recebido=${r.recebido} />
       <${BarraDeOrigens} grupos=${r.grupos} total=${r.recebido} />
+      <${FluxoDaCampanha} r=${r} />
       <${PosicaoNoCargo} posicoes=${posicoes} nomeDoCargo=${sentence(cfg.nomeDoCargo[cand.cargo] || '').toLowerCase()} />
       <${DespesasDoCandidato} categorias=${r.categorias} />
       <${DoadoresDoCandidato} f=${f} chave=${chave} ctx=${ctx} recebido=${r.recebido} onPick=${onPick} />
