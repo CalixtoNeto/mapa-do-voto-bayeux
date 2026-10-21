@@ -3,6 +3,9 @@ import { dinheiro } from '../formato.mjs';
 import { Bloco } from '../estrutura.mjs';
 import { Cartao } from '../cartao.mjs';
 import { Treemap } from '../treemap.mjs';
+import { Sankey } from '../sankey.mjs';
+import { Alternar } from '../alternar.mjs';
+import { grafoDaPrefeitura } from './calculos-fluxo-perfil.mjs';
 import { LinhaDoTempo } from '../linha-do-tempo.mjs';
 import { ColunasMensais } from '../colunas-mensais.mjs';
 import { ArvoreDeGastos } from './arvore.mjs';
@@ -11,13 +14,20 @@ import { nomeDaFuncao, pontosDeDestaque, rotulosEspacados } from './calculos-fat
 import { milhoes } from './formato-perfil.mjs';
 const { html } = window.htmPreact;
 
+function PagoPorFuncao({ a, funcoes }) {
+  const grafo = grafoDaPrefeitura(a), formato = dinheiro;
+  const treemap = html`<${Treemap} itens=${funcoes} formato=${formato} altura=${420} descricao=${`Valor pago por função em ${a.ano}`} />`;
+  return html`<${Cartao} tipo="Treemap · fluxo" titulo=${`Pago por função, ${a.ano}`} sub=${`${dinheiro(pagoDoAno(a))}. Em blocos, a área é proporcional ao valor; em fluxo, a faixa mostra de qual órgão saiu.`}
+    nota="Cor mais escura = valor maior. Blocos e nós pequenos ficam sem rótulo: passe o cursor sobre eles ou use a árvore ao lado.">
+    ${grafo ? html`<${Alternar} rotulo="Forma de ver o pago por função" visoes=${[{ id: 'blocos', rotulo: 'Blocos', corpo: treemap },
+      { id: 'fluxo', rotulo: 'Fluxo', corpo: html`<${Sankey} grafo=${grafo} formato=${formato} altura=${420} descricao=${`Pago por órgão e por função em ${a.ano}`} />` }]} />` : treemap}<//>`;
+}
+
 export function ParaOndeVai({ a, detalhe }) {
   const funcoes = (a.despesas?.funcoes || []).map(([n, v]) => ({ n: nomeDaFuncao(n), v }));
   return html`<${Bloco} id="pa" titulo="Para onde vai o dinheiro" colunas="sessenta"
-    lede="Um total que se abre em partes: o treemap mostra o tamanho relativo de cada função; a árvore ao lado abre cada uma em tipos de gasto, fornecedores e origens.">
-    <${Cartao} tipo="Treemap · árvore de áreas" titulo=${`Pago por função, ${a.ano}`} sub=${`${dinheiro(pagoDoAno(a))}. A área de cada bloco é proporcional ao valor.`}
-      nota="Cor mais escura = valor maior. Blocos pequenos ficam sem rótulo: passe o cursor sobre eles ou use a árvore ao lado.">
-      ${funcoes.length > 0 && html`<${Treemap} itens=${funcoes} formato=${dinheiro} altura=${420} descricao=${`Valor pago por função em ${a.ano}`} />`}<//>
+    lede="Um total que se abre em partes: o treemap mostra o tamanho relativo de cada função, o fluxo liga o órgão que pagou à função; a árvore ao lado abre cada função em tipos de gasto, fornecedores e origens.">
+    ${funcoes.length > 0 && html`<${PagoPorFuncao} a=${a} funcoes=${funcoes} />`}
     <${Cartao} tipo="Árvore expansível" titulo="Abra uma função" sub="Do total até quem recebeu">
       <${ArvoreDeGastos} key=${a.ano} arvores=${detalhe?.arvores} ano=${a.ano} /><//>
   <//>`;
