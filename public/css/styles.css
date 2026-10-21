@@ -394,4 +394,6 @@ button.abre{cursor:pointer}
 .pilha-fig .pilha{height:14px}
 .colunas.densa{gap:3px} .colunas.densa .cv{display:none} .colunas.densa .ultima .cv{display:block; align-self:flex-end}
 .colunas .cn{min-height:1.2em}
+.colunas div{min-width:0}
+@media (max-width:520px){ .colunas{gap:4px} .colunas .cv{font-size:10px} }
 .posicoes li .haltere{grid-column:1 / 3}
