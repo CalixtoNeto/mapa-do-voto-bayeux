@@ -18,9 +18,9 @@ const voto = ({ secao = '100', cargo = '13', nr = '12345', nome = 'MARIA', votos
   `"2024";"1";"PB";"${mun}";"61";"${secao}";"${cargo}";"Cargo";"${nr}";"${nome}";"${votos}";"${local}"`;
 const TABELA = { locais: [{ zona: 61, nr: 1490 }, { zona: 61, nr: 1500 }], secoes: { '61|100': 0 } };
 
-function ler(linhas, cabecalho = CABECALHO) {
+function ler(linhas, cabecalho = CABECALHO, cargoAceito = cargo => cargo !== '1') {
   const porTurno = {}, partidos = {}, semLocal = new Set();
-  const aoLinha = leitorDeVotosPorSecao({ ano: '2024', localDaSecao: localizadorDeSecoes(TABELA), porTurno, partidos, semLocal });
+  const aoLinha = leitorDeVotosPorSecao({ ano: '2024', localDaSecao: localizadorDeSecoes(TABELA), porTurno, partidos, semLocal, cargoAceito });
   aoLinha(cabecalho, true);
   for (const l of linhas) aoLinha(l, false);
   return { apuracao: porTurno[1], partidos, semLocal };
@@ -48,8 +48,27 @@ test('voto de legenda guarda o nome do partido, mas não para governador', () =>
   assert.equal(apuracao.esp['2024|1|13'].legenda, 1);
 });
 
-test('ignora outro município e cargo que o site não mostra (presidente, que o CSV da UF não traz)', () => {
-  assert.deepEqual(ler([voto({ mun: '19003' }), voto({ cargo: '1', nr: '13' })]).apuracao, undefined);
+test('ignora outro município e cargo que o site não mostra', () => {
+  assert.deepEqual(ler([voto({ mun: '19003' }), voto({ cargo: '9', nr: '13' })]).apuracao, undefined);
+});
+
+const soPresidente = cargo => cargo === '1';
+
+test('presidente vem do arquivo nacional: o número de 2 dígitos é o candidato e o voto entra no local da seção', () => {
+  const { apuracao, partidos } = ler([voto({ cargo: '1', nr: '13', nome: 'LULA', votos: '9' })], CABECALHO, soPresidente);
+  assert.deepEqual(apuracao.cands.get('2024|1|1|13').loc, { 0: 9 });
+  assert.deepEqual(partidos, {}, 'não é voto de legenda');
+});
+
+test('cada arquivo só aceita os cargos que lhe cabem: o da UF deixa o presidente de fora e o nacional só lê o presidente', () => {
+  assert.equal(ler([voto({ cargo: '1', nr: '13' })]).apuracao, undefined);
+  assert.equal(ler([voto({ cargo: '13' })], CABECALHO, soPresidente).apuracao, undefined);
+});
+
+test('presidente: branco e nulo não são candidato', () => {
+  assert.equal(ehVotoNominal('1', '13'), true);
+  assert.equal(ehVotoNominal('1', '95'), false);
+  assert.equal(ehVotoNominal('1', '96'), false);
 });
 
 test('prefeito: o número de 2 dígitos é o candidato, não voto de legenda nem nome de partido', () => {

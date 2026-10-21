@@ -2,7 +2,7 @@ Site: https://bayeux.mapadapolitica.com.br/
 
 # Mapa da política · Bayeux
 
-Votos de candidatos a prefeito, vereador, deputado federal, deputado estadual, senador e governador em cada bairro de Bayeux (PB), a partir dos resultados oficiais do TSE.
+Votos de candidatos a prefeito, vereador, deputado federal, deputado estadual, senador, governador e presidente em cada bairro de Bayeux (PB), a partir dos resultados oficiais do TSE.
 
 ## Como usar
 
@@ -10,7 +10,7 @@ Votos de candidatos a prefeito, vereador, deputado federal, deputado estadual, s
 
 Abra o site: ele lista todas as eleições disponíveis sozinho, sem precisar baixar nem enviar arquivos. Escolha a eleição (ano e turno), o cargo e o candidato. Clique num bairro para ver os votos em cada escola.
 
-O partido vem dos votos de legenda do arquivo por seção e pode faltar quando o partido não teve voto de legenda em Bayeux. Presidente não aparece: os bairros dependem de votos por seção, e o TSE publica o presidente em arquivo separado, só por município.
+O partido vem dos votos de legenda do arquivo por seção e pode faltar quando o partido não teve voto de legenda em Bayeux. O presidente vem do arquivo nacional de votos por seção (`votacao_secao_ANO_BR.zip`), lido só nas linhas de Bayeux; o arquivo da UF não o traz.
 
 ## Comparar a evolução de um candidato
 
@@ -56,7 +56,7 @@ Além do mapa de votos, cada candidato e cada cargo têm análises tiradas dos D
 Cuidados que o site mostra junto dos números:
 
 - **Gasto** é o total de despesas contratadas declaradas ao TSE, sem as doações a outras campanhas (que são gasto de quem recebe). **Custo por voto** é esse gasto dividido pelos votos do candidato em Bayeux.
-- O **dinheiro de campanha** aparece só para prefeito e vereador: a campanha de deputado, senador ou governador é estadual e não dá para dividi-la pelos votos de Bayeux. O perfil e os bens aparecem para todos os cargos.
+- O **dinheiro de campanha** aparece só para prefeito e vereador: a campanha de deputado, senador ou governador é estadual e a de presidente é nacional, e não dá para dividi-las pelos votos de Bayeux. O perfil e os bens aparecem para todos os cargos.
 - O dinheiro que veio **de outros candidatos** fica separado, para não ser contado duas vezes (pode incluir fundo eleitoral repassado).
 - A **prestação de contas é parcial** até o prazo da prestação final (cerca de 30 dias depois da eleição); o site avisa, e os números mudam quando o workflow roda de novo.
 - O **fundo eleitoral** existe desde 2018 (nas eleições municipais, desde 2020), e a prestação de contas neste formato também. Para 2012, 2014 e 2016 o site diz que o dado não existe.
