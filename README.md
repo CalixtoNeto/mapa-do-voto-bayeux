@@ -86,7 +86,7 @@ Para gerar ou atualizar: **Actions → Gerar análises → Run workflow** (em br
 
 ## Perfis dos políticos
 
-![Perfil do município: Prefeitura (treemap e árvore de gastos, série anual, folha, valores atípicos), Câmara (presença, votos, alinhamento), Emendas e a página de um vereador](docs/perfil.gif)
+![Perfil do município: Prefeitura (treemap ou fluxo e árvore de gastos, série anual, folha, valores atípicos), Câmara (presença, votos, alinhamento), Emendas e a página de um vereador](docs/perfil.gif)
 
 Em **Perfil do município** (ou direto em `#perfis`), quem governa Bayeux, com um endereço para cada perfil (`#perfil/prefeitura`, `#perfil/camara`, `#perfil/emendas`, `#perfil/cabo-rubem`…), bom para compartilhar:
 
